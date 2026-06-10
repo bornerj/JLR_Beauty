@@ -1,0 +1,82 @@
+# SFK — Structured Framework Kit
+# Windsurf Integration Bridge
+
+This project uses the **Structured Framework Kit (SFK)** — a persistent memory and
+governance framework for AI-assisted development. SFK is AI-agnostic; this file is
+the Windsurf entry point.
+
+---
+
+## Mandatory Session Start Protocol
+
+**Before any other action, read `kernel/BOOTSTRAP.md` in full.**
+
+BOOTSTRAP.md is the session entry point. It will instruct you to:
+1. Classify the project as NEW PROJECT or EXISTING PROJECT
+2. Load Layer 0 (SOUL, RULES, project.toml, SYSTEM.md)
+3. Load Layer 1 selectively by task type (via kernel/index.toml)
+4. Classify the request type and route to the correct agent
+5. Provide a readback confirmation to the user
+
+Do not skip this step. Do not summarize it. Read it to the last line.
+
+---
+
+## Key Files — Quick Reference
+
+| File | Purpose | Load |
+|------|---------|------|
+| `kernel/BOOTSTRAP.md` | Session entry point | Every session, first |
+| `kernel/RULES.md` | Sovereign governance — never override | Layer 0 |
+| `kernel/SOUL.md` | AI behavior contract | Layer 0 |
+| `kernel/project.toml` | Project identity, stack, URLs, env vars | Layer 0 |
+| `kernel/SYSTEM.md` | Technical and engineering standards | Layer 0 |
+| `kernel/index.toml` | Session router — loads files by task type | Layer 1 |
+| `kernel/ARCHITECTURE.md` | Inventory of agents, skills, scripts | On demand |
+| `memory/MODIFICATION_LOG.md` | Macro operational history | On demand |
+| `memory/progress.md` | Current module state snapshot | On demand |
+| `memory/logs/DEBUG-HISTORY.md` | Resolved bugs database (RAG source) | On bug tasks |
+| `memory/logs/SESSION-AUDIT-CHECKLIST.md` | Pre-closure validation | Session close |
+
+---
+
+## Capabilities
+
+- **20 agents** in `kernel/agents/` — specialist AI personas for domain routing
+- **56 skills** in `kernel/skills/` — domain knowledge modules (read via agent frontmatter)
+- **11 workflows** in `kernel/workflows/` — slash commands (/plan, /debug, /deploy, /test, etc.)
+- **5 scripts** in `kernel/scripts/` — validation and automation tools
+
+Do not read all skills by default. Read `kernel/ARCHITECTURE.md` first, identify the
+relevant agent, then load only the skills listed in that agent's `skills:` frontmatter.
+
+---
+
+## Memory System — Recording Rules
+
+Every significant session must produce records in:
+
+| File | When |
+|------|------|
+| `memory/MODIFICATION_LOG.md` | After every significant change |
+| `memory/plans/PLAN-XXXX.md` | Before executing complex or structural changes |
+| `memory/decisions/DECISION-XXX.md` | When an architectural decision is made |
+| `memory/logs/DEBUG-HISTORY.md` | After every resolved bug (format: ERR-0001, ERR-0002...) |
+| `memory/progress.md` | When a module changes state |
+
+---
+
+## Session Closure
+
+Before ending any session:
+1. Run `memory/logs/SESSION-AUDIT-CHECKLIST.md`
+2. Update `memory/MODIFICATION_LOG.md` with done/changed/pending
+3. Session must reach **PASS** — do not close on FAIL
+
+---
+
+## Git Governance
+
+- Never commit without explicit user approval
+- Never push without a second, separate explicit user approval
+- Commit approval does NOT imply push approval

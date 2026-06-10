@@ -1,0 +1,185 @@
+# project.toml — Technical Dictionary of the Project
+# Loaded in EVERY interaction with the AI.
+# This is the single file a solo dev needs to read after 1 month away.
+# NEVER put real secret values here — names only.
+
+# ═══════════════════════════════════════
+# IDENTITY
+# ═══════════════════════════════════════
+
+[project]
+name        = "JLR AI Studio"
+version     = "1.0"
+description = "AI-assisted beauty salon management platform — scheduling, concierge (web/WhatsApp), payments, and admin"
+type        = "fullstack"   # web-app | mobile | api | cli | fullstack
+language    = "pt-BR"
+
+[project.team]
+author  = "Jeiel Borner"
+company = "JLR"
+
+[project.urls]
+repository = ""       # fill in: GitHub/GitLab URL
+docs       = ""
+
+# ═══════════════════════════════════════
+# HOSTING — Where the project lives
+# ═══════════════════════════════════════
+
+[hosting.frontend]
+provider = "Vercel"
+url      = "https://jlrbeauty.vercel.app"
+service  = "Static SPA deploy (Vite build)"
+
+[hosting.backend]
+provider = "Railway"
+url      = "https://jlraistudio-production.up.railway.app"
+service  = "Node.js API (Express) — service 'api' in Railway project"
+
+[hosting.database]
+provider = "Railway"
+service  = "MySQL — same Railway project as the API"
+url_var  = "DATABASE_URL"
+
+# ═══════════════════════════════════════
+# STACK — What the project uses and which version
+# ═══════════════════════════════════════
+
+[stack.runtime]
+node   = "20+"
+python = ""
+
+[stack.frontend]
+framework = "Vite + React"
+version   = "React 19 / Vite 7"
+language  = "TypeScript (strict)"
+styling   = "TailwindCSS"
+
+[stack.backend]
+framework   = "Express 5"
+orm         = "Prisma"
+orm_version = "5.22"
+language    = "TypeScript (strict) — Node.js (commonjs)"
+
+[stack.database]
+engine  = "MySQL"
+version = ""
+access  = "ORM only — Prisma is the only database access layer"
+
+[stack.package_manager]
+tool    = "npm"
+version = ""
+
+# ═══════════════════════════════════════
+# DESIGN — Visual identity and CSS tooling
+# ═══════════════════════════════════════
+
+[design]
+framework         = "TailwindCSS"
+framework_version = "3.x"    # module.exports syntax in tailwind.config.js — not listed in package.json
+build_command     = ""        # handled by Vite
+component_library = "(none)"
+icon_library      = "(none)"
+primary_color     = "#00967f"                                   # tailwind.config.js → colors.primary
+secondary_color   = "#c5a059"                                   # tailwind.config.js → colors.gold
+font_family       = "Montserrat (display/headings) / Manrope (body)"  # tailwind.config.js → fontFamily
+spacing_unit      = "4px"
+
+# ═══════════════════════════════════════
+# ENVIRONMENT VARIABLES — Separated by server/platform
+# NEVER put real values here — names only
+# ═══════════════════════════════════════
+
+[environments.railway]
+# Where to configure: Railway → Project → Service "api" → Variables
+vars = [
+  "DATABASE_URL",                       # MySQL connection string
+  "PORT",                               # API port (default 3001)
+  "APP_API_URL",                        # this API's own public URL
+  "APP_WEB_URL",                        # frontend URL (Vercel)
+  "CORS_ORIGIN",                        # must match APP_WEB_URL
+  "JWT_SECRET",                         # token generation secret (min 32 chars)
+  "JWT_EXPIRES_IN",                     # ex: 12h
+  "AUTH_RATE_LIMIT_WINDOW_MS",          # rate limit window in ms
+  "AUTH_RATE_LIMIT_MAX_ATTEMPTS",       # max login attempts per window
+  "AUTH_RATE_LIMIT_BLOCK_MS",           # block duration in ms
+  "STRIPE_ENABLED",                     # true | false
+  "STRIPE_SECRET_KEY",                  # Stripe secret key
+  "STRIPE_WEBHOOK_SECRET",              # Stripe webhook signing secret
+  "STRIPE_CHECKOUT_SUCCESS_URL",        # redirect after successful payment
+  "STRIPE_CHECKOUT_CANCEL_URL",         # redirect after cancelled payment
+  "STRIPE_CHECKOUT_CURRENCY",           # ex: brl
+  "ZAPI_WEBHOOK_SECRET",                # Z-API webhook validation secret
+  "CONCIERGE_RETENTION_DAYS",           # concierge session retention (days)
+  "CONCIERGE_RETENTION_INTERVAL_HOURS", # cleanup job interval (hours)
+]
+
+[environments.vercel]
+# Where to configure: Vercel → Project → Settings → Environment Variables
+vars = [
+  "VITE_API_URL",   # Railway backend URL
+  "VITE_WEB_URL",   # this frontend's own URL
+]
+
+# ═══════════════════════════════════════
+# EXTERNAL INTEGRATIONS — Active third-party APIs
+# ═══════════════════════════════════════
+
+[[integrations]]
+name     = "Stripe"
+purpose  = "Payment processing — Checkout sessions, webhook confirmation, order/payment status sync"
+docs     = "https://stripe.com/docs"
+webhook  = "https://jlraistudio-production.up.railway.app/api/public/payments/stripe/webhook"
+env_vars = ["STRIPE_ENABLED", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_CHECKOUT_SUCCESS_URL", "STRIPE_CHECKOUT_CANCEL_URL", "STRIPE_CHECKOUT_CURRENCY"]
+
+[[integrations]]
+name     = "Z-API (WhatsApp)"
+purpose  = "WhatsApp concierge — inbound webhook processing, outbound text messages, session orchestration"
+docs     = "docs/config/WHATSAPP_API_ZAPI_NGROK.md"
+webhook  = "https://jlraistudio-production.up.railway.app/api/public/webhooks/zapi"
+env_vars = ["ZAPI_WEBHOOK_SECRET"]
+
+# ═══════════════════════════════════════
+# DEV TOOLS — Local environment only
+# ═══════════════════════════════════════
+
+[tools.dev.tunnel]
+provider  = "ngrok"
+purpose   = "Expose local API to receive Z-API and Stripe webhooks in dev"
+who_calls = "Z-API (WhatsApp webhook) and Stripe — both need a public HTTPS URL for POST callbacks"
+setup     = "ngrok http 3001 → copy HTTPS URL → set as webhook URL in Z-API dashboard and Stripe Dashboard"
+note      = "URL changes on every free-plan restart. See docs/config/WHATSAPP_API_ZAPI_NGROK.md for full setup."
+
+# ═══════════════════════════════════════
+# MONOREPO STRUCTURE
+# ═══════════════════════════════════════
+
+[monorepo]
+api = "apps/api"   # Express API — src/server.ts entry point
+web = "apps/web"   # Vite + React SPA — src/main.tsx entry point
+cms = "cms/"       # PHP scripts for CMS/content generation only
+
+[monorepo.api_ports]
+dev  = 3001
+prod = "Railway-assigned (process.env.PORT)"
+
+[monorepo.web_ports]
+dev  = 5173
+prod = "Vercel (auto)"
+
+# ═══════════════════════════════════════
+# AI CONTEXT REFERENCE — Do not remove this section
+# Used by the AI during onboarding and every session
+# ═══════════════════════════════════════
+
+[ai_context]
+kernel_entry   = "kernel/BOOTSTRAP.md"
+rules          = "kernel/RULES.md"
+behavior       = "kernel/SOUL.md"
+identity       = "kernel/project.toml"
+routing        = "kernel/index.toml"
+engineering    = "kernel/SYSTEM.md"
+memory_log     = "memory/MODIFICATION_LOG.md"
+memory_status  = "memory/progress.md"
+memory_debug   = "memory/logs/DEBUG-HISTORY.md"
+capabilities   = "kernel/ARCHITECTURE.md"

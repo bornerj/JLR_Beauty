@@ -1,0 +1,589 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - link "JLR Beauty Bem Estar Autoestima" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img "JLR Beauty" [ref=e8]
+        - generic "Bem Estar Autoestima" [ref=e9]:
+          - generic [ref=e10]: Bem Estar
+          - generic [ref=e11]: Autoestima
+      - generic [ref=e12]:
+        - button "JLR Beauty expand_more" [ref=e14] [cursor=pointer]:
+          - text: JLR Beauty
+          - generic [ref=e15]: expand_more
+        - link "ASSINATURAS" [ref=e16] [cursor=pointer]:
+          - /url: /assinaturas
+        - link "Franquias" [ref=e17] [cursor=pointer]:
+          - /url: /franquias
+        - button "Produtos expand_more" [ref=e19] [cursor=pointer]:
+          - text: Produtos
+          - generic [ref=e20]: expand_more
+      - generic [ref=e22]:
+        - button "Abrir carrinho" [active] [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: shopping_cart
+        - link "Administrador" [ref=e26] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e27]: admin_panel_settings
+        - button "Entrar" [ref=e28] [cursor=pointer]
+        - button "Sair" [ref=e29] [cursor=pointer]:
+          - generic [ref=e30]: logout
+  - main [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: star
+            - generic [ref=e41]: Redefinindo a Beleza!
+          - heading "Sua melhor versão, Eternizada" [level=1] [ref=e42]
+          - paragraph [ref=e43]: Um santuario exclusivo para cabelo, pele e alma. Viva a intersecao entre tecnologia de beleza avancada e bem-estar holistico.
+          - generic [ref=e44]:
+            - button "Agende Sua Experiencia" [ref=e45] [cursor=pointer]
+            - link "Ver Menu de Servicos" [ref=e46] [cursor=pointer]:
+              - /url: "#membership"
+        - generic [ref=e48]: keyboard_arrow_down
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - heading "Nossa Especialidade" [level=2] [ref=e53]
+            - heading "Tratamentos Personalizados" [level=3] [ref=e54]
+          - link "Ver Menu Completo arrow_forward" [ref=e56] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e57]: Ver Menu Completo
+            - generic [ref=e58]: arrow_forward
+        - generic [ref=e59]:
+          - generic [ref=e61] [cursor=pointer]:
+            - generic [ref=e62]:
+              - img "Woman with sleek shiny hair looking over shoulder" [ref=e63]
+              - generic [ref=e65]:
+                - heading "Arte Capilar" [level=3] [ref=e66]
+                - paragraph [ref=e67]: Corte preciso e tratamentos restauradores
+            - generic [ref=e68]:
+              - heading "Arte Capilar" [level=3] [ref=e69]
+              - paragraph [ref=e70]: Coloracao sob medida, reconstrucoes e finalizacao profissional para cada estilo.
+              - button "Agendar" [ref=e71]
+          - generic [ref=e73] [cursor=pointer]:
+            - generic [ref=e74]:
+              - img "Close de mulher recebendo tratamento facial com olhos fechados" [ref=e75]
+              - generic [ref=e77]:
+                - heading "Pele Clinica" [level=3] [ref=e78]
+                - paragraph [ref=e79]: Faciais avancados e peelings
+            - generic [ref=e80]:
+              - heading "Pele Clinica" [level=3] [ref=e81]
+              - paragraph [ref=e82]: Protocolos de rejuvenescimento e cuidados intensivos para cada necessidade da pele.
+              - button "Agendar" [ref=e83]
+          - generic [ref=e85] [cursor=pointer]:
+            - generic [ref=e86]:
+              - img "Relaxing spa setting with stones and massage oils" [ref=e87]
+              - generic [ref=e89]:
+                - heading "Terapia de Bem-Estar" [level=3] [ref=e90]
+                - paragraph [ref=e91]: Massagens e aromaterapia
+            - generic [ref=e92]:
+              - heading "Terapia de Bem-Estar" [level=3] [ref=e93]
+              - paragraph [ref=e94]: Experiencias sensoriais para restaurar energia, equilibrio e relaxamento profundo.
+              - button "Agendar" [ref=e95]
+          - generic [ref=e97] [cursor=pointer]:
+            - generic [ref=e98]:
+              - img "Terapia capilar" [ref=e99]
+              - generic [ref=e101]:
+                - heading "Terapia Capilar" [level=3] [ref=e102]
+                - paragraph [ref=e103]: Saude dos fios
+            - generic [ref=e104]:
+              - heading "Spa Capilar" [level=3] [ref=e105]
+              - paragraph [ref=e106]: Tratamentos para couro cabeludo, controle de queda e reconstrucao profunda.
+              - button "Agendar" [ref=e107]
+          - generic [ref=e109] [cursor=pointer]:
+            - generic [ref=e110]:
+              - img "Extensao de cilios" [ref=e111]
+              - generic [ref=e113]:
+                - heading "Lashes" [level=3] [ref=e114]
+                - paragraph [ref=e115]: Extensao de cilios
+            - generic [ref=e116]:
+              - heading "Extensao de Cilios" [level=3] [ref=e117]
+              - paragraph [ref=e118]: Fio a fio classico e volume para um olhar marcante e elegante.
+              - button "Agendar" [ref=e119]
+          - generic [ref=e121] [cursor=pointer]:
+            - generic [ref=e122]:
+              - img "Sobrancelhas" [ref=e123]
+              - generic [ref=e125]:
+                - heading "Brows" [level=3] [ref=e126]
+                - paragraph [ref=e127]: Sobrancelhas
+            - generic [ref=e128]:
+              - heading "Micropigmentacao" [level=3] [ref=e129]
+              - paragraph [ref=e130]: Design estrategico, lamination e tecnica shadow para realce natural.
+              - button "Agendar" [ref=e131]
+          - generic [ref=e133] [cursor=pointer]:
+            - generic [ref=e134]:
+              - img "Estetica facial" [ref=e135]
+              - generic [ref=e137]:
+                - heading "Facial Spa" [level=3] [ref=e138]
+                - paragraph [ref=e139]: Estetica facial
+            - generic [ref=e140]:
+              - heading "Harmonizacao" [level=3] [ref=e141]
+              - paragraph [ref=e142]: Limpeza profunda, peelings e protocolos de rejuvenescimento personalizados.
+              - button "Agendar" [ref=e143]
+          - generic [ref=e145] [cursor=pointer]:
+            - generic [ref=e146]:
+              - img "Manicure" [ref=e147]
+              - generic [ref=e149]:
+                - heading "Nails" [level=3] [ref=e150]
+                - paragraph [ref=e151]: Maos e pes
+            - generic [ref=e152]:
+              - heading "Manicure" [level=3] [ref=e153]
+              - paragraph [ref=e154]: Esmaltacao em gel, alongamentos e spa dos pes.
+              - button "Agendar" [ref=e155]
+          - generic [ref=e157] [cursor=pointer]:
+            - generic [ref=e158]:
+              - img "Depilacao" [ref=e159]
+              - generic [ref=e161]:
+                - heading "Smooth" [level=3] [ref=e162]
+                - paragraph [ref=e163]: Depilacao
+            - generic [ref=e164]:
+              - heading "Depilacao" [level=3] [ref=e165]
+              - paragraph [ref=e166]: Tecnicas confortaveis e ceras especiais para uma pele lisa.
+              - button "Agendar" [ref=e167]
+      - generic [ref=e169]:
+        - generic [ref=e170]:
+          - heading "Assinaturas Exclusivas" [level=2] [ref=e171]
+          - heading "Quer fazer uma Assinatura e Economizar?" [level=3] [ref=e172]
+          - paragraph [ref=e173]: Escolha o plano que melhor se adapta ao seu estilo de vida e desfrute de beneficios exclusivos, descontos e experiencias premium.
+        - generic [ref=e174]:
+          - generic [ref=e175]:
+            - generic [ref=e176]: Mais Popular
+            - generic [ref=e177]:
+              - generic [ref=e178]: Gold
+              - heading "Luminosity" [level=4] [ref=e179]
+              - paragraph [ref=e180]: R$ 189,00 / mes
+            - list [ref=e181]:
+              - listitem [ref=e182]:
+                - generic [ref=e183]: verified
+                - generic [ref=e184]: 15% desconto
+              - listitem [ref=e185]:
+                - generic [ref=e186]: verified
+                - generic [ref=e187]: Priority booking
+              - listitem [ref=e188]:
+                - generic [ref=e189]: verified
+                - generic [ref=e190]: Facial mensal
+            - button "Entrar no Clube" [ref=e191] [cursor=pointer]
+          - generic [ref=e192]:
+            - generic [ref=e193]:
+              - generic [ref=e194]: Silver
+              - heading "Radiance" [level=4] [ref=e195]
+              - paragraph [ref=e196]: R$ 99,00 / mes
+            - list [ref=e197]:
+              - listitem [ref=e198]:
+                - generic [ref=e199]: check_circle
+                - generic [ref=e200]: 10% desconto
+              - listitem [ref=e201]:
+                - generic [ref=e202]: check_circle
+                - generic [ref=e203]: Acesso antecipado
+              - listitem [ref=e204]:
+                - generic [ref=e205]: check_circle
+                - generic [ref=e206]: Tratamento mensal
+            - button "Entrar no Clube" [ref=e207] [cursor=pointer]
+          - generic [ref=e208]:
+            - generic [ref=e209]:
+              - generic [ref=e210]: Platinum
+              - heading "Ethereal" [level=4] [ref=e211]
+              - paragraph [ref=e212]: R$ 199,00 / mes
+            - list [ref=e213]:
+              - listitem [ref=e214]:
+                - generic [ref=e215]: diamond
+                - generic [ref=e216]: 20% de desconto Ilimitado
+              - listitem [ref=e217]:
+                - generic [ref=e218]: diamond
+                - generic [ref=e219]: Massagem corporal mensal
+              - listitem [ref=e220]:
+                - generic [ref=e221]: diamond
+                - generic [ref=e222]: Servico de concierge dedicado
+              - listitem [ref=e223]:
+                - generic [ref=e224]: diamond
+                - generic [ref=e225]: Convites para eventos VIP
+            - button "Entrar no Clube" [ref=e226] [cursor=pointer]
+      - generic [ref=e229]:
+        - generic [ref=e231]:
+          - generic [ref=e232]:
+            - img "JLR Beauty - equipe" [ref=e233]
+            - img "Salao JLR Beauty" [ref=e234]
+          - generic [ref=e235]:
+            - img "Ambiente JLR Beauty" [ref=e236]
+            - img "Salao premium" [ref=e237]
+            - img "Ambiente sofisticado" [ref=e238]
+          - generic [ref=e239]:
+            - img "Detalhes do salao" [ref=e240]
+            - img "Sobre nos JLR Beauty" [ref=e241]
+        - generic [ref=e242]:
+          - generic [ref=e245]: Quem Somos
+          - heading "Inovação na Beleza e Estética" [level=3] [ref=e246]
+          - generic [ref=e247]:
+            - paragraph [ref=e248]: A JLR Beauty House é uma marca inovadora no setor de beleza e estética, dedicada a oferecer serviços de alta qualidade que proporcionam bem-estar e autoestima aos seus clientes. Temos foco na excelência e no atendimento personalizado, combinamos técnicas modernas e produtos de última geração para atender às tendências e demandas do mercado de cuidados pessoais.
+            - paragraph [ref=e249]: Nossa missão é transformar a experiência de beleza em algo acessível, acolhedor e inspirador. Buscamos impactar positivamente a vida de nossos clientes, parceiros e franqueados, criando um ambiente que valoriza a qualidade, a inovação e o compromisso com a satisfação.
+          - generic [ref=e250]:
+            - generic [ref=e251]:
+              - generic [ref=e252]: 15+
+              - generic [ref=e253]: Anos de Experiencia
+            - generic [ref=e254]:
+              - generic [ref=e255]: 100%
+              - generic [ref=e256]: Produtos Organicos
+          - button "Conheça Nossos Produtos arrow_outward" [ref=e257] [cursor=pointer]:
+            - link "Conheça Nossos Produtos" [ref=e258]:
+              - /url: "#spotlightprod"
+            - generic [ref=e259]: arrow_outward
+      - generic [ref=e262]:
+        - generic [ref=e263]:
+          - heading "Luxo em Casa" [level=2] [ref=e264]
+          - heading "Produtos em Destaque" [level=3] [ref=e265]
+        - link "Ver Todos os Produtos arrow_forward" [ref=e266] [cursor=pointer]:
+          - /url: "#spotlightprod"
+          - generic [ref=e267]: Ver Todos os Produtos
+          - generic [ref=e268]: arrow_forward
+      - generic [ref=e269]:
+        - generic [ref=e271]:
+          - generic [ref=e275]: Novo
+          - generic [ref=e276]:
+            - heading "Elixir de Seda - Soro Regenerador Capilar" [level=1] [ref=e277]
+            - generic [ref=e278]:
+              - generic [ref=e279]: R$ 125,00
+              - generic [ref=e281]:
+                - generic [ref=e282]:
+                  - generic [ref=e283]: star
+                  - generic [ref=e284]: star
+                  - generic [ref=e285]: star
+                  - generic [ref=e286]: star
+                  - generic [ref=e287]: star_half
+                - generic [ref=e288] [cursor=pointer]: 342 Avaliacoes
+            - generic [ref=e289]:
+              - paragraph [ref=e290]: Viva a transformacao definitiva com nosso soro assinatura. Infundido com oleos botanicos raros das Montanhas do Atlas, restaura brilho e vitalidade aos fios cansados, deixando um aroma sutil e duradouro de jasmim e sandalo.
+              - list [ref=e291]:
+                - listitem [ref=e292]:
+                  - generic [ref=e294]: check_circle
+                  - generic [ref=e295]:
+                    - heading "Reduz o Frizz" [level=4] [ref=e296]
+                    - paragraph [ref=e297]: Controla fios rebeldes instantaneamente para um acabamento espelhado.
+                - listitem [ref=e298]:
+                  - generic [ref=e300]: check_circle
+                  - generic [ref=e301]:
+                    - heading "Protecao Termica" [level=4] [ref=e302]
+                    - paragraph [ref=e303]: Protege contra danos de calor ate 450F.
+                - listitem [ref=e304]:
+                  - generic [ref=e306]: check_circle
+                  - generic [ref=e307]:
+                    - heading "Oleos Raros" [level=4] [ref=e308]
+                    - paragraph [ref=e309]: Enriquecido com oleos de argan e jojoba do Marrocos.
+              - generic [ref=e310]:
+                - generic [ref=e311]:
+                  - generic [ref=e312]:
+                    - button "-" [ref=e313] [cursor=pointer]
+                    - generic [ref=e314]: "1"
+                    - button "+" [ref=e315] [cursor=pointer]
+                  - button "shopping_bag Adicionar a Sacola - R$ 125,00" [ref=e316] [cursor=pointer]:
+                    - generic [ref=e317]: shopping_bag
+                    - text: Adicionar a Sacola - R$ 125,00
+                - paragraph [ref=e318]: Frete gratis em pedidos acima de R$ 150,00. Devolucao em 30 dias.
+        - generic [ref=e319]:
+          - generic [ref=e320]:
+            - heading "Outros Produtos para seu conforto" [level=1] [ref=e321]
+            - heading "Colecao Completa" [level=1] [ref=e322]
+          - generic [ref=e323]:
+            - generic [ref=e325]:
+              - img "Lymp Clean" [ref=e326]
+              - generic [ref=e327]:
+                - text: JLR Beauty
+                - paragraph [ref=e328]: Lymp Clean
+                - generic [ref=e329]:
+                  - paragraph [ref=e330]: R$ 45,00
+                  - deletion [ref=e331]:
+                    - paragraph [ref=e332]: R$ 59,00
+                  - button "Ir para checkout" [ref=e333] [cursor=pointer]:
+                    - generic [ref=e334]: add_shopping_cart
+            - generic [ref=e336]:
+              - img "Lait Vital" [ref=e337]
+              - generic [ref=e338]:
+                - text: JLR Beauty
+                - paragraph [ref=e339]: Lait Vital
+                - generic [ref=e340]:
+                  - paragraph [ref=e341]: R$ 52,00
+                  - deletion [ref=e342]:
+                    - paragraph [ref=e343]: R$ 68,00
+                  - button "Ir para checkout" [ref=e344] [cursor=pointer]:
+                    - generic [ref=e345]: add_shopping_cart
+            - generic [ref=e347]:
+              - img "Masque Intense" [ref=e348]
+              - generic [ref=e349]:
+                - text: JLR Beauty
+                - paragraph [ref=e350]: Masque Intense
+                - generic [ref=e351]:
+                  - paragraph [ref=e352]: R$ 68,00
+                  - deletion [ref=e353]:
+                    - paragraph [ref=e354]: R$ 82,00
+                  - button "Ir para checkout" [ref=e355] [cursor=pointer]:
+                    - generic [ref=e356]: add_shopping_cart
+            - generic [ref=e358]:
+              - img "Lymp Clean" [ref=e359]
+              - generic [ref=e360]:
+                - text: JLR Beauty
+                - paragraph [ref=e361]: Lymp Clean
+                - generic [ref=e362]:
+                  - paragraph [ref=e363]: R$ 45,00
+                  - deletion [ref=e364]:
+                    - paragraph [ref=e365]: R$ 59,00
+                  - button "Ir para checkout" [ref=e366] [cursor=pointer]:
+                    - generic [ref=e367]: add_shopping_cart
+            - generic [ref=e369]:
+              - img "Lait Vital" [ref=e370]
+              - generic [ref=e371]:
+                - text: JLR Beauty
+                - paragraph [ref=e372]: Lait Vital
+                - generic [ref=e373]:
+                  - paragraph [ref=e374]: R$ 52,00
+                  - deletion [ref=e375]:
+                    - paragraph [ref=e376]: R$ 68,00
+                  - button "Ir para checkout" [ref=e377] [cursor=pointer]:
+                    - generic [ref=e378]: add_shopping_cart
+            - generic [ref=e380]:
+              - img "Masque Intense" [ref=e381]
+              - generic [ref=e382]:
+                - text: JLR Beauty
+                - paragraph [ref=e383]: Masque Intense
+                - generic [ref=e384]:
+                  - paragraph [ref=e385]: R$ 68,00
+                  - deletion [ref=e386]:
+                    - paragraph [ref=e387]: R$ 82,00
+                  - button "Ir para checkout" [ref=e388] [cursor=pointer]:
+                    - generic [ref=e389]: add_shopping_cart
+            - generic [ref=e391]:
+              - img "Cuticle Express" [ref=e392]
+              - generic [ref=e393]:
+                - text: JLR Beauty
+                - paragraph [ref=e394]: Cuticle Express
+                - generic [ref=e395]:
+                  - paragraph [ref=e396]: R$ 59,00
+                  - deletion [ref=e397]:
+                    - paragraph [ref=e398]: R$ 75,00
+                  - button "Ir para checkout" [ref=e399] [cursor=pointer]:
+                    - generic [ref=e400]: add_shopping_cart
+            - generic [ref=e402]:
+              - img "Argan Glow" [ref=e403]
+              - generic [ref=e404]:
+                - text: JLR Beauty
+                - paragraph [ref=e405]: Argan Glow
+                - generic [ref=e406]:
+                  - paragraph [ref=e407]: R$ 74,00
+                  - deletion [ref=e408]:
+                    - paragraph [ref=e409]: R$ 92,00
+                  - button "Ir para checkout" [ref=e410] [cursor=pointer]:
+                    - generic [ref=e411]: add_shopping_cart
+      - generic [ref=e413]:
+        - generic [ref=e414]:
+          - img "JLR Beauty" [ref=e416]
+          - paragraph [ref=e417]: Depoimentos
+          - heading "Experiencias reais, resultados inesqueciveis" [level=3] [ref=e418]
+          - paragraph [ref=e419]: Quatro historias que refletem o cuidado, o luxo e a transformacao que entregamos em cada atendimento.
+        - generic [ref=e420]:
+          - figure "Retrato de Sarah Jenkins Sarah Jenkins Editora da Vogue" [ref=e421]:
+            - blockquote [ref=e422]: "\"JLR Beauty nao e apenas um salao, e um botao de reinicio para todo o seu ser. Atendimento impecavel.\""
+            - generic [ref=e423]:
+              - img "Retrato de Sarah Jenkins" [ref=e425]
+              - generic [ref=e426]:
+                - paragraph [ref=e427]: Sarah Jenkins
+                - paragraph [ref=e428]: Editora da Vogue
+          - figure "Retrato de Luiza Martins Luiza Martins Diretora Criativa" [ref=e429]:
+            - blockquote [ref=e430]: "\"O cuidado com cada detalhe transforma o ritual em um momento de calma. Resultado visivel desde a primeira visita.\""
+            - generic [ref=e431]:
+              - img "Retrato de Luiza Martins" [ref=e433]
+              - generic [ref=e434]:
+                - paragraph [ref=e435]: Luiza Martins
+                - paragraph [ref=e436]: Diretora Criativa
+          - figure "Retrato de Marcos Nogueira Marcos Nogueira Consultor de Imagem" [ref=e437]:
+            - blockquote [ref=e438]: "\"Saio sempre renovado. A equipe entendeu exatamente o que eu queria e o resultado ficou sofisticado.\""
+            - generic [ref=e439]:
+              - img "Retrato de Marcos Nogueira" [ref=e441]
+              - generic [ref=e442]:
+                - paragraph [ref=e443]: Marcos Nogueira
+                - paragraph [ref=e444]: Consultor de Imagem
+          - figure "Retrato de Ana Ribeiro Ana Ribeiro Empresaria" [ref=e445]:
+            - blockquote [ref=e446]: "\"Produtos premium, atendimento elegante e um clima de spa verdadeiro. Um refugo de luxo no meio da cidade.\""
+            - generic [ref=e447]:
+              - img "Retrato de Ana Ribeiro" [ref=e449]
+              - generic [ref=e450]:
+                - paragraph [ref=e451]: Ana Ribeiro
+                - paragraph [ref=e452]: Empresaria
+      - generic [ref=e456]:
+        - generic [ref=e457]:
+          - paragraph [ref=e458]: Convite Exclusivo
+          - heading "Pronto para elevar sua rotina?" [level=2] [ref=e459]
+          - paragraph [ref=e460]: Agende sua consulta hoje e receba uma analise capilar gratuita na sua primeira visita.
+        - button "Agendar Consulta" [ref=e461] [cursor=pointer]
+      - button "Abrir concierge" [ref=e463] [cursor=pointer]:
+        - generic [ref=e464]: chat
+  - dialog [ref=e465]:
+    - generic [ref=e466]:
+      - button "Fechar checkout" [ref=e467] [cursor=pointer]:
+        - generic [ref=e468]: close
+      - main [ref=e471]:
+        - generic [ref=e472]:
+          - generic [ref=e473]:
+            - generic [ref=e474]:
+              - generic [ref=e475]:
+                - heading "Pagamento e Seguranca" [level=2] [ref=e476]
+                - link "WhatsApp Fale Conosco" [ref=e477] [cursor=pointer]:
+                  - /url: https://web.whatsapp.com/send?phone=5511978935812
+                  - img "WhatsApp" [ref=e478]
+                  - generic [ref=e479]: Fale Conosco
+              - paragraph [ref=e480]: Escolha um metodo de pagamento seguro para concluir seu pedido.
+            - region [ref=e481]:
+              - generic [ref=e482]:
+                - generic [ref=e483]:
+                  - generic [ref=e484]:
+                    - generic [ref=e485]:
+                      - radio "Cartao de Credito/Debito" [checked] [ref=e486] [cursor=pointer]
+                      - generic [ref=e487]: Cartao de Credito/Debito
+                    - generic [ref=e488]:
+                      - generic [ref=e490]: VISA
+                      - generic [ref=e492]: MC
+                      - generic [ref=e494]: AMEX
+                  - generic [ref=e495]:
+                    - generic [ref=e496]:
+                      - generic [ref=e497]: Numero do Cartao
+                      - generic [ref=e498]:
+                        - textbox "Numero do Cartao" [ref=e499]:
+                          - /placeholder: 0000 0000 0000 0000
+                        - generic:
+                          - generic: credit_card
+                    - generic [ref=e500]:
+                      - generic [ref=e501]: Validade (MM/AA)
+                      - textbox "Validade (MM/AA)" [ref=e502]:
+                        - /placeholder: MM / AA
+                    - generic [ref=e503]:
+                      - generic [ref=e504]: CVV
+                      - generic [ref=e505]:
+                        - textbox "CVV" [ref=e506]:
+                          - /placeholder: "123"
+                        - generic:
+                          - generic: help
+                    - generic [ref=e507]:
+                      - generic [ref=e508]: Nome no Cartao
+                      - textbox "Nome no Cartao" [ref=e509]
+                - generic [ref=e510] [cursor=pointer]:
+                  - generic [ref=e511]:
+                    - radio "Apple Pay" [ref=e512]
+                    - generic [ref=e513]: Apple Pay
+                  - generic [ref=e514]: Pagar
+                - generic [ref=e515] [cursor=pointer]:
+                  - generic [ref=e516]:
+                    - radio "PayPal" [ref=e517]
+                    - generic [ref=e518]: PayPal
+                  - generic [ref=e519]: PayPal
+            - generic [ref=e520]:
+              - generic [ref=e522]: lock
+              - generic [ref=e523]:
+                - heading "Transacao Segura" [level=3] [ref=e524]
+                - paragraph [ref=e525]: Suas informacoes pessoais e de pagamento sao criptografadas com tecnologia SSL de 256 bits. Nao armazenamos os dados completos do cartao em nossos servidores.
+          - generic [ref=e527]:
+            - heading "Resumo do Pedido" [level=2] [ref=e529]
+            - list [ref=e531]:
+              - listitem [ref=e532]:
+                - generic [ref=e533]:
+                  - img [ref=e534]
+                  - generic [ref=e535]: "1"
+                - generic [ref=e537]:
+                  - generic [ref=e538]:
+                    - heading "Creme Noturno Rejuvenescedor" [level=3] [ref=e539]:
+                      - link "Creme Noturno Rejuvenescedor" [ref=e540] [cursor=pointer]:
+                        - /url: "#"
+                    - paragraph [ref=e541]: R$ 120,00
+                  - paragraph [ref=e542]: 50ml
+              - listitem [ref=e543]:
+                - generic [ref=e544]:
+                  - img [ref=e545]
+                  - generic [ref=e546]: "1"
+                - generic [ref=e548]:
+                  - generic [ref=e549]:
+                    - heading "Soro Seda Dourada" [level=3] [ref=e550]:
+                      - link "Soro Seda Dourada" [ref=e551] [cursor=pointer]:
+                        - /url: "#"
+                    - paragraph [ref=e552]: R$ 85,00
+                  - paragraph [ref=e553]: 30ml
+            - generic [ref=e555]:
+              - textbox "Codigo de desconto" [ref=e557]
+              - button "Aplicar" [ref=e558] [cursor=pointer]
+            - generic [ref=e559]:
+              - generic [ref=e560]:
+                - paragraph [ref=e561]: Subtotal
+                - paragraph [ref=e562]: R$ 205,00
+              - generic [ref=e563]:
+                - paragraph [ref=e564]: Entrega
+                - paragraph [ref=e565]: R$ 15,00
+              - generic [ref=e566]:
+                - paragraph [ref=e567]: Impostos
+                - paragraph [ref=e568]: R$ 8,40
+              - generic [ref=e569]:
+                - paragraph [ref=e570]: Total
+                - generic [ref=e571]:
+                  - paragraph [ref=e572]: BRL
+                  - paragraph [ref=e573]: R$ 228,40
+              - button "Concluir Compra lock" [ref=e574] [cursor=pointer]:
+                - text: Concluir Compra
+                - generic [ref=e575]: lock
+              - generic [ref=e576]:
+                - generic [ref=e577]: verified_user
+                - generic [ref=e578]: Transacao Criptografada SSL
+  - contentinfo [ref=e579]:
+    - generic [ref=e580]:
+      - generic [ref=e581]:
+        - generic [ref=e582]:
+          - generic [ref=e583]:
+            - generic [ref=e584]:
+              - img "JLR Beauty" [ref=e585]
+              - generic [ref=e586]: JLR Beauty
+            - paragraph [ref=e587]: Redefinindo o padrao da beleza e bem-estar de luxo. Onde ciencia encontra serenidade.
+          - generic [ref=e588]:
+            - link [ref=e589] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e590]
+            - link [ref=e592] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e593]
+        - generic [ref=e595]:
+          - heading "Contato" [level=4] [ref=e596]
+          - list [ref=e597]:
+            - listitem [ref=e598]:
+              - generic [ref=e599]: location_on
+              - generic [ref=e600]: Unidade Parque da Cidade Av. das Nações Unidas, 14401 - Torre Tarumã (Conj. 804) - Chácara Santo Antônio, SP - 04794-000
+            - listitem [ref=e601]:
+              - generic [ref=e602]: location_on
+              - generic [ref=e603]: Unidade Birmann 20 Av. das Nações Unidas, 17891 - Jardim Dom Bosco, SP - 04723-002
+            - listitem [ref=e604]:
+              - generic [ref=e605]: call
+              - generic [ref=e606]: +55 11 97893-5812
+            - listitem [ref=e607]:
+              - generic [ref=e608]: mail
+              - generic [ref=e609]: concierge@@jlrbeautyhouse.com.br
+        - generic [ref=e610]:
+          - heading "Horario" [level=4] [ref=e611]
+          - list [ref=e612]:
+            - listitem [ref=e613]:
+              - generic [ref=e614]: Seg - Sex
+              - generic [ref=e615]: 9:00 AM - 8:00 PM
+            - listitem [ref=e616]:
+              - generic [ref=e617]: Sabado
+              - generic [ref=e618]: 10:00 AM - 6:00 PM
+            - listitem [ref=e619]:
+              - generic [ref=e620]: Domingo
+              - generic [ref=e621]: Fechado
+        - generic [ref=e623]:
+          - heading "Entre na Lista de Convidados" [level=4] [ref=e624]
+          - paragraph [ref=e625]: Receba ofertas exclusivas e conteudos de beleza.
+          - generic [ref=e626]:
+            - textbox "Endereco de Email" [ref=e627]
+            - button "Assinar" [ref=e628] [cursor=pointer]
+      - generic [ref=e629]:
+        - paragraph [ref=e630]: (c) 2024 JLR Beauty Salao & Spa. Todos os direitos reservados.
+        - generic [ref=e631]:
+          - link "Politica de Privacidade" [ref=e632] [cursor=pointer]:
+            - /url: "#"
+          - link "Administrador" [ref=e633] [cursor=pointer]:
+            - /url: /admin#
+```

@@ -1,0 +1,41 @@
+Resumo das modificacoes de 14/02/2026
+
+1) Fluxo WhatsApp Concierge
+- Fluxo ajustado para comecar por servico, com selecao de periodo/horario usando disponibilidade real.
+- Quando existe mais de um profissional no mesmo horario, o bot passou a pedir a escolha do profissional.
+- Ao final do fluxo, o agendamento e criado de forma real no backend.
+- Saudacao inicial dinamica por horario (Bom Dia/Boa Tarde/Boa Noite).
+- Mensagens com melhor formatacao (blocos separados por linha em branco).
+- Envio do resumo final com retry e fallback compacto para reduzir falhas de entrega.
+- Correcao de loop de coleta de perfil: agora no maximo 1 campo por sessao e sem pedir nome de novo quando ja existe cadastro.
+
+2) Configuracoes do WhatsApp no Admin
+- Novo toggle para escolher entre "categorias primeiro" ou "lista completa de servicos" no inicio do fluxo.
+- Novos campos para parametrizar saudacao inicial e saudacao final no Admin.
+- Backend passou a ler essas configuracoes de ContentEntry em uma carga unica.
+
+3) Backend / Modelagem de dados
+- Criado model Customer separado de User, com link opcional userId.
+- Professional.userId passou a ser obrigatorio (com migration e backfill).
+- Chatbot agora reconhece cliente por telefone e faz onboarding progressivo (1 campo por conversa).
+- Persistencia/atualizacao de Customer ao concluir agendamento via WhatsApp.
+
+4) Admin - modulo Pessoas
+- Menu "Usuarios" renomeado para "Pessoas" com abas: Clientes, Profissionais e Usuarios.
+- Novas grades de Clientes e Profissionais com dados reais via API.
+- Filtros, busca e paginacao padronizados nas tres abas.
+- Correcao da aba Clientes quando filtros ativos escondiam registros existentes.
+
+5) Admin - Agenda e UI
+- Agenda convertida para layout mais legivel (tabela).
+- Layout da Agenda padronizado: filtros no topo e grid abaixo.
+- Ajustes visuais gerais do admin para paleta champagne e contraste consistente nos labels de paginacao.
+
+6) Confiabilidade tecnica
+- Hardening no endpoint /auth/login para reduzir erro 500 por divergencias de schema.
+- Ajuste no startup local para conflito de ambiente Prisma (erro prisma://).
+
+7) Documentacao
+- Documento consolidado atualizado: docs/config/ESPECIFICACAO_FLUXO_CONCIERGE_2026-02-13.md
+- Registro detalhado mantido em: docs/MODIFICATION_LOG.md
+
