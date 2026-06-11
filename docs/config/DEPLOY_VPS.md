@@ -22,7 +22,7 @@ docker compose version
 ## 1. Clonar o repositório
 
 ```bash
-git clone <URL_DO_REPOSITORIO> /opt/jlrbeauty
+git clone git@github.com:bornerj/JLR_Beauty.git /opt/jlrbeauty
 cd /opt/jlrbeauty
 ```
 
@@ -56,13 +56,12 @@ docker compose logs -f
 
 ---
 
-## 4. Aplicar migrations e seed
+## 4. Popular banco com dados iniciais
+
+As migrations são aplicadas **automaticamente** pelo `docker-entrypoint.sh` ao iniciar a API.
+Só é necessário rodar o seed uma vez na primeira inicialização:
 
 ```bash
-# Rodar migrations
-docker compose exec api npx prisma migrate deploy
-
-# Popular banco com dados iniciais
 docker compose exec api npx prisma db seed
 ```
 
@@ -92,7 +91,7 @@ Acessar `http://SEU_IP` no navegador — site público deve carregar.
 ```bash
 git pull
 docker compose up -d --build
-docker compose exec api npx prisma migrate deploy
+# migrations aplicadas automaticamente no restart da API
 ```
 
 ### Ver logs
