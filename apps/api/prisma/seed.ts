@@ -8,22 +8,7 @@ import { serviceCatalogSeed } from "./data/serviceCatalogSeed";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = "admin@jlrbeauty.com";
-  const adminPassword = "Admin@1234";
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
-  if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash(adminPassword, 10);
-    await prisma.user.create({
-      data: {
-        name: "admin",
-        email: adminEmail,
-        role: "ADMIN",
-        passwordHash,
-      },
-    });
-  }
-
-  const masterEmail = process.env.MASTER_EMAIL;
+  const masterEmail = process.env.MASTER_EMAIL?.toLowerCase();
   const masterPassword = process.env.MASTER_PASSWORD;
   if (masterEmail && masterPassword) {
     const existingMaster = await prisma.user.findUnique({ where: { email: masterEmail } });
@@ -32,8 +17,25 @@ async function main() {
       await prisma.user.create({
         data: {
           name: "master",
-          email: masterEmail.toLowerCase(),
+          email: masterEmail,
           role: "MASTER",
+          passwordHash,
+        },
+      });
+    }
+  }
+
+  const adminEmail = "admin@jlrbeauty.com";
+  const adminPassword = "Admin@1234";
+  if (adminEmail !== masterEmail) {
+    const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+    if (!existingAdmin) {
+      const passwordHash = await bcrypt.hash(adminPassword, 10);
+      await prisma.user.create({
+        data: {
+          name: "admin",
+          email: adminEmail,
+          role: "ADMIN",
           passwordHash,
         },
       });
