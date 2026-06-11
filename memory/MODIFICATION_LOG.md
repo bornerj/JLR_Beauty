@@ -2,6 +2,14 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-06-11 — VALIDAÇÃO PLAN-0009 DONE / PLAN-0010 + PLAN-0011 VALIDADOS
+
+- PLAN-0009 fechado: cópia concluída, commits cf3d219 + 641b1a8 confirmados, builds passando.
+- PLAN-0010 validado: Docker Compose (4 serviços), PostgreSQL, Dockerfiles, nginx.conf, migration init_postgresql, seed executado, health OK, login OK, section toggles sem fs.writeFileSync.
+- PLAN-0011 validado: 9 arquivos de rota por domínio criados, 6 libs extraídas, routes/index.ts com 23 linhas, 5/5 testes passando, docker compose up funcional.
+- Stack rodando em http://localhost com docker compose up -d.
+- Próximo passo: aguardando autorização do usuário para commit de PLAN-0010 + PLAN-0011.
+
 ## 2026-06-10 — INÍCIO PLAN-0009 / PLAN-0010 / PLAN-0011
 
 - Análise estrutural completa do projeto realizada (session intel).
