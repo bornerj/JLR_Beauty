@@ -2,6 +2,12 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-06-11 — fixes de seed e entrypoint
+
+- seed.ts: MASTER criado antes do admin hardcoded; colisão de email eliminada (`72bdb1a`)
+- Dockerfile: `docker-entrypoint.sh` executa `prisma migrate deploy` automaticamente no boot, eliminando race condition do concierge job
+- Validado: login MASTER OK, migration automática no startup, concierge cleanup sem erro
+
 ## 2026-06-11 — VALIDAÇÃO PLAN-0009 DONE / PLAN-0010 + PLAN-0011 VALIDADOS
 
 - PLAN-0009 fechado: cópia concluída, commits cf3d219 + 641b1a8 confirmados, builds passando.

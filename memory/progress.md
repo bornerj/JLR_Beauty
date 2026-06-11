@@ -26,8 +26,8 @@
 
 | Area | Debt | Severity |
 |------|------|----------|
-| API startup | Migration precisa rodar antes do API start; concierge job falha no boot se tabela não existe | low |
-| Seed | MASTER_EMAIL conflita com adminEmail hardcoded — se forem iguais, o MASTER nunca é criado | low |
+| ~~API startup~~ | ~~Migration race condition~~ | ~~low~~ — **RESOLVIDO** docker-entrypoint.sh |
+| ~~Seed~~ | ~~MASTER_EMAIL conflita com adminEmail~~ | ~~low~~ — **RESOLVIDO** seed reordenado |
 
 ---
 
