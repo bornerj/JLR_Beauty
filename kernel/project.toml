@@ -26,19 +26,15 @@ docs       = ""
 # HOSTING — Where the project lives
 # ═══════════════════════════════════════
 
-[hosting.frontend]
-provider = "Vercel"
-url      = "https://jlrbeauty.vercel.app"
-service  = "Static SPA deploy (Vite build)"
-
-[hosting.backend]
-provider = "Railway"
-url      = "https://jlraistudio-production.up.railway.app"
-service  = "Node.js API (Express) — service 'api' in Railway project"
+[hosting.docker]
+provider = "VPS (Ubuntu/Debian 22.04+)"
+compose  = "docker-compose.yml"
+services = ["nginx", "api", "web", "postgres"]
+guide    = "docs/config/DEPLOY_VPS.md"
 
 [hosting.database]
-provider = "Railway"
-service  = "MySQL — same Railway project as the API"
+provider = "PostgreSQL 16 (Docker volume)"
+service  = "postgres container — volume postgres_data"
 url_var  = "DATABASE_URL"
 
 # ═══════════════════════════════════════
@@ -62,8 +58,8 @@ orm_version = "5.22"
 language    = "TypeScript (strict) — Node.js (commonjs)"
 
 [stack.database]
-engine  = "MySQL"
-version = ""
+engine  = "PostgreSQL"
+version = "16"
 access  = "ORM only — Prisma is the only database access layer"
 
 [stack.package_manager]
@@ -90,19 +86,24 @@ spacing_unit      = "4px"
 # NEVER put real values here — names only
 # ═══════════════════════════════════════
 
-[environments.railway]
-# Where to configure: Railway → Project → Service "api" → Variables
+[environments.docker]
+# Where to configure: .env na raiz do projeto (copiar de .env.docker.example)
 vars = [
-  "DATABASE_URL",                       # MySQL connection string
+  "POSTGRES_DB",                        # nome do banco PostgreSQL
+  "POSTGRES_USER",                      # usuário do banco
+  "POSTGRES_PASSWORD",                  # senha do banco
+  "DATABASE_URL",                       # postgresql://user:pass@postgres:5432/db
   "PORT",                               # API port (default 3001)
-  "APP_API_URL",                        # this API's own public URL
-  "APP_WEB_URL",                        # frontend URL (Vercel)
-  "CORS_ORIGIN",                        # must match APP_WEB_URL
+  "APP_API_URL",                        # URL pública do servidor
+  "APP_WEB_URL",                        # URL pública do frontend
+  "CORS_ORIGIN",                        # deve coincidir com APP_WEB_URL
   "JWT_SECRET",                         # token generation secret (min 32 chars)
   "JWT_EXPIRES_IN",                     # ex: 12h
   "AUTH_RATE_LIMIT_WINDOW_MS",          # rate limit window in ms
   "AUTH_RATE_LIMIT_MAX_ATTEMPTS",       # max login attempts per window
   "AUTH_RATE_LIMIT_BLOCK_MS",           # block duration in ms
+  "MASTER_EMAIL",                       # email do usuário master (criado no seed)
+  "MASTER_PASSWORD",                    # senha do usuário master
   "STRIPE_ENABLED",                     # true | false
   "STRIPE_SECRET_KEY",                  # Stripe secret key
   "STRIPE_WEBHOOK_SECRET",              # Stripe webhook signing secret
@@ -114,13 +115,6 @@ vars = [
   "CONCIERGE_RETENTION_INTERVAL_HOURS", # cleanup job interval (hours)
 ]
 
-[environments.vercel]
-# Where to configure: Vercel → Project → Settings → Environment Variables
-vars = [
-  "VITE_API_URL",   # Railway backend URL
-  "VITE_WEB_URL",   # this frontend's own URL
-]
-
 # ═══════════════════════════════════════
 # EXTERNAL INTEGRATIONS — Active third-party APIs
 # ═══════════════════════════════════════
@@ -129,14 +123,14 @@ vars = [
 name     = "Stripe"
 purpose  = "Payment processing — Checkout sessions, webhook confirmation, order/payment status sync"
 docs     = "https://stripe.com/docs"
-webhook  = "https://jlraistudio-production.up.railway.app/api/public/payments/stripe/webhook"
+webhook  = "https://SEU_DOMINIO/api/public/payments/stripe/webhook"
 env_vars = ["STRIPE_ENABLED", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_CHECKOUT_SUCCESS_URL", "STRIPE_CHECKOUT_CANCEL_URL", "STRIPE_CHECKOUT_CURRENCY"]
 
 [[integrations]]
 name     = "Z-API (WhatsApp)"
 purpose  = "WhatsApp concierge — inbound webhook processing, outbound text messages, session orchestration"
 docs     = "docs/config/WHATSAPP_API_ZAPI_NGROK.md"
-webhook  = "https://jlraistudio-production.up.railway.app/api/public/webhooks/zapi"
+webhook  = "https://SEU_DOMINIO/api/public/webhooks/zapi"
 env_vars = ["ZAPI_WEBHOOK_SECRET"]
 
 # ═══════════════════════════════════════
@@ -161,11 +155,11 @@ cms = "cms/"       # PHP scripts for CMS/content generation only
 
 [monorepo.api_ports]
 dev  = 3001
-prod = "Railway-assigned (process.env.PORT)"
+prod = "3001 (interno Docker — nginx proxia)"
 
 [monorepo.web_ports]
 dev  = 5173
-prod = "Vercel (auto)"
+prod = "80 (interno Docker — nginx proxia)"
 
 # ═══════════════════════════════════════
 # AI CONTEXT REFERENCE — Do not remove this section

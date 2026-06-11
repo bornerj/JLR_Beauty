@@ -1,7 +1,7 @@
 # Integrations
 
 This document defines active third-party integration contracts.
-Backend stack target: Express + Prisma + MySQL, serving the React/Vite frontend.
+Backend stack target: Express + Prisma + PostgreSQL (Docker), serving the React/Vite frontend via nginx.
 
 ## WhatsApp (Z-API + ngrok)
 - Full operational chapter: `docs/config/WHATSAPP_API_ZAPI_NGROK.md`
