@@ -1,26 +1,23 @@
 import type { ReactElement } from "react";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
-type HomeMembershipSectionProps = {
-  title?: string;
-};
+export const HomeMembershipSection = (): ReactElement => {
+  const label    = usePageText("home.membership.label");
+  const title    = usePageText("home.membership.title");
+  const subtitle = usePageText("home.membership.subtitle");
 
-export const HomeMembershipSection = ({
-  title = "Quer fazer uma Assinatura e Economizar?",
-}: HomeMembershipSectionProps): ReactElement => {
   return (
     <>
-    {/* Assinaturas */} 
+    {/* Assinaturas */}
     <section className="py-24 px-6 bg-champagne dark:bg-[#1a2e22]" id="membership">
         <div className="max-w-[1440px] mx-auto">
             <div className="text-center mb-16 max-w-2xl mx-auto">
-                <h2 className="text-gold text-sm display-label mb-3">Assinaturas
-                    Exclusivas</h2>
+                <h2 className="text-gold text-sm display-label mb-3"><RichText value={label} /></h2>
                 <h3 className="text-4xl md:text-5xl display-hero text-shadow-strong text-forest dark:text-white leading-tight mb-6">
-                    {title}
+                    <RichText value={title} />
                 </h3>
-                <p className="text-forest/70 dark:text-gray-300 text-lg">Escolha o plano
-                    que melhor se adapta ao seu estilo
-                    de vida e desfrute de benefícios exclusivos, descontos e experiências premium.</p>
+                <p className="text-forest/70 dark:text-gray-300 text-lg"><RichText value={subtitle} /></p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start" data-membership-grid>
                 <div className="bg-white dark:bg-forest border border-champagne-dark dark:border-white/10 rounded-2xl p-8 hover:shadow-2xl hover:shadow-gold/10 transition-all duration-300 transform hover:-translate-y-2 relative group h-full flex flex-col">
@@ -58,8 +55,7 @@ export const HomeMembershipSection = ({
                     <ul className="space-y-4 mb-10 flex-grow">
                         <li className="flex items-start gap-3">
                             <span className="material-symbols-outlined text-gold text-lg mt-0.5">verified</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm font-medium">15% de desconto em todos
-                                os serviços</span>
+                            <span className="text-forest/80 dark:text-gray-300 text-sm font-medium">15% de desconto em todos os serviços</span>
                         </li>
                         <li className="flex items-start gap-3">
                             <span className="material-symbols-outlined text-gold text-lg mt-0.5">verified</span>
@@ -71,8 +67,7 @@ export const HomeMembershipSection = ({
                         </li>
                         <li className="flex items-start gap-3">
                             <span className="material-symbols-outlined text-gold text-lg mt-0.5">verified</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Presente de aniversário
-                                exclusivo</span>
+                            <span className="text-forest/80 dark:text-gray-300 text-sm">Presente de aniversário exclusivo</span>
                         </li>
                     </ul>
                     <button className="w-full py-4 rounded-lg bg-forest text-white hover:bg-primary hover:text-forest font-bold uppercase tracking-widest text-xs transition-colors mt-auto" type="button" data-membership-join data-membership-name="Gold" data-membership-title="Luminosity">
@@ -147,4 +142,3 @@ export const HomeMembershipSection = ({
     </>
   );
 };
-

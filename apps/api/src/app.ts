@@ -72,6 +72,24 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
+app.get("/health/services", async (_req, res) => {
+  let postgresStatus = "online";
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch {
+    postgresStatus = "offline";
+  }
+  res.json({
+    services: {
+      nginx:    { status: "online" },
+      api:      { status: "online" },
+      web:      { status: "online" },
+      postgres: { status: postgresStatus },
+    },
+    time: new Date().toISOString(),
+  });
+});
+
 app.get("/health/db", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;

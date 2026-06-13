@@ -28,6 +28,12 @@ import {
   savePublicMediaSlots,
 } from "../modules/mediaSlots/service";
 import {
+  PAGE_TEXT_CATALOG,
+  getPublicPageTexts,
+  pageTextsPayloadSchema,
+  savePublicPageTexts,
+} from "../modules/pageTexts/service";
+import {
   getAdminDashboardAgendaSummary,
   getAdminDashboardCommissionsSummary,
   getAdminDashboardKpis,
@@ -51,11 +57,14 @@ const DEFAULT_PUBLIC_SECTION_TOGGLES: SectionToggleMap = {
     about: false,
     hero: true,
     membership: true,
+    mission: false,
     testimonials: false,
   },
   franquias: {
+    about: false,
     contact: true,
     hero: true,
+    mission: false,
     models: true,
     vision: true,
   },
@@ -64,6 +73,7 @@ const DEFAULT_PUBLIC_SECTION_TOGGLES: SectionToggleMap = {
     cta: true,
     hero: true,
     membership: false,
+    mission: false,
     products: true,
     services: true,
     testimonials: true,
@@ -80,13 +90,23 @@ const cloneSectionToggleMap = (value: SectionToggleMap): SectionToggleMap => {
   }, {});
 };
 
+const mergeWithDefaultSectionToggles = (stored: SectionToggleMap): SectionToggleMap => {
+  const result = cloneSectionToggleMap(DEFAULT_PUBLIC_SECTION_TOGGLES);
+  for (const [page, sections] of Object.entries(stored)) {
+    if (!result[page]) result[page] = {};
+    for (const [section, enabled] of Object.entries(sections)) {
+      result[page][section] = Boolean(enabled);
+    }
+  }
+  return result;
+};
+
 const canEditSectionToggles = async (userId: number): Promise<boolean> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true },
+    select: { role: true },
   });
-  if (!user?.email) return false;
-  return user.email.trim().toLowerCase() === SECTION_TOGGLES_EDITOR_EMAIL;
+  return user?.role === "MASTER";
 };
 
 const readSectionTogglesFromSettings = async (): Promise<SectionToggleMap | null> => {
@@ -106,7 +126,7 @@ const readSectionTogglesFromSettings = async (): Promise<SectionToggleMap | null
     });
     return null;
   }
-  return cloneSectionToggleMap(parsed.data);
+  return mergeWithDefaultSectionToggles(parsed.data);
 };
 
 const readSectionTogglesWithFallback = async (): Promise<SectionToggleMap> => {
@@ -363,6 +383,57 @@ adminRouter.get("/public/media-slots", async (_req, res) => {
     res.json({ slots });
   } catch (error) {
     logger.error("Falha ao ler media slots publicos", { error });
+    res.status(500).json({
+      message: MSG.SERVER_ERROR,
+      ...withDetail(error instanceof Error ? error.message : undefined),
+    });
+  }
+});
+
+// --- Page texts ---
+
+adminRouter.get("/admin/page-texts", requireAdmin, async (_req, res) => {
+  try {
+    const catalog = PAGE_TEXT_CATALOG;
+    const texts = await getPublicPageTexts();
+    res.json({ catalog, texts });
+  } catch (error) {
+    logger.error("Falha ao ler page texts no admin", { error });
+    res.status(500).json({
+      message: MSG.SERVER_ERROR,
+      ...withDetail(error instanceof Error ? error.message : undefined),
+    });
+  }
+});
+
+adminRouter.put("/admin/page-texts", requireAdmin, async (req, res) => {
+  const parsedPayload = pageTextsPayloadSchema.safeParse(req.body);
+  if (!parsedPayload.success) {
+    res.status(400).json({
+      message: MSG.INVALID_PAYLOAD,
+      ...withDetail(formatZodDetail(parsedPayload.error.issues)),
+    });
+    return;
+  }
+
+  try {
+    const texts = await savePublicPageTexts(parsedPayload.data.texts);
+    res.json({ texts, updatedAt: new Date().toISOString() });
+  } catch (error) {
+    logger.error("Falha ao salvar page texts no admin", { error });
+    res.status(500).json({
+      message: MSG.SERVER_ERROR,
+      ...withDetail(error instanceof Error ? error.message : undefined),
+    });
+  }
+});
+
+adminRouter.get("/public/page-texts", async (_req, res) => {
+  try {
+    const texts = await getPublicPageTexts();
+    res.json({ texts });
+  } catch (error) {
+    logger.error("Falha ao ler page texts publicos", { error });
     res.status(500).json({
       message: MSG.SERVER_ERROR,
       ...withDetail(error instanceof Error ? error.message : undefined),

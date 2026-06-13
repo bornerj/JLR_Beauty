@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { logger } from "../src/utils/logger";
 import { productInventorySeed } from "./data/productInventorySeed";
 import { serviceCatalogSeed } from "./data/serviceCatalogSeed";
+import { PAGE_TEXT_CATALOG } from "../src/modules/pageTexts/catalog";
 
 const prisma = new PrismaClient();
 
@@ -610,6 +611,19 @@ async function main() {
         skipDuplicates: true,
       });
     }
+  }
+
+  const existingPageTextsSetting = await prisma.setting.findUnique({
+    where: { key: "public.pageTexts" },
+  });
+  if (!existingPageTextsSetting) {
+    const defaultPageTexts: Record<string, unknown> = {};
+    for (const entry of PAGE_TEXT_CATALOG) {
+      defaultPageTexts[entry.key] = entry.defaultValue;
+    }
+    await prisma.setting.create({
+      data: { key: "public.pageTexts", value: defaultPageTexts },
+    });
   }
 }
 

@@ -324,6 +324,14 @@ export const mediaSlotCatalog = [
     label: "Checkout - Ícone WhatsApp",
     fallbackUrl: "/images/whatsapp-icon-button.svg",
   },
+  {
+    id: "mission_center_img_01",
+    page: "global",
+    section: "mission",
+    order: 1,
+    label: "Missão/Visão - Foto central",
+    fallbackUrl: "/images/about_img1.webp",
+  },
 ] as const;
 
 export type PublicMediaSlotCatalogItem = (typeof mediaSlotCatalog)[number];

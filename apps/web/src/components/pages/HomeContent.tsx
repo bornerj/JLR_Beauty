@@ -10,6 +10,7 @@ import {
   HomeProductsSection,
   HomeServicesSection,
   HomeTestimonialsSection,
+  MissionSection,
 } from "../../modules/public-site/sections";
 import { usePublicPageSectionToggles } from "../../modules/public-site/sectionToggles.runtime";
 
@@ -26,6 +27,7 @@ export default function HomeContent() {
       {homeSections.services ? <HomeServicesSection /> : null}
       {homeSections.membership ? <HomeMembershipSection /> : null}
       {homeSections.about ? <HomeAboutSection /> : null}
+      {homeSections.mission ? <MissionSection /> : null}
       {homeSections.products ? <HomeProductsSection /> : null}
       {homeSections.testimonials ? <HomeTestimonialsSection /> : null}
       {homeSections.cta ? <HomeCtaSection /> : null}

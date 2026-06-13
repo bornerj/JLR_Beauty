@@ -47,6 +47,7 @@ const MEDIA_SLOT_IDS = [
   "assinaturas_hero_card_img_02",
   "assinaturas_hero_card_img_03",
   "checkout_whatsapp_icon_01",
+  "mission_center_img_01",
 ] as const;
 
 type PublicMediaSlotId = (typeof MEDIA_SLOT_IDS)[number];
@@ -385,6 +386,14 @@ const PUBLIC_MEDIA_SLOT_CATALOG: ReadonlyArray<PublicMediaSlotCatalogItem> = [
     order: 1,
     label: "Checkout - Ícone WhatsApp",
     fallbackUrl: "/images/whatsapp-icon-button.svg",
+  },
+  {
+    id: "mission_center_img_01",
+    page: "global",
+    section: "mission",
+    order: 1,
+    label: "Missão/Visão - Foto central",
+    fallbackUrl: "/images/about_img1.webp",
   },
 ];
 

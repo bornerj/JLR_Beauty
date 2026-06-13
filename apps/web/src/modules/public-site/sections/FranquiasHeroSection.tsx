@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 import { useBranding } from "../branding.runtime";
 import { useMediaSlot } from "../media.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 export const FranquiasHeroSection = (): ReactElement => {
   const branding = useBranding();
@@ -14,6 +16,14 @@ export const FranquiasHeroSection = (): ReactElement => {
   const heroGalleryImage07 = useMediaSlot("franquias_hero_gallery_img_07");
   const heroGalleryImage08 = useMediaSlot("franquias_hero_gallery_img_08");
 
+  const badge        = usePageText("franquias.hero.badge");
+  const title        = usePageText("franquias.hero.title");
+  const subtitle     = usePageText("franquias.hero.subtitle");
+  const ctaPrimary   = usePageText("franquias.hero.cta_primary");
+  const ctaSecondary = usePageText("franquias.hero.cta_secondary");
+
+  const ctx = { fullName: branding.fullName };
+
   return (
     <>
     {/* Hero Section */}
@@ -25,21 +35,20 @@ export const FranquiasHeroSection = (): ReactElement => {
         <div className="mx-auto max-w-[1200px] px-6 lg:px-10 grid items-center gap-14 lg:grid-cols-2 relative z-10">
             <div className="flex flex-col items-start">
                 <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-forest/20 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-forest shadow-sm dark:border-white/20 dark:bg-white/10 dark:text-white">
-                    Oportunidades de Franquia
+                    <RichText value={badge} />
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl display-hero leading-tight text-forest dark:text-white">
-                    {`Leve a ${branding.fullName} para sua cidade ou bairro`}
+                    <RichText value={title} context={ctx} />
                 </h1>
                 <p className="mt-5 text-base md:text-lg font-light leading-relaxed text-forest/80 dark:text-white/80 max-w-xl">
-                    Junte-se a rede premier de franquias de beleza de luxo e leve elegância, sofisticação e cuidado de
-                    classe mundial para sua comunidade.
+                    <RichText value={subtitle} />
                 </p>
                 <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                     <a className="flex h-12 min-w-[180px] items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 hover:shadow-xl" href="#models">
-                        Conhecer Modelos
+                        <RichText value={ctaPrimary} />
                     </a>
                     <a className="flex h-12 min-w-[180px] items-center justify-center rounded-lg border border-forest/20 bg-white/70 px-6 text-sm font-bold uppercase tracking-wider text-forest backdrop-blur-sm transition-all hover:bg-white/90 dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20" href="#vision">
-                        Nossa Visão
+                        <RichText value={ctaSecondary} />
                     </a>
                 </div>
             </div>

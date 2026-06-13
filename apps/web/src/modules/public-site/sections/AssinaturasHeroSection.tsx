@@ -1,11 +1,24 @@
 import type { ReactElement } from "react";
 import { useMediaSlot } from "../media.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 export const AssinaturasHeroSection = (): ReactElement => {
   const heroBackgroundImage = useMediaSlot("assinaturas_hero_bg_01");
   const heroCardImage01 = useMediaSlot("assinaturas_hero_card_img_01");
   const heroCardImage02 = useMediaSlot("assinaturas_hero_card_img_02");
   const heroCardImage03 = useMediaSlot("assinaturas_hero_card_img_03");
+
+  const title      = usePageText("assinaturas.hero.title");
+  const subtitle1  = usePageText("assinaturas.hero.subtitle_1");
+  const subtitle2  = usePageText("assinaturas.hero.subtitle_2");
+  const subtitle3  = usePageText("assinaturas.hero.subtitle_3");
+  const card1Title = usePageText("assinaturas.hero.card_1_title");
+  const card1Desc  = usePageText("assinaturas.hero.card_1_desc");
+  const card2Title = usePageText("assinaturas.hero.card_2_title");
+  const card2Desc  = usePageText("assinaturas.hero.card_2_desc");
+  const card3Title = usePageText("assinaturas.hero.card_3_title");
+  const card3Desc  = usePageText("assinaturas.hero.card_3_desc");
 
   return (
     <header className="relative w-full h-screen min-h-[760px] overflow-hidden">
@@ -19,18 +32,14 @@ export const AssinaturasHeroSection = (): ReactElement => {
         <div className="w-full h-full flex flex-col justify-end pb-12">
           <div className="w-full">
             <h1 className="text-6xl md:text-7xl display-hero text-shadow-strong text-primary leading-tight mb-6">
-              Viva seu melhor <span className="gold-gradient-text">Estilo!</span>
+              <RichText value={title} />
             </h1>
           </div>
           <div className="w-full lg:w-[38%] xl:w-[34%]">
             <p className="text-white text-lg md:text-xl leading-relaxed">
-              <span className="block">
-                Aqui está a solução para conseguir cuidar da sua autoestima em meio à sua rotina super corrida!
-              </span>
-              <span className="block mt-1">
-                Garanta um visual de alto padrão com um valor fixo mensal que custa menos do que três visitas avulsas!
-              </span>
-              <span className="block mt-1">assinantes têm acesso a horários exclusivos e agendamento prioritário via app.</span>
+              <span className="block"><RichText value={subtitle1} /></span>
+              <span className="block mt-1"><RichText value={subtitle2} /></span>
+              <span className="block mt-1"><RichText value={subtitle3} /></span>
             </p>
           </div>
         </div>
@@ -42,9 +51,9 @@ export const AssinaturasHeroSection = (): ReactElement => {
                   <img src={heroCardImage01} alt="Plano de assinatura" className="h-full w-full object-cover object-center scale-[1.45]" />
                 </div>
                 <div className="min-w-0 flex-1 flex flex-col justify-center">
-                  <h3 className="text-xl md:text-base font-semibold text-gold mb-0.5">Assine e Economize</h3>
+                  <h3 className="text-xl md:text-base font-semibold text-gold mb-0.5"><RichText value={card1Title} /></h3>
                   <p className="text-xs md:text-sm text-white/90 leading-tight">
-                    Assine um de nossos planos e use <b>Ilimitadamente</b> nossos serviços
+                    <RichText value={card1Desc} />
                   </p>
                 </div>
               </div>
@@ -55,9 +64,9 @@ export const AssinaturasHeroSection = (): ReactElement => {
                   <img src={heroCardImage02} alt="Plano de assinatura" className="h-full w-full object-cover object-center scale-[1.45]" />
                 </div>
                 <div className="min-w-0 flex-1 flex flex-col justify-center">
-                  <h3 className="text-sm md:text-base font-semibold text-gold  mb-0.5">Agende e Visite</h3>
+                  <h3 className="text-sm md:text-base font-semibold text-gold mb-0.5"><RichText value={card2Title} /></h3>
                   <p className="text-xs md:text-sm text-white/90 leading-tight">
-                    Agende seu horário facilmente utilizando nosso aplicativo e venha nos visitar
+                    <RichText value={card2Desc} />
                   </p>
                 </div>
               </div>
@@ -68,8 +77,8 @@ export const AssinaturasHeroSection = (): ReactElement => {
                   <img src={heroCardImage03} alt="Plano de assinatura" className="h-full w-full object-cover object-center scale-[1.45]" />
                 </div>
                 <div className="min-w-0 flex-1 flex flex-col justify-center">
-                  <h3 className="text-sm md:text-base font- text-gold mb-0.5">Pronto !!</h3>
-                  <p className="text-xs md:text-sm text-white/90 leading-tight">Aproveite o seu momento e fique pronta em até 60 min!</p>
+                  <h3 className="text-sm md:text-base font-semibold text-gold mb-0.5"><RichText value={card3Title} /></h3>
+                  <p className="text-xs md:text-sm text-white/90 leading-tight"><RichText value={card3Desc} /></p>
                 </div>
               </div>
             </article>

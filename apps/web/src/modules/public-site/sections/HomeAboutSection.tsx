@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 import { useBranding } from "../branding.runtime";
 import { useMediaSlot } from "../media.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 export const HomeAboutSection = (): ReactElement => {
   const branding = useBranding();
@@ -12,6 +14,18 @@ export const HomeAboutSection = (): ReactElement => {
   const aboutImage06 = useMediaSlot("home_about_img_06");
   const aboutImage07 = useMediaSlot("home_about_img_07");
   const aboutImage08 = useMediaSlot("home_about_img_08");
+
+  const label      = usePageText("home.about.label");
+  const title      = usePageText("home.about.title");
+  const para1      = usePageText("home.about.paragraph_1");
+  const para2      = usePageText("home.about.paragraph_2");
+  const stat1Value = usePageText("home.about.stat_1_value");
+  const stat1Label = usePageText("home.about.stat_1_label");
+  const stat2Value = usePageText("home.about.stat_2_value");
+  const stat2Label = usePageText("home.about.stat_2_label");
+  const ctaButton  = usePageText("home.about.cta_button");
+
+  const ctx = { fullName: branding.fullName };
 
   return (
     <>
@@ -42,25 +56,27 @@ export const HomeAboutSection = (): ReactElement => {
                 <div className="order-2 flex flex-col justify-center">
                     <div className="mb-4 flex items-center gap-2">
                         <div className="h-px w-12 bg-gold"></div>
-                        <span className="text-sm font-bold uppercase tracking-widest text-gold">Quem Somos</span>
+                        <span className="text-sm font-bold uppercase tracking-widest text-gold"><RichText value={label} /></span>
                     </div>
-                    <h3 className="mb-6 text-4xl md:text-5xl display-hero text-shadow-strong text-primary dark:text-white">Inovação na Beleza e Estética</h3>
+                    <h3 className="mb-6 text-4xl md:text-5xl display-hero text-shadow-strong text-primary dark:text-white">
+                      <RichText value={title} />
+                    </h3>
                     <div className="space-y-6 text-lg font-light leading-relaxed text-forest/80">
-                        <p>{`A ${branding.fullName} é uma marca inovadora no setor de beleza e estética, dedicada a oferecer serviços de alta qualidade que proporcionam bem-estar e autoestima aos seus clientes. Temos foco na excelência e no atendimento personalizado, combinamos técnicas modernas e produtos de última geração para atender às tendências e demandas do mercado de cuidados pessoais.`}</p>
-                        <p>Nossa missão é transformar a experiência de beleza em algo acessível, acolhedor e inspirador. Buscamos impactar positivamente a vida de nossos clientes, parceiros e franqueados, criando um ambiente que valoriza a qualidade, a inovação e o compromisso com a satisfação.</p>
+                        <p><RichText value={para1} context={ctx} /></p>
+                        <p><RichText value={para2} context={ctx} /></p>
                     </div>
                     <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div className="flex flex-col gap-2 border-l border-forest/10 pl-4">
-                            <span className="text-3xl display-number text-shadow-strong text-gold">15+</span>
-                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60">Anos de Experiência</span>
+                            <span className="text-3xl display-number text-shadow-strong text-gold"><RichText value={stat1Value} /></span>
+                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60"><RichText value={stat1Label} /></span>
                         </div>
                         <div className="flex flex-col gap-2 border-l border-forest/10 pl-4">
-                            <span className="text-3xl display-number text-shadow-strong text-gold">100%</span>
-                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60">Produtos Orgânicos</span>
+                            <span className="text-3xl display-number text-shadow-strong text-gold"><RichText value={stat2Value} /></span>
+                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60"><RichText value={stat2Label} /></span>
                         </div>
                     </div>
                     <button className="mt-10 flex w-fit items-center gap-2 rounded-lg border border-forest/20 bg-forest/5 px-4 py-2 text-sm font-bold uppercase tracking-wider text-forest transition-colors hover:bg-primary hover:text-white">
-                        <a href="#spotlightprod">Conheça Nossos Produtos</a>
+                        <a href="#spotlightprod"><RichText value={ctaButton} /></a>
                         <span className="material-symbols-outlined text-sm">arrow_outward</span>
                     </button>
                 </div>
@@ -71,4 +87,3 @@ export const HomeAboutSection = (): ReactElement => {
     </>
   );
 };
-

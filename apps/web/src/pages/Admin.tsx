@@ -23,6 +23,7 @@ import { AdminCheckoutDeliveryViewIsland } from "../modules/admin-checkout-deliv
 import { AdminBrandingViewIsland } from "../modules/admin-branding";
 import { AdminMediaGalleryViewIsland } from "../modules/admin-media-gallery";
 import { AdminSectionTogglesViewIsland } from "../modules/admin-section-toggles";
+import { AdminPageTextsViewIsland } from "../modules/admin-page-texts";
 import { AdminTestsViewIsland } from "../modules/admin-tests";
 import { AdminWhatsappContactsViewIsland } from "../modules/admin-whatsapp-contacts";
 
@@ -95,6 +96,7 @@ export default function AdminPage() {
       <AdminSectionTogglesViewIsland />
       <AdminBrandingViewIsland />
       <AdminMediaGalleryViewIsland />
+      <AdminPageTextsViewIsland />
       <AdminDiscountCouponsViewIsland />
       <AdminDashboardKpisIsland />
       <AdminDashboardSalesIsland />

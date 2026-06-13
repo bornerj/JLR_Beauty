@@ -1,8 +1,17 @@
 import type { ReactElement } from "react";
 import { useBranding } from "../branding.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 export const FranquiasContactSection = (): ReactElement => {
   const branding = useBranding();
+
+  const title       = usePageText("franquias.contact.title");
+  const subtitle    = usePageText("franquias.contact.subtitle");
+  const button      = usePageText("franquias.contact.button");
+  const privacyNote = usePageText("franquias.contact.privacy_note");
+
+  const ctx = { fullName: branding.fullName };
 
   return (
     <>
@@ -13,9 +22,8 @@ export const FranquiasContactSection = (): ReactElement => {
                 <span className="mb-4 inline-flex items-center justify-center rounded-full bg-primary/20 p-3 text-primary">
                     <span className="material-symbols-outlined">handshake</span>
                 </span>
-                <h2 className="display-hero text-shadow-strong mb-4 text-4xl md:text-5xl">Seja um Parceiro</h2>
-                <p className="text-lg text-white/70">Preencha o formulario abaixo para receber nosso dossiê completo de
-                    franquias.</p>
+                <h2 className="display-hero text-shadow-strong mb-4 text-4xl md:text-5xl"><RichText value={title} /></h2>
+                <p className="text-lg text-white/70"><RichText value={subtitle} /></p>
             </div>
             <form className="space-y-6 rounded-2xl bg-white/5 p-8 shadow-2xl backdrop-blur-sm md:p-12">
                 <div className="grid gap-6 md:grid-cols-2">
@@ -95,10 +103,9 @@ export const FranquiasContactSection = (): ReactElement => {
                 </div>
                 <div className="pt-4">
                     <button className="flex w-full items-center justify-center rounded-lg bg-primary py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:scale-[1.01]" type="button">
-                        Seja um Franqueado
+                        <RichText value={button} context={ctx} />
                     </button>
-                    <p className="mt-4 text-center text-xs text-white/40">Ao enviar este formulário, você concorda com nossa
-                        política de privacidade.</p>
+                    <p className="mt-4 text-center text-xs text-white/40"><RichText value={privacyNote} /></p>
                 </div>
             </form>
         </div>

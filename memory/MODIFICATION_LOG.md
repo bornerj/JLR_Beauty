@@ -2,6 +2,68 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-06-13 — PLAN-0014 EM ANDAMENTO — About em Franquias + Seção Mission
+
+**Seção About em Franquias:**
+- `sectionToggles.ts` + `admin.ts`: adicionado `about: false` em `franquias`
+- `FranquiasContent.tsx`: importa e renderiza `HomeAboutSection` (condicionado ao toggle)
+
+**Nova Seção Mission (global):**
+- `catalog.ts`: type `page` extendido para incluir `"global"`; 10 novas entradas sob `page: "global", section: "mission"`
+  Chaves: `global.mission.missao_title/text`, `global.mission.visao_title/text`, `global.mission.valores_title/item_1..5`
+- `mediaSlots/service.ts`: adicionado slot `mission_center_img_01` (foto central da seção)
+- Novo componente `MissionSection.tsx`: 3 colunas — esq teal (Missão+Visão), centro imagem, dir branca (Valores)
+- `sections/index.ts`: exporta `MissionSection`
+- `HomeContent.tsx`, `FranquiasContent.tsx`, `AssinaturasContent.tsx`: importam e renderizam `MissionSection`
+- `sectionToggles.ts` + `admin.ts`: adicionado `mission: false` nas 3 páginas
+- `AdminPageTextsView.tsx`: `PAGE_LABELS` recebe `global: "Missão & Valores"` + `SECTION_LABELS` recebe `mission: "Missão"`
+- TypeScript: zero erros em api + web
+- Git Record: PENDING
+
+## 2026-06-12 — PLAN-0013 EM ANDAMENTO — Docker Status Modal + fix nginx boot
+
+**Fix ERR-0029 ##bug — nginx não subia após reboot:**
+- `nginx.depends_on.api.condition`: `service_healthy` → `service_started`
+  Causa: Docker daemon ignora `depends_on` no restart automático pós-reboot;
+  nginx entrava em backoff exponencial e desaparecia do `docker compose ps`.
+
+**Fix ERR-0030 ##bug — 502 + tela branca após docker compose up --build:**
+- `docker-compose.yml`: volume nginx alterado de bind de arquivo único para bind de diretório (`./nginx/:/etc/nginx/conf.d/:ro`) — evita perda de inode ao editar arquivos no host.
+- `nginx/nginx.conf`: removida a `/` final de todos os `proxy_pass http://$var` — com variável, nginx substituía a URI completa por `/`; sem URI no proxy_pass, repassa a URI original intacta.
+
+**Feature (PLAN-0013):**
+- Removido LED de status do banco de `NavStatusActions.tsx` (navbar público)
+- Novo endpoint `GET /health/services` em `app.ts` — retorna status dos 4 serviços Docker
+- Novo hook `useDockerHealth.ts` — fetch único no mount, retorna `{ nginx, api, web, postgres }`
+- Novo componente `DockerStatusModal.tsx` — modal flutuante (bottom-right), auto-fecha em 10s
+- `AdminContent.tsx`: ícone `dns` no topbar com LED de alerta (vermelho se offline) + render do modal
+  O modal abre ao entrar no admin e pode ser aberto/fechado pelo ícone a qualquer momento.
+- TypeScript: zero erros em ambos os apps (api + web)
+- Git Record: PENDING
+
+## 2026-06-12 — Correção ERR-0028: Section Toggles "acesso negado" (causa real)
+
+- `apps/api/src/routes/admin.ts`: `canEditSectionToggles()` reescrito — verificação por email hardcoded (`jeiel.borner@gmail.com`) substituída por `user.role === "MASTER"`.
+- Role de `admin@jlrbeauty.com` restaurada para MASTER diretamente no banco (foi alterada para ADMIN acidentalmente via UI de Pessoas; a API bloqueia corretamente a escalada de volta quando o token não é MASTER).
+- `AdminContent.tsx`: revertido para `isMaster` em todos os checks (remoção de `isAdminOrMaster` que havia sido adicionado por diagnóstico errado).
+- `AdminSectionTogglesView.tsx`: `canEdit` mantido como MASTER-only (revertido fix provisório).
+- Diagnóstico inicial (ERR-0028) corrigido no DEBUG-HISTORY.md.
+- Docker: `api` + `web` rebuiltados e rodando.
+
+## 2026-06-11 — PLAN-0012 CONCLUÍDO — Sistema de Edição de Textos das Páginas
+
+- kernel/SYSTEM.md corrigido: MySQL → PostgreSQL 16, ESM → commonjs, Next.js removido
+- Backend criado: `catalog.ts` (129 entradas), `service.ts` (cache + upsert), 3 rotas novas
+- Frontend: hook `usePageText(key)`, renderer `<RichText>`, runtime com localStorage snapshot
+- Admin UI: `AdminPageTextsView` (abas Home/Franquias/Assinaturas + acordeão por seção)
+  + `SegmentEditor` (editor de segmentos inline com preview)
+  + `AdminPageTextsViewIsland` (portal pattern), sidebar "Textos" em AdminContent
+- 11 componentes de seção migrados: todos os textos de marketing agora via usePageText()
+  (HomeHero, HomeAbout, HomeCta, HomeMembership, HomeServices, HomeTestimonials,
+  FranquiasHero, FranquiasModels, FranquiasVision, FranquiasContact, AssinaturasHero)
+- Seed: `public.pageTexts` inicializado com defaults do catálogo na primeira boot
+- TypeScript: zero erros em ambos os apps (api + web)
+
 ## 2026-06-11 — fixes de seed e entrypoint
 
 - seed.ts: MASTER criado antes do admin hardcoded; colisão de email eliminada (`72bdb1a`)

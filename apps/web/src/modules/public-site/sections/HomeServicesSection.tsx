@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { fetchChatbotPublicJson } from "../../chatbot";
 import { useMediaSlot } from "../media.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 type PublicServiceCatalogItem = {
   id: number;
@@ -47,6 +49,55 @@ export const HomeServicesSection = (): ReactElement => {
   const serviceCardImage07 = useMediaSlot("home_services_card_img_07");
   const serviceCardImage08 = useMediaSlot("home_services_card_img_08");
   const serviceCardImage09 = useMediaSlot("home_services_card_img_09");
+
+  const label       = usePageText("home.services.label");
+  const title       = usePageText("home.services.title");
+  const catalogLink = usePageText("home.services.catalog_link");
+
+  const c1FrontLabel   = usePageText("home.services.card_1_front_label");
+  const c1FrontTagline = usePageText("home.services.card_1_front_tagline");
+  const c1BackLabel    = usePageText("home.services.card_1_back_label");
+  const c1BackDesc     = usePageText("home.services.card_1_back_desc");
+
+  const c2FrontLabel   = usePageText("home.services.card_2_front_label");
+  const c2FrontTagline = usePageText("home.services.card_2_front_tagline");
+  const c2BackLabel    = usePageText("home.services.card_2_back_label");
+  const c2BackDesc     = usePageText("home.services.card_2_back_desc");
+
+  const c3FrontLabel   = usePageText("home.services.card_3_front_label");
+  const c3FrontTagline = usePageText("home.services.card_3_front_tagline");
+  const c3BackLabel    = usePageText("home.services.card_3_back_label");
+  const c3BackDesc     = usePageText("home.services.card_3_back_desc");
+
+  const c4FrontLabel   = usePageText("home.services.card_4_front_label");
+  const c4FrontTagline = usePageText("home.services.card_4_front_tagline");
+  const c4BackLabel    = usePageText("home.services.card_4_back_label");
+  const c4BackDesc     = usePageText("home.services.card_4_back_desc");
+
+  const c5FrontLabel   = usePageText("home.services.card_5_front_label");
+  const c5FrontTagline = usePageText("home.services.card_5_front_tagline");
+  const c5BackLabel    = usePageText("home.services.card_5_back_label");
+  const c5BackDesc     = usePageText("home.services.card_5_back_desc");
+
+  const c6FrontLabel   = usePageText("home.services.card_6_front_label");
+  const c6FrontTagline = usePageText("home.services.card_6_front_tagline");
+  const c6BackLabel    = usePageText("home.services.card_6_back_label");
+  const c6BackDesc     = usePageText("home.services.card_6_back_desc");
+
+  const c7FrontLabel   = usePageText("home.services.card_7_front_label");
+  const c7FrontTagline = usePageText("home.services.card_7_front_tagline");
+  const c7BackLabel    = usePageText("home.services.card_7_back_label");
+  const c7BackDesc     = usePageText("home.services.card_7_back_desc");
+
+  const c8FrontLabel   = usePageText("home.services.card_8_front_label");
+  const c8FrontTagline = usePageText("home.services.card_8_front_tagline");
+  const c8BackLabel    = usePageText("home.services.card_8_back_label");
+  const c8BackDesc     = usePageText("home.services.card_8_back_desc");
+
+  const c9FrontLabel   = usePageText("home.services.card_9_front_label");
+  const c9FrontTagline = usePageText("home.services.card_9_front_tagline");
+  const c9BackLabel    = usePageText("home.services.card_9_back_label");
+  const c9BackDesc     = usePageText("home.services.card_9_back_desc");
 
   const [isCatalogModalOpen, setIsCatalogModalOpen] = useState<boolean>(false);
   const [catalogLoadState, setCatalogLoadState] = useState<CatalogLoadState>("idle");
@@ -142,10 +193,9 @@ export const HomeServicesSection = (): ReactElement => {
         <div className="max-w-[1440px] mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                 <div className="max-w-xl">
-                    <h2 className="text-gold text-sm display-label mb-3">Nossa
-                        Especialidade</h2>
+                    <h2 className="text-gold text-sm display-label mb-3"><RichText value={label} /></h2>
                     <h3 className="text-3xl sm:text-4xl md:text-5xl display-hero text-shadow-strong text-primary dark:text-white leading-tight">
-                        Tratamentos <br className="sm:hidden" />Personalizados</h3>
+                        <RichText value={title} /></h3>
                 </div>
                 <div className="md:text-right">
                     <button
@@ -153,7 +203,7 @@ export const HomeServicesSection = (): ReactElement => {
                         type="button"
                         onClick={openCatalogModal}
                     >
-                        <span>Ver Menu Completo</span>
+                        <span><RichText value={catalogLink} /></span>
                         <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                 </div>
@@ -166,13 +216,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage01} alt="Woman with sleek shiny hair looking over shoulder" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Arte Capilar</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Corte preciso e tratamentos restauradores</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c1FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c1FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Arte Capilar</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Coloracao sob medida, reconstrucoes e finalizacao profissional para cada estilo.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c1BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c1BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -192,13 +242,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage02} alt="Close de mulher recebendo tratamento facial com olhos fechados" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Pele Clinica</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Faciais avançados e peelings</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c2FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c2FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Pele Clínica</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Protocolos de rejuvenescimento e cuidados intensivos para cada necessidade da pele.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c2BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c2BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -218,13 +268,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage03} alt="Relaxing spa setting with stones and massage oils" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Terapia de Bem-Estar</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Massagens e aromaterapia</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c3FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c3FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Terapia de Bem-Estar</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Experiências sensoriais para restaurar energia, equilíbrio e relaxamento profundo.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c3BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c3BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -244,13 +294,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage04} alt="Terapia capilar" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Terapia Capilar</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Saúde dos fios</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c4FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c4FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Spa Capilar</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Tratamentos para couro cabeludo, controle de queda e reconstrução profunda.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c4BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c4BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -270,13 +320,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage05} alt="Extensão de cílios" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Lashes</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Extensão de cílios</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c5FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c5FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Extensão de Cílios</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Fio a fio clássico e volume para um olhar marcante e elegante.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c5BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c5BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -296,13 +346,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage06} alt="Sobrancelhas" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Brows</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Sobrancelhas</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c6FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c6FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Micropigmentação</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Design estratégico, lamination e técnica shadow para realce natural.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c6BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c6BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -322,13 +372,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage07} alt="Estética facial" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Facial Spa</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Estética facial</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c7FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c7FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Harmonização</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Limpeza profunda, peelings e protocolos de rejuvenescimento personalizados.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c7BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c7BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -348,13 +398,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage08} alt="Manicure" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Nails</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Mãos e pés</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c8FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c8FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Manicure</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Esmaltação em gel, alongamentos e spa dos pés.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c8BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c8BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -374,13 +424,13 @@ export const HomeServicesSection = (): ReactElement => {
                             <img src={serviceCardImage09} alt="Depilação" className="w-full h-full object-cover opacity-70 grayscale group-hover:grayscale-0 transition duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-forest via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-8 left-0 w-full text-center">
-                                <h3 className="text-2xl font-serif text-gold italic">Smooth</h3>
-                                <p className="text-white text-xs tracking-widest mt-2 uppercase">Depilação</p>
+                                <h3 className="text-2xl font-serif text-gold italic"><RichText value={c9FrontLabel} /></h3>
+                                <p className="text-white text-xs tracking-widest mt-2 uppercase"><RichText value={c9FrontTagline} /></p>
                             </div>
                         </div>
                         <div className="flip-card-back bg-forest-green border border-gold-accent/60 p-6 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-xl font-serif text-gold mb-3">Depilação</h3>
-                            <p className="text-gray-200 text-xs leading-relaxed mb-5">Técnicas confortáveis e ceras especiais para uma pele lisa.</p>
+                            <h3 className="text-xl font-serif text-gold mb-3"><RichText value={c9BackLabel} /></h3>
+                            <p className="text-gray-200 text-xs leading-relaxed mb-5"><RichText value={c9BackDesc} /></p>
                             <button
                                 className="inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full border border-gold-accent text-gold hover:bg-gold-accent hover:text-forest transition-colors"
                                 data-open-concierge
@@ -551,4 +601,3 @@ export const HomeServicesSection = (): ReactElement => {
     </>
   );
 };
-

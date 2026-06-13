@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 import { useBranding } from "../branding.runtime";
 import { useMediaSlot } from "../media.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 export const HomeTestimonialsSection = (): ReactElement => {
   const branding = useBranding();
@@ -8,6 +10,25 @@ export const HomeTestimonialsSection = (): ReactElement => {
   const testimonialAvatar02 = useMediaSlot("home_testimonials_avatar_02");
   const testimonialAvatar03 = useMediaSlot("home_testimonials_avatar_03");
   const testimonialAvatar04 = useMediaSlot("home_testimonials_avatar_04");
+
+  const label    = usePageText("home.testimonials.label");
+  const title    = usePageText("home.testimonials.title");
+  const subtitle = usePageText("home.testimonials.subtitle");
+
+  const item1Quote = usePageText("home.testimonials.item_1_quote");
+  const item1Name  = usePageText("home.testimonials.item_1_name");
+  const item1Role  = usePageText("home.testimonials.item_1_role");
+  const item2Quote = usePageText("home.testimonials.item_2_quote");
+  const item2Name  = usePageText("home.testimonials.item_2_name");
+  const item2Role  = usePageText("home.testimonials.item_2_role");
+  const item3Quote = usePageText("home.testimonials.item_3_quote");
+  const item3Name  = usePageText("home.testimonials.item_3_name");
+  const item3Role  = usePageText("home.testimonials.item_3_role");
+  const item4Quote = usePageText("home.testimonials.item_4_quote");
+  const item4Name  = usePageText("home.testimonials.item_4_name");
+  const item4Role  = usePageText("home.testimonials.item_4_role");
+
+  const ctx = { fullName: branding.fullName };
 
   return (
     <>
@@ -17,68 +38,68 @@ export const HomeTestimonialsSection = (): ReactElement => {
                 <div className="h-10 w-auto text-primary">
                     <img alt={branding.fullName} className="brand-img" src={branding.logoUrl} />
                 </div>
-                <p className="text-gold text-xs uppercase tracking-[0.3em]">Depoimentos</p>
+                <p className="text-gold text-xs uppercase tracking-[0.3em]"><RichText value={label} /></p>
                 <h3 className="text-2xl md:text-3xl display-hero text-shadow-strong leading-tight text-forest dark:text-white">
-                    Experiências reais, resultados inesquecíveis
+                    <RichText value={title} />
                 </h3>
                 <p className="text-sm md:text-base text-forest/70 dark:text-gray-300 max-w-2xl">
-                    Quatro histórias que refletem o cuidado, o luxo e a transformação que entregamos em cada atendimento.
+                    <RichText value={subtitle} />
                 </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <figure className="rounded-2xl border border-forest/10 dark:border-white/10 bg-white/80 dark:bg-white/5 p-6 shadow-sm">
                     <blockquote className="text-sm text-forest/80 dark:text-gray-300 leading-relaxed">
-                        {`"${branding.fullName} não é apenas um salão, é um botão de reinício para todo o seu ser. Atendimento impecável."`}
+                        <RichText value={item1Quote} context={ctx} />
                     </blockquote>
                     <figcaption className="mt-6 flex items-center gap-3">
                         <div className="size-12 rounded-full overflow-hidden border border-primary/40">
                             <img alt="Retrato de Sarah Jenkins" className="w-full h-full object-cover" data-alt="Retrato de mulher sorridente" src={testimonialAvatar01} />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-forest dark:text-white">Sarah Jenkins</p>
-                            <p className="text-xs uppercase tracking-wider text-gold">Editora da Vogue</p>
+                            <p className="text-sm font-semibold text-forest dark:text-white"><RichText value={item1Name} /></p>
+                            <p className="text-xs uppercase tracking-wider text-gold"><RichText value={item1Role} /></p>
                         </div>
                     </figcaption>
                 </figure>
                 <figure className="rounded-2xl border border-forest/10 dark:border-white/10 bg-white/80 dark:bg-white/5 p-6 shadow-sm">
                     <blockquote className="text-sm text-forest/80 dark:text-gray-300 leading-relaxed">
-                        "O cuidado com cada detalhe transforma o ritual em um momento de calma. Resultado visível desde a primeira visita."
+                        <RichText value={item2Quote} />
                     </blockquote>
                     <figcaption className="mt-6 flex items-center gap-3">
                         <div className="size-12 rounded-full overflow-hidden border border-primary/40">
                             <img alt="Retrato de Luiza Martins" className="w-full h-full object-cover" data-alt="Retrato de mulher com cabelo ondulado" src={testimonialAvatar02} />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-forest dark:text-white">Luiza Martins</p>
-                            <p className="text-xs uppercase tracking-wider text-gold">Diretora Criativa</p>
+                            <p className="text-sm font-semibold text-forest dark:text-white"><RichText value={item2Name} /></p>
+                            <p className="text-xs uppercase tracking-wider text-gold"><RichText value={item2Role} /></p>
                         </div>
                     </figcaption>
                 </figure>
                 <figure className="rounded-2xl border border-forest/10 dark:border-white/10 bg-white/80 dark:bg-white/5 p-6 shadow-sm">
                     <blockquote className="text-sm text-forest/80 dark:text-gray-300 leading-relaxed">
-                        "Saio sempre renovado. A equipe entendeu exatamente o que eu queria e o resultado ficou sofisticado."
+                        <RichText value={item3Quote} />
                     </blockquote>
                     <figcaption className="mt-6 flex items-center gap-3">
                         <div className="size-12 rounded-full overflow-hidden border border-primary/40">
                             <img alt="Retrato de Marcos Nogueira" className="w-full h-full object-cover" data-alt="Retrato de homem sorridente" src={testimonialAvatar03} />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-forest dark:text-white">Marcos Nogueira</p>
-                            <p className="text-xs uppercase tracking-wider text-gold">Consultor de Imagem</p>
+                            <p className="text-sm font-semibold text-forest dark:text-white"><RichText value={item3Name} /></p>
+                            <p className="text-xs uppercase tracking-wider text-gold"><RichText value={item3Role} /></p>
                         </div>
                     </figcaption>
                 </figure>
                 <figure className="rounded-2xl border border-forest/10 dark:border-white/10 bg-white/80 dark:bg-white/5 p-6 shadow-sm">
                     <blockquote className="text-sm text-forest/80 dark:text-gray-300 leading-relaxed">
-                        "Produtos premium, atendimento elegante e um clima de spa verdadeiro. Um refugo de luxo no meio da cidade."
+                        <RichText value={item4Quote} />
                     </blockquote>
                     <figcaption className="mt-6 flex items-center gap-3">
                         <div className="size-12 rounded-full overflow-hidden border border-primary/40">
                             <img alt="Retrato de Ana Ribeiro" className="w-full h-full object-cover" data-alt="Retrato de mulher com pele iluminada" src={testimonialAvatar04} />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-forest dark:text-white">Ana Ribeiro</p>
-                            <p className="text-xs uppercase tracking-wider text-gold">Empresária</p>
+                            <p className="text-sm font-semibold text-forest dark:text-white"><RichText value={item4Name} /></p>
+                            <p className="text-xs uppercase tracking-wider text-gold"><RichText value={item4Role} /></p>
                         </div>
                     </figcaption>
                 </figure>
@@ -88,4 +109,3 @@ export const HomeTestimonialsSection = (): ReactElement => {
     </>
   );
 };
-

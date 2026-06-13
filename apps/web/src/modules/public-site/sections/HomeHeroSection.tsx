@@ -1,9 +1,17 @@
 import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { useMediaSlot } from "../media.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 export const HomeHeroSection = (): ReactElement => {
   const heroBackgroundUrl = useMediaSlot("home_hero_bg_01");
+
+  const badge        = usePageText("home.hero.badge");
+  const title        = usePageText("home.hero.title");
+  const subtitle     = usePageText("home.hero.subtitle");
+  const ctaPrimary   = usePageText("home.hero.cta_primary");
+  const ctaSecondary = usePageText("home.hero.cta_secondary");
 
   return (
     <>
@@ -22,22 +30,23 @@ export const HomeHeroSection = (): ReactElement => {
         <div className="relative z-20 container mx-auto px-6 text-center flex flex-col items-center gap-8 pt-20">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
                 <span className="material-symbols-outlined text-primary text-sm">star</span>
-                <span className="text-white text-xs font-bold tracking-widest uppercase">Redefinindo a Beleza!</span>
+                <span className="text-white text-xs font-bold tracking-widest uppercase"><RichText value={badge} /></span>
             </div>
-            
-            <h1 className="text-white text-4xl sm:text-5xl md:text-7xl lg:text-8xl 
-                        display-hero font-playfair leading-tight break-words max-w-[92vw] lg:max-w-5xl drop-shadow-lg ">Sua melhor versão, 
-                        <span className="gold-gradient-text">Eternizada</span>
+
+            <h1 className="text-white text-4xl sm:text-5xl md:text-7xl lg:text-8xl
+                        display-hero font-playfair leading-tight break-words max-w-[92vw] lg:max-w-5xl drop-shadow-lg">
+              <RichText value={title} />
             </h1>
             <p className="text-white/90 text-lg md:text-xl font-light tracking-wide max-w-2xl leading-relaxed drop-shadow-lg">
-                Um santuário exclusivo para cabelo, pele e alma. Viva a interseção entre tecnologia de beleza avançada e
-                bem-estar holístico.
+                <RichText value={subtitle} />
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <button className="h-14 px-8 items-center justify-center rounded-lg bg-primary text-forest text-sm font-bold uppercase tracking-widest hover:bg-white transition-colors duration-300 shadow-[0_0_20px_rgba(17,212,82,0.4)]" data-open-concierge type="button">
-                    Agende Sua Experiencia
+                    <RichText value={ctaPrimary} />
                 </button>
-                <Link className="h-14 px-8 inline-flex items-center justify-center rounded-lg border border-white/40 bg-transparent text-white text-sm font-bold uppercase tracking-widest hover:bg-white/10 transition-colors backdrop-blur-sm" to="/franquias">Rede de Franquias</Link>
+                <Link className="h-14 px-8 inline-flex items-center justify-center rounded-lg border border-white/40 bg-transparent text-white text-sm font-bold uppercase tracking-widest hover:bg-white/10 transition-colors backdrop-blur-sm" to="/franquias">
+                  <RichText value={ctaSecondary} />
+                </Link>
             </div>
         </div>
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 animate-bounce">
@@ -47,4 +56,3 @@ export const HomeHeroSection = (): ReactElement => {
     </>
   );
 };
-

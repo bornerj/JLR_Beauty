@@ -151,3 +151,48 @@ SINTOMA: Ao abrir o editor da imagem por slot, a visualizacao ficava grande dema
 CAUSA_RAIZ: Preview com dimensionamento inadequado para o container e UX do modal sem CTA local de persistencia.
 ACAO: Em `apps/web/src/modules/admin-media-gallery/components/AdminMediaGalleryView.tsx`, o preview foi padronizado em box fixo medio com imagem contida (`object-contain`, `max-w/max-h`) e foi adicionado fluxo explicito `Salvar e fechar` + confirmacao em `Fechar sem salvar`.
 CONTEXTO: Sessao 2026-03-03; React + Vite no modulo `admin-media-gallery`; validacao manual do usuario concluida.
+
+# ID: ERR-0026: Build Docker falhou — prop `title` obsoleto em AssinaturasContent
+SINTOMA: `docker compose up -d --build api web` falhou com erro TypeScript: `Type '{ title: string; }' is not assignable to type 'IntrinsicAttributes'. Property 'title' does not exist on type 'IntrinsicAttributes'` em `AssinaturasContent.tsx(17,53)`.
+CAUSA_RAIZ: `AssinaturasContent.tsx` passava `title="Faça sua Assinatura e Economize!"` para `<HomeMembershipSection>`, que antes aceitava esse prop. Apos a migracao do PLAN-0012, o componente passou a ler o titulo via `usePageText("home.membership.title")` e nao aceita mais props externos — a interface ficou incompativel.
+ACAO: Removido o prop `title` da linha 17 de `apps/web/src/components/pages/AssinaturasContent.tsx`. O titulo agora vem do catalogo de textos (editavel via Admin > Textos).
+CONTEXTO: Sessao 2026-06-12; PLAN-0012 migracao de componentes; Docker build no host Linux.
+
+# ID: ERR-0027: Seed falhou no container de producao — `Cannot find module '../src/utils/logger'`
+SINTOMA: `docker compose exec api npx tsx prisma/seed.ts` retornou `Error: Cannot find module '../src/utils/logger'` dentro do container da API.
+CAUSA_RAIZ: O container de producao contem apenas `dist/` (codigo compilado) — o diretorio `src/` nao e copiado para a imagem final. O `tsx` tentou resolver `../src/utils/logger` em tempo de execucao, mas o arquivo nao existe no container.
+ACAO: Usar o seed ja compilado pelo `seed:build` (esbuild gera `dist/seed.js` com todas as dependencias internas em bundle). Comando correto: `docker compose exec api node dist/seed.js`.
+CONTEXTO: Sessao 2026-06-12; container Docker producao (node:20-slim, apenas dist/); seed rodado apos PLAN-0012.
+
+# ID: ERR-0028: Section Toggles "acesso negado" — diagnóstico inicial errado, causa real: email hardcoded na API
+SINTOMA: Admin > Seções SPA retornava "acesso negado" para o usuário MASTER (admin@jlrbeauty.com). Diagnóstico inicial errado: achamos que era `canEdit` MASTER-only no frontend. Fix provisório (ADMIN ou MASTER) revertido.
+CAUSA_RAIZ_REAL: `canEditSectionToggles()` em `apps/api/src/routes/admin.ts` linha 95 verificava `user.email === "jeiel.borner@gmail.com"` (email pessoal hardcoded). O email do MASTER do sistema é `admin@jlrbeauty.com`, então a verificação nunca passava.
+CAUSA_SECUNDARIA: O usuário acidentalmente trocou sua própria role de MASTER para ADMIN pela UI de Pessoas. A API bloqueia corretamente escalada para MASTER se o token atual não for MASTER (lines 79/128/183 de users.ts), criando deadlock. Role restaurada diretamente no banco via psql.
+ACAO: (1) `canEditSectionToggles` reescrito para verificar `user.role === "MASTER"` em vez de email. (2) Role de `admin@jlrbeauty.com` restaurada via `UPDATE "User" SET role = 'MASTER' WHERE email = 'admin@jlrbeauty.com'`. (3) `AdminContent.tsx` e `AdminSectionTogglesView.tsx` revertidos para lógica MASTER-only original.
+CONTEXTO: Sessao 2026-06-12; `apps/api/src/routes/admin.ts` linha 89–96; `apps/web/src/modules/admin-section-toggles/components/AdminSectionTogglesView.tsx`.
+
+# ID: ERR-0029: nginx não subia após reboot do computador ##bug
+SINTOMA: Após reinicialização do SO, `docker compose ps` mostrava apenas 3 containers (postgres, api, web). nginx ausente — não aparecia nem em estado de erro. Site carregava (web container servindo SPA diretamente via porta 80 interna) mas login falhava porque não havia proxy para a API.
+CAUSA_RAIZ: `docker-compose.yml` definia `nginx.depends_on.api.condition: service_healthy`. O Compose CLI respeita `depends_on` durante `docker compose up`, mas o Docker daemon — responsável pelo restart automático com política `restart: unless-stopped` — ignora completamente `depends_on`. No reboot, nginx iniciava antes da API estar healthy, falhava, entrava em backoff exponencial (1s → 2s → 4s → ... → 30s) e após 34 min estava em pausa longa, invisível no `docker compose ps`.
+ACAO: Alterado `condition: service_healthy` → `condition: service_started` para a dependência `api` do serviço `nginx` em `docker-compose.yml`. Nginx passa a subir junto com os demais containers e serve `502` por poucos segundos enquanto a API aquece — comportamento correto.
+CONTEXTO: Sessao 2026-06-13; `docker-compose.yml` serviço nginx; Linux/Docker daemon restart policy; JLR_Beauty produção Docker.
+
+# ID: ERR-0032: Novas seções e toggles não apareciam — `readSectionTogglesFromSettings` não mesclava com defaults ##bug
+SINTOMA: Após rebuild com PLAN-0014, as seções `mission` (todas as páginas) e `about` (franquias) não apareciam no site público nem como switches no Admin > Seções Públicas. A imagem do slot apareceu corretamente.
+CAUSA_RAIZ: `readSectionTogglesFromSettings` em `apps/api/src/routes/admin.ts` retornava o snapshot do banco diretamente via `cloneSectionToggleMap(parsed.data)` sem mesclar com `DEFAULT_PUBLIC_SECTION_TOGGLES`. O banco continha um snapshot antigo (salvo antes do PLAN-0014) sem as chaves `mission` e `franquias.about`. Como o snapshot era válido, o fallback nunca era acionado — as novas chaves simplesmente não existiam na resposta da API.
+ACAO: Adicionada função `mergeWithDefaultSectionToggles(stored)` que parte de um clone dos defaults e sobrepõe os valores armazenados. `readSectionTogglesFromSettings` agora retorna `mergeWithDefaultSectionToggles(parsed.data)`. Isso garante que novas seções adicionadas aos defaults sempre apareçam, mesmo quando o banco tem um snapshot anterior. O comportamento é idêntico ao `normalizeSnapshot` já existente no frontend (`sectionToggles.runtime.ts`).
+CONTEXTO: Sessão 2026-06-13; PLAN-0014; `apps/api/src/routes/admin.ts`; padrão — ao adicionar novas seções aos defaults, o banco nunca tem as chaves novas até o admin salvar manualmente.
+
+# ID: ERR-0031: Build Docker falhou — `mission_center_img_01` ausente do catálogo de media slots do frontend ##bug
+SINTOMA: `docker compose up -d --build` falhou com erro TypeScript no build do `web`: `Argument of type '"mission_center_img_01"' is not assignable to parameter of type '"home_hero_bg_01" | ... | "checkout_whatsapp_icon_01"'` em `MissionSection.tsx:7`.
+CAUSA_RAIZ: O projeto mantém dois catálogos de media slots paralelos e independentes: `apps/api/src/modules/mediaSlots/service.ts` (backend, fonte de verdade da API) e `apps/web/src/modules/public-site/mediaSlots.ts` (frontend, lista `as const` que gera o tipo `MediaSlotId`). O hook `useMediaSlot(id)` é tipado contra o catálogo do frontend. Ao adicionar `mission_center_img_01` apenas no backend, o TypeScript do frontend rejeitou a chave como inválida.
+ACAO: Adicionado `mission_center_img_01` em `apps/web/src/modules/public-site/mediaSlots.ts` — entrada idêntica à do backend (`page: "global"`, `section: "mission"`, `fallbackUrl: "/images/about_img1.webp"`). Build passou sem erros após a correção.
+CONTEXTO: Sessão 2026-06-13; PLAN-0014; padrão arquitetural — qualquer novo slot de mídia precisa ser adicionado nos **dois** arquivos simultaneamente.
+
+# ID: ERR-0030: 502 Bad Gateway + tela branca após `docker compose up --build` ##bug
+SINTOMA: Após rebuild com `docker compose up -d --build`, site retornava `502 Bad Gateway`. Após restart manual do nginx, site carregava mas ficava tela branca — JS do bundle era servido com `Content-Type: text/html` e tamanho 533 bytes (= index.html gzipado) em vez de 955 KB.
+CAUSA_RAIZ: Dois problemas encadeados:
+  (1) Bind mount de arquivo único (`./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro`): ao editar o arquivo no host, ferramentas de edição criam novo inode (write-to-temp + rename). Docker bind de arquivo único aponta para o inode original — que foi deletado. Container vê "No such file or directory" para o arquivo montado, e nginx cai para config padrão sem nenhum virtual host configurado → 502.
+  (2) `proxy_pass http://$upstream_web/` com variável: no nginx, quando `proxy_pass` usa variável E inclui URI (mesmo apenas `/`), o URI do proxy_pass SUBSTITUI a URI completa da request em vez de apenas substituir o prefixo da location. Resultado: toda request (`GET /assets/index.js`, `GET /api/...`) era encaminhada ao upstream como `GET /`.
+ACAO: (1) Volume alterado de bind de arquivo para bind de diretório: `./nginx/:/etc/nginx/conf.d/:ro` — diretório bind não perde referência ao editar arquivos internos. (2) Removida a `/` final de todos os `proxy_pass http://$var` no `nginx/nginx.conf` — sem URI no proxy_pass, nginx repassa a URI original intacta ao upstream.
+CONTEXTO: Sessao 2026-06-13; `docker-compose.yml` volumes nginx; `nginx/nginx.conf` proxy_pass; comportamento nginx com variáveis documentado em http://nginx.org/en/docs/http/ngx_http_proxy_module.html.

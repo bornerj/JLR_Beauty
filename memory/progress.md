@@ -17,6 +17,9 @@
 | API Routes (refactor) | stable | 2026-06-11 | 9 arquivos de domínio, 6 libs, index.ts 23 linhas, builds e testes passando |
 | Prisma Schema | stable | 2026-06-11 | provider=postgresql, migration init única, binaryTargets para Docker Alpine |
 | Section Toggles | stable | 2026-06-11 | fs.writeFileSync removido, usa apenas tabela Setting |
+| Page Texts Editor | stable | 2026-06-11 | PLAN-0012 CONCLUÍDO — 129 campos, 11 componentes migrados, Admin UI funcional |
+| Docker Status Modal | in-progress | 2026-06-12 | PLAN-0013 — modal flutuante admin, auto-fecha 10s, ícone topbar — Git PENDING |
+| Mission Section | in-progress | 2026-06-13 | PLAN-0014 — About Franquias + MissionSection 3-col — Git PENDING |
 
 ---
 
@@ -38,3 +41,6 @@
 - 2026-06-10: Cópia do projeto JLR_AI_Studio → JLR_Beauty, git init, npm install (PLAN-0009 DONE)
 - 2026-06-11: Docker Compose + PostgreSQL + Dockerfiles + nginx + migration PostgreSQL (PLAN-0010 validado)
 - 2026-06-11: Refactor routes/index.ts God File → 9 arquivos de domínio + 6 libs (PLAN-0011 validado)
+- 2026-06-11: Page Texts Editor — 129 campos, 11 componentes migrados, Admin UI (PLAN-0012 CONCLUÍDO)
+- 2026-06-12: Docker Status Modal + fix nginx boot/inode/proxy_pass (PLAN-0013 em andamento)
+- 2026-06-13: About em Franquias + MissionSection global (PLAN-0014 em andamento)

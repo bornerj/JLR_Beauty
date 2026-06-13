@@ -3,6 +3,42 @@
 Stack: Docker Compose (nginx + api + web + postgres)
 Compatível com: Ubuntu 22.04+ / Debian 12+
 
+1. Arquivos para o docker compose — onde estão
+Todos na raiz ou próximos do projeto:
+
+Arquivo	Onde	Para que serve
+docker-compose.yml	            raiz	    Orquestra os 4 serviços: nginx, api, web, postgres
+.env	                          raiz	    Variáveis de ambiente reais (credenciais, URLs)
+.env.docker.example	            raiz	    Template para recriar o .env do zero
+apps/api/Dockerfile	            apps/api	Build da API
+apps/api/docker-entrypoint.sh	  apps/api	Roda migration automática no boot
+apps/web/Dockerfile	            apps/web	Build do frontend
+nginx/nginx.conf	              nginx/	  Proxy reverso nginx
+
+Para subir: docker compose up -d na raiz do projeto.
+
+# Comandos utilizados para subir/atualizar o Docker 
+
+docker compose pull
+docker compose build
+docker compose up -d
+docker compose ps
+docker compose exec api node dist/seed.js
+docker compose up -d --build web
+
+## Após a primeira vez, O Dockerfile já compila o código durante o build, então basta reconstruir as imagens da api e do web e reiniciar:
+## Na raiz do projeto 
+docker compose up -d --build api web
+
+## Rodar o seed manualmente para já persistir os defaults:
+docker compose exec api node dist/seed.js
+
+## Só o web mudou, então:
+docker compose up -d --build web
+
+## reconstruir os containers após as lateracoes
+docker compose up -d --build
+
 ---
 
 ## Pré-requisitos do servidor
@@ -171,3 +207,55 @@ E adicionar um bloco de redirecionamento HTTP → HTTPS.
 | `uploads_data` | Arquivos de upload da API     |
 
 Os volumes ficam em `/var/lib/docker/volumes/` no host.
+
+
+Pronto. O que falta para estar na VPS:
+
+  ---
+  Já pronto no código ✅
+
+  - Docker Compose completo (4 serviços + healthchecks + volumes)
+  - Migration automática no startup (docker-entrypoint.sh)
+  - .env.docker.example com todos os vars documentados
+  - DEPLOY_VPS.md com guia passo a passo atualizado
+  - Frontend usa URL relativa (/api/...) — funciona sem configuração extra no nginx
+  - Código no GitHub: github.com/bornerj/JLR_Beauty
+
+  ---
+  O que você precisa fazer na VPS
+
+  1. Provisionar o servidor
+  - Ubuntu 22.04+ ou Debian 12+
+  - Mínimo: 1 vCPU, 1GB RAM, 20GB disco
+  - Abrir portas: 22 (SSH), 80 (HTTP), 443 (HTTPS futuramente)
+
+  2. Instalar Docker
+  curl -fsSL https://get.docker.com | sh
+  sudo usermod -aG docker $USER
+
+  3. Adicionar chave SSH da VPS ao GitHub (para clonar via SSH)
+  ssh-keygen -t ed25519
+  cat ~/.ssh/id_ed25519.pub  # adicionar nas Deploy Keys do repo
+
+  4. Clonar e configurar
+  git clone git@github.com:bornerj/JLR_Beauty.git /opt/jlrbeauty
+  cd /opt/jlrbeauty
+  cp .env.docker.example .env
+  nano .env   # preencher POSTGRES_PASSWORD, JWT_SECRET, APP_WEB_URL, MASTER_EMAIL/PASSWORD
+
+  5. Subir
+  docker compose up -d --build
+  docker compose exec api npx prisma db seed
+
+  ---
+Opcional (pós-deploy)
+
+  - SSL: Certbot + nginx quando tiver domínio (guia já está no DEPLOY_VPS.md)
+  - Stripe: ativar STRIPE_ENABLED=true e preencher as chaves
+  - Z-API: configurar ZAPI_WEBHOOK_SECRET
+
+✻ Worked for 1m 18s
+
+※ recap: Migramos o projeto JLR Beauty para Docker + PostgreSQL com infraestrutura completa pronta para VPS. Tudo commitado e no GitHub — próximo passo é provisionar o servidor e 
+  rodar o deploy. (disable recaps in /config)
+

@@ -3,6 +3,7 @@ import {
   HomeAboutSection,
   HomeMembershipSection,
   HomeTestimonialsSection,
+  MissionSection,
 } from "../../modules/public-site/sections";
 import { usePublicPageSectionToggles } from "../../modules/public-site/sectionToggles.runtime";
 
@@ -14,9 +15,11 @@ export default function AssinaturasContent() {
     <>
       {showHero ? <AssinaturasHeroSection /> : null}
 
-      {sections.membership ? <HomeMembershipSection title="Faça sua Assinatura e Economize!" /> : null}
+      {sections.membership ? <HomeMembershipSection /> : null}
 
       {sections.about ? <HomeAboutSection /> : null}
+
+      {sections.mission ? <MissionSection /> : null}
 
       {sections.testimonials ? <HomeTestimonialsSection /> : null}
     </>

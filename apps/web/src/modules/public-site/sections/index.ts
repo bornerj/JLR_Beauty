@@ -14,3 +14,4 @@ export * from "./FranquiasHeroSection";
 export * from "./FranquiasVisionSection";
 export * from "./FranquiasModelsSection";
 export * from "./FranquiasContactSection";
+export * from "./MissionSection";

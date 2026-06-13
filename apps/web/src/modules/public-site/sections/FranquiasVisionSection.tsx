@@ -1,8 +1,22 @@
 import type { ReactElement } from "react";
 import { useMediaSlot } from "../media.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 export const FranquiasVisionSection = (): ReactElement => {
   const visionImage = useMediaSlot("franquias_vision_img_01");
+
+  const label      = usePageText("franquias.vision.label");
+  const title      = usePageText("franquias.vision.title");
+  const quote      = usePageText("franquias.vision.quote");
+  const para1      = usePageText("franquias.vision.paragraph_1");
+  const para2      = usePageText("franquias.vision.paragraph_2");
+  const stat1Value = usePageText("franquias.vision.stat_1_value");
+  const stat1Label = usePageText("franquias.vision.stat_1_label");
+  const stat2Value = usePageText("franquias.vision.stat_2_value");
+  const stat2Label = usePageText("franquias.vision.stat_2_label");
+  const stat3Value = usePageText("franquias.vision.stat_3_value");
+  const stat3Label = usePageText("franquias.vision.stat_3_label");
 
   return (
     <>
@@ -19,47 +33,38 @@ export const FranquiasVisionSection = (): ReactElement => {
                         >
                         </div>
                         <div className="absolute -bottom-10 -right-10 z-10 hidden h-64 w-64 rounded-full border-[1px] border-gold/30 bg-forest p-8 lg:flex items-center justify-center">
-                            <p className="text-center display-quote text-xl text-gold">"Beleza não é apenas um
-                                serviço, é uma experiência arquitetônica."</p>
+                            <p className="text-center display-quote text-xl text-gold"><RichText value={quote} /></p>
                         </div>
                     </div>
                 </div>
                 <div className="order-1 flex flex-col justify-center lg:order-2">
                     <div className="mb-4 flex items-center gap-2">
                         <div className="h-px w-12 bg-gold"></div>
-                        <span className="text-sm font-bold uppercase tracking-widest text-gold">A Visão</span>
+                        <span className="text-sm font-bold uppercase tracking-widest text-gold"><RichText value={label} /></span>
                     </div>
                     <h2 className="mb-8 text-4xl display-hero text-shadow-strong leading-tight text-forest dark:text-white md:text-5xl">
-                        Mais que um salão, um santuário de autocuidado.
+                        <RichText value={title} />
                     </h2>
                     <div className="space-y-6 text-lg font-light leading-relaxed text-forest/80 dark:text-white/80">
                         <p>
-                            <span className="float-left mr-3 text-6xl display-title text-shadow-strong leading-[0.8] text-primary">J</span>LR
-                            Beauty combina tecnologia de beleza de ponta com elegância atemporal para criar uma
-                            experiência inesquecível para cada cliente. Acreditamos que o verdadeiro luxo está nos
-                            detalhes - do calor da nossa iluminação à precisão dos nossos tratamentos.
+                            <span className="float-left mr-3 text-6xl display-title text-shadow-strong leading-[0.8] text-primary">J</span><RichText value={para1} />
                         </p>
                         <p>
-                            Ser nosso parceiro significa entrar em um legado de excelência. Não apenas construímos
-                            salões; criamos ambientes onde a confiança floresce. Nossos conceitos arquitetônicos são
-                            premiados, pensados para serem funcionais para a equipe e transcendentes para os clientes.
+                            <RichText value={para2} />
                         </p>
                     </div>
                     <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
                         <div className="flex flex-col gap-2 border-l border-forest/10 pl-4 dark:border-white/10">
-                            <span className="text-3xl display-number text-shadow-strong text-gold">10+</span>
-                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60 dark:text-white/60">Anos
-                                de Liderança</span>
+                            <span className="text-3xl display-number text-shadow-strong text-gold"><RichText value={stat1Value} /></span>
+                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60 dark:text-white/60"><RichText value={stat1Label} /></span>
                         </div>
                         <div className="flex flex-col gap-2 border-l border-forest/10 pl-4 dark:border-white/10">
-                            <span className="text-3xl display-number text-shadow-strong text-gold">50+</span>
-                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60 dark:text-white/60">Unidades
-                                no Mundo</span>
+                            <span className="text-3xl display-number text-shadow-strong text-gold"><RichText value={stat2Value} /></span>
+                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60 dark:text-white/60"><RichText value={stat2Label} /></span>
                         </div>
                         <div className="flex flex-col gap-2 border-l border-forest/10 pl-4 dark:border-white/10">
-                            <span className="text-3xl display-number text-shadow-strong text-gold">98%</span>
-                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60 dark:text-white/60">Satisfação
-                                dos Parceiros</span>
+                            <span className="text-3xl display-number text-shadow-strong text-gold"><RichText value={stat3Value} /></span>
+                            <span className="text-sm font-medium uppercase tracking-wider text-forest/60 dark:text-white/60"><RichText value={stat3Label} /></span>
                         </div>
                     </div>
                 </div>

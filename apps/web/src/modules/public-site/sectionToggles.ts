@@ -3,11 +3,14 @@ export const publicSectionToggles = {
     about: false,
     hero: true,
     membership: true,
+    mission: false,
     testimonials: false
   },
   franquias: {
+    about: false,
     contact: true,
     hero: true,
+    mission: false,
     models: true,
     vision: true
   },
@@ -16,6 +19,7 @@ export const publicSectionToggles = {
     cta: true,
     hero: true,
     membership: false,
+    mission: false,
     products: true,
     services: true,
     testimonials: true

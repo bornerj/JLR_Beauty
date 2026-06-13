@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStatus } from "../hooks/useAuthStatus";
-import { useDbHealthStatus } from "../hooks/useDbHealthStatus";
 
 type NavStatusActionsProps = {
   mobileMenuTrigger?: ReactNode;
@@ -9,7 +8,6 @@ type NavStatusActionsProps = {
 
 export default function NavStatusActions({ mobileMenuTrigger }: NavStatusActionsProps) {
   const { user, roleLabel, isLoggedIn, openLoginModal, logout } = useAuthStatus();
-  const dbHealth = useDbHealthStatus();
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
@@ -80,12 +78,6 @@ export default function NavStatusActions({ mobileMenuTrigger }: NavStatusActions
         </>
       )}
 
-      <span
-        className={`${dbHealth.className} hidden sm:inline-flex`}
-        data-db-status-led
-        aria-label={dbHealth.title}
-        title={dbHealth.title}
-      ></span>
     </div>
   );
 }

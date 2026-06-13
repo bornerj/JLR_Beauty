@@ -5,12 +5,12 @@ Regras de processo, continuidade e memoria ficam em `kernel/RULES.md`.
 
 ## Linguagem e Stack
 - TypeScript com modo strict.
-- Node.js 20+ com modulos ESM.
-- API em Express.
-- ORM: Prisma com MySQL.
+- Node.js 20+ (commonjs).
+- API em Express 5.
+- ORM: Prisma 5.22 com PostgreSQL 16.
 - Testes E2E: Playwright.
-- Frontend principal: Vite + React.
-- Contexto adicional do produto: Next.js App Router e Stripe.
+- Frontend principal: Vite + React 19.
+- Pagamentos: Stripe (integração ativa — ver project.toml).
 
 ## Estilo de Codigo
 - Use componentes funcionais (React).
@@ -64,7 +64,7 @@ await db.query(`SELECT * FROM users WHERE email = '${email}'`);
 - Mensagens devem ser normalizadas para PT-BR quando necessario.
 - Validacoes de telefone e email devem ser consistentes entre backend e frontend.
 
-## Prisma + MySQL
+## Prisma + PostgreSQL
 - Prisma e a unica camada de acesso ao banco no backend.
 - Migracoes devem ser versionadas (Prisma Migrate).
 - Crie seeds para base/feature/error quando necessario.
