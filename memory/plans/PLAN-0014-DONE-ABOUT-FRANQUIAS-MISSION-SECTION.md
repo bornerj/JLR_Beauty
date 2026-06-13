@@ -1,6 +1,6 @@
 # PLAN-0014 — About em Franquias + Nova Seção Mission
 
-**Status:** EM ANDAMENTO
+**Status:** CONCLUÍDO — 2026-06-13
 **Criado:** 2026-06-13
 **Autor:** Claude Sonnet 4.6
 **Aprovado por:** Jeiel Borner
@@ -81,11 +81,11 @@ global.mission.valores_item_5  → "Trabalhar com ética, respeito e paixão."
 
 **Branch:** main
 **Commits:**
-- PENDING
+- 0637dcd — feat: page texts editor, docker status modal, mission section — PLAN-0012/0013/0014
 
 ---
 
 ## Conclusão
 
-**Status final:** PENDENTE
-**Testado em browser:** NÃO
+**Status final:** CONCLUÍDO
+**Testado em browser:** SIM — switches habilitados pelo usuário, seções visíveis nas 3 páginas

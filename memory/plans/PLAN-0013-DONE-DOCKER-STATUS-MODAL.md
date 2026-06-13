@@ -1,7 +1,7 @@
 
 # PLAN-0013 — Docker Status Modal no Admin
 
-Status: EM ANDAMENTO
+Status: CONCLUÍDO — 2026-06-13
 Data de abertura: 2026-06-12
 Pré-requisito: PLAN-0012 concluído (rotas Admin funcionando)
 Contexto: O LED de status do banco estava no navbar público (sem sentido em produção Docker).
@@ -93,8 +93,8 @@ docker-compose.yml                                   ← fix nginx depends_on
 
 ## Git Record of Delivery
 
-- [ ] Step 1 — Pre-commit review: arquivos + validações
-- [ ] Step 2 — Commit authorization: confirmação explícita do usuário
-- [ ] Step 3 — Commit confirmation: hash / branch / mensagem / estatísticas
-- [ ] Step 4 — Push authorization e resultado
-- Push status: PENDING
+- [x] Step 1 — Pre-commit review: 46 arquivos revisados, zero erros TypeScript
+- [x] Step 2 — Commit authorization: aprovado pelo usuário em 2026-06-13
+- [x] Step 3 — Commit: 0637dcd | main | feat: page texts editor, docker status modal, mission section
+- [x] Step 4 — Push: origin/main atualizado
+- Push status: DONE — 2026-06-13

@@ -85,3 +85,19 @@ Status: PASS | FAIL
 If FAIL:
 - Describe the violation.
 - Indicate the mandatory corrective action before merge or push.
+
+---
+
+## Mandatory Record — execute after every audit
+
+1. Save this filled checklist as:
+   `memory/logs/AUDIT_CHECKLIST_YYYY-MM-DD-PASS.md` (or -FAIL)
+
+2. Add a summary entry in `memory/MODIFICATION_LOG.md`:
+   ```
+   ## YYYY-MM-DD — SESSION AUDIT — PASS
+   | Item | Resultado |
+   ...
+   ```
+
+No session can be closed without both records written.

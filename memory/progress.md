@@ -18,8 +18,8 @@
 | Prisma Schema | stable | 2026-06-11 | provider=postgresql, migration init única, binaryTargets para Docker Alpine |
 | Section Toggles | stable | 2026-06-11 | fs.writeFileSync removido, usa apenas tabela Setting |
 | Page Texts Editor | stable | 2026-06-11 | PLAN-0012 CONCLUÍDO — 129 campos, 11 componentes migrados, Admin UI funcional |
-| Docker Status Modal | in-progress | 2026-06-12 | PLAN-0013 — modal flutuante admin, auto-fecha 10s, ícone topbar — Git PENDING |
-| Mission Section | in-progress | 2026-06-13 | PLAN-0014 — About Franquias + MissionSection 3-col — Git PENDING |
+| Docker Status Modal | stable | 2026-06-13 | PLAN-0013 CONCLUÍDO — modal flutuante admin, auto-fecha 10s, ícone topbar com LED |
+| Mission Section | stable | 2026-06-13 | PLAN-0014 CONCLUÍDO — About Franquias + MissionSection 3-col, testado em browser |
 
 ---
 
