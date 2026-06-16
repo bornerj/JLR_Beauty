@@ -32,7 +32,7 @@ export const FranquiasHeroSection = (): ReactElement => {
     {/* Hero Section */}
     <section className="relative pt-28 pb-16 bg-cream dark:bg-background-dark overflow-hidden">
         <div
-          className="absolute inset-0 bg-center bg-no-repeat bg-contain opacity-20 pointer-events-none"
+          className="absolute inset-0 bg-center bg-no-repeat bg-cover opacity-20 pointer-events-none"
           style={{ backgroundImage: `url(${heroBackgroundMap})` }}
         ></div>
         <div className={`mx-auto max-w-[1200px] px-6 lg:px-10 grid items-center gap-14 ${showGallery ? "lg:grid-cols-2" : ""} relative z-10`}>
