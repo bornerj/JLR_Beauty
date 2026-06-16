@@ -30,5 +30,14 @@ export const RichText = ({ value, context, className }: RichTextProps): ReactEle
   }
 
   const resolved = applyContext(value, context);
+
+  if (resolved.includes("\n")) {
+    const lines = resolved.split("\n");
+    const children = lines.flatMap((line, i) =>
+      i < lines.length - 1 ? [line, <br key={i} />] : [line]
+    );
+    return className ? <span className={className}>{children}</span> : <>{children}</>;
+  }
+
   return className ? <span className={className}>{resolved}</span> : <>{resolved}</>;
 };

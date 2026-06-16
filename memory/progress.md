@@ -17,9 +17,10 @@
 | API Routes (refactor) | stable | 2026-06-11 | 9 arquivos de domínio, 6 libs, index.ts 23 linhas, builds e testes passando |
 | Prisma Schema | stable | 2026-06-11 | provider=postgresql, migration init única, binaryTargets para Docker Alpine |
 | Section Toggles | stable | 2026-06-11 | fs.writeFileSync removido, usa apenas tabela Setting |
-| Page Texts Editor | stable | 2026-06-11 | PLAN-0012 CONCLUÍDO — 129 campos, 11 componentes migrados, Admin UI funcional |
+| Page Texts Editor | stable | 2026-06-16 | PLAN-0012 FECHADO — 129 campos, quebra de linha, histórico (versão anterior), galeria Masonry |
 | Docker Status Modal | stable | 2026-06-13 | PLAN-0013 CONCLUÍDO — modal flutuante admin, auto-fecha 10s, ícone topbar com LED |
-| Mission Section | stable | 2026-06-13 | PLAN-0014 CONCLUÍDO — About Franquias + MissionSection 3-col, testado em browser |
+| Mission Section | stable | 2026-06-16 | PLAN-0014 CONCLUÍDO — About Franquias + MissionSection 3-col; width corrigido (max-w-[1440px]) |
+| Franquias Hero Gallery | stable | 2026-06-16 | toggle hero_gallery via section toggles — oculto por padrão, reativável pelo Admin |
 
 ---
 

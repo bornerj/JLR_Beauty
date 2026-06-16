@@ -9,6 +9,7 @@ import {
 } from "./catalog";
 
 export const PUBLIC_PAGE_TEXTS_SETTING_KEY = "public.pageTexts";
+export const PUBLIC_PAGE_TEXTS_PREVIOUS_KEY = "public.pageTexts.previous";
 
 const DEFAULT_PAGE_TEXTS_CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -83,6 +84,15 @@ export const getPublicPageTexts = async (): Promise<PageTextsMap> => {
   return { ...pageTextsCache };
 };
 
+export const getPreviousPageTexts = async (): Promise<PageTextsMap | null> => {
+  const setting = await prisma.setting.findUnique({
+    where: { key: PUBLIC_PAGE_TEXTS_PREVIOUS_KEY },
+    select: { value: true },
+  });
+  if (!setting?.value || typeof setting.value !== "object") return null;
+  return mergeWithDefaults(setting.value as Record<string, unknown>);
+};
+
 export const savePublicPageTexts = async (texts: PageTextsMap): Promise<PageTextsMap> => {
   const sanitized: PageTextsMap = {};
   for (const [key, value] of Object.entries(texts)) {
@@ -96,6 +106,18 @@ export const savePublicPageTexts = async (texts: PageTextsMap): Promise<PageText
   }
 
   const merged = mergeWithDefaults(sanitized);
+
+  const currentSetting = await prisma.setting.findUnique({
+    where: { key: PUBLIC_PAGE_TEXTS_SETTING_KEY },
+    select: { value: true },
+  });
+  if (currentSetting?.value && typeof currentSetting.value === "object") {
+    await prisma.setting.upsert({
+      where: { key: PUBLIC_PAGE_TEXTS_PREVIOUS_KEY },
+      create: { key: PUBLIC_PAGE_TEXTS_PREVIOUS_KEY, value: currentSetting.value },
+      update: { value: currentSetting.value },
+    });
+  }
 
   await prisma.setting.upsert({
     where: { key: PUBLIC_PAGE_TEXTS_SETTING_KEY },

@@ -1,0 +1,5 @@
+Status: ACTIVE
+Date: 2026-06-11
+Context: PLAN-0011 encontrou `apps/api/src/routes/index.ts` com 6.650 linhas e 130 definições de rota — um God File que misturava schemas Zod, helpers utilitários, rate limiting, acesso direto ao Prisma e todos os handlers. Qualquer modificação tocava o mesmo arquivo.
+Decision: Dividir em 9 arquivos de domínio (`auth.ts`, `users.ts`, `catalog.ts`, `orders.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`, `webhooks.ts`) + `index.ts` aggregator (~23 linhas). Helpers compartilhados extraídos para `apps/api/src/lib/` (routeHelpers, rateLimiter, uploadHandler, currencyUtils, fulfillmentUtils, webhookParser). Camada service/repository explicitamente adiada — handlers ainda acessam Prisma diretamente.
+Consequences: Risco de conflito em merges eliminado; rastreabilidade por domínio; sem abstração adicional significa que lógica de negócio ainda vive nos handlers (aceitável para o tamanho atual do projeto); camada service/repository será criada em plano futuro quando a complexidade justificar.

@@ -30,6 +30,7 @@ import {
 import {
   PAGE_TEXT_CATALOG,
   getPublicPageTexts,
+  getPreviousPageTexts,
   pageTextsPayloadSchema,
   savePublicPageTexts,
 } from "../modules/pageTexts/service";
@@ -64,6 +65,7 @@ const DEFAULT_PUBLIC_SECTION_TOGGLES: SectionToggleMap = {
     about: false,
     contact: true,
     hero: true,
+    hero_gallery: false,
     mission: false,
     models: true,
     vision: true,
@@ -434,6 +436,37 @@ adminRouter.get("/public/page-texts", async (_req, res) => {
     res.json({ texts });
   } catch (error) {
     logger.error("Falha ao ler page texts publicos", { error });
+    res.status(500).json({
+      message: MSG.SERVER_ERROR,
+      ...withDetail(error instanceof Error ? error.message : undefined),
+    });
+  }
+});
+
+adminRouter.get("/admin/page-texts/previous", requireAdmin, async (_req, res) => {
+  try {
+    const texts = await getPreviousPageTexts();
+    res.json({ texts });
+  } catch (error) {
+    logger.error("Falha ao ler versão anterior de page texts", { error });
+    res.status(500).json({
+      message: MSG.SERVER_ERROR,
+      ...withDetail(error instanceof Error ? error.message : undefined),
+    });
+  }
+});
+
+adminRouter.post("/admin/page-texts/restore", requireAdmin, async (_req, res) => {
+  try {
+    const previous = await getPreviousPageTexts();
+    if (!previous) {
+      res.status(404).json({ message: "Nenhuma versão anterior encontrada." });
+      return;
+    }
+    const texts = await savePublicPageTexts(previous);
+    res.json({ texts });
+  } catch (error) {
+    logger.error("Falha ao restaurar versão anterior de page texts", { error });
     res.status(500).json({
       message: MSG.SERVER_ERROR,
       ...withDetail(error instanceof Error ? error.message : undefined),

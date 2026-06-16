@@ -370,53 +370,54 @@ export const AdminMediaGalleryView = (): ReactElement => {
         </section>
       ) : (
         <section className="grid grid-cols-1 gap-5">
-          {groupedCatalog.map(({ page, slots }) => (
-            <article key={page} className="bg-gray-100 rounded-2xl p-4 md:p-5">
-              <div className="flex items-center justify-between gap-2 mb-4">
-                <h3 className="text-xl font-bold text-forest uppercase tracking-wider">{page}</h3>
-                <span className="text-xs text-stone-500">{slots.length} slots</span>
-              </div>
+          {groupedCatalog.map(({ page, slots }) => {
+            const numCols = 4;
+            const columns: typeof slots[number][][] = Array.from({ length: numCols }, () => []);
+            slots.forEach((slot, i) => columns[i % numCols].push(slot));
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {slots.map((slot, index) => {
-                  const currentValue = formSlots[slot.id];
-                  const currentPreviewUrl = resolveUploadedAssetUrl(currentValue) || currentValue;
-                  const isHeroCard = index === 0;
-                  const cardClass = isHeroCard ? "md:col-span-2 md:row-span-2" : "";
-                  const imageClass = isHeroCard
-                    ? "w-full h-64 md:h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    : "w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110";
+            return (
+              <article key={page} className="bg-gray-100 rounded-2xl p-4 md:p-5">
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <h3 className="text-xl font-bold text-forest uppercase tracking-wider">{page}</h3>
+                  <span className="text-xs text-stone-500">{slots.length} slots</span>
+                </div>
 
-                  return (
-                    <button
-                      key={slot.id}
-                      type="button"
-                      className={`relative overflow-hidden rounded-2xl shadow-lg group text-left ${cardClass}`}
-                      onClick={() => {
-                        setEditorSlotId(slot.id);
-                      }}
-                    >
-                      <img src={currentPreviewUrl} alt={slot.label} className={imageClass} />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          {isHeroCard ? (
-                            <>
-                              <h3 className="text-2xl font-bold text-white">{slot.label}</h3>
-                              <p className="text-white text-sm">
-                                {slot.section} · clique para editar
-                              </p>
-                            </>
-                          ) : (
-                            <h4 className="text-xl font-bold text-white">{slot.label}</h4>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </article>
-          ))}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {columns.map((colSlots, colIdx) => (
+                    <div key={colIdx} className="grid gap-3 content-start">
+                      {colSlots.map((slot) => {
+                        const currentValue = formSlots[slot.id];
+                        const currentPreviewUrl = resolveUploadedAssetUrl(currentValue) || currentValue;
+
+                        return (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            className="w-full text-left group"
+                            onClick={() => {
+                              setEditorSlotId(slot.id);
+                            }}
+                          >
+                            <div className="relative overflow-hidden rounded-xl shadow-sm">
+                              <img
+                                src={currentPreviewUrl}
+                                alt={slot.label}
+                                className="h-auto max-w-full w-full block rounded-xl transition-transform duration-500 group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 rounded-xl pointer-events-none" />
+                            </div>
+                            <p className="mt-1.5 text-xs text-gray-600 font-semibold truncate px-0.5">
+                              {slot.label}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </article>
+            );
+          })}
         </section>
       )}
 

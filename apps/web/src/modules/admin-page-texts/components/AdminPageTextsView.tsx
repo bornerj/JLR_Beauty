@@ -46,15 +46,22 @@ export const AdminPageTextsView = (): ReactElement => {
   const [activePage, setActivePage] = useState<string>("home");
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     const load = async (): Promise<void> => {
       setLoadState("loading");
       try {
         const token = localStorage.getItem("jlr_token") ?? "";
-        const res = await fetch(`${API_URL}/api/admin/page-texts`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const [res, prevRes] = await Promise.all([
+          fetch(`${API_URL}/api/admin/page-texts`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/api/admin/page-texts/previous`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
         if (!res.ok) throw new Error(`status ${res.status}`);
         const data = (await res.json()) as { catalog: CatalogEntry[]; texts: PageTextsMap };
         setCatalog(data.catalog ?? []);
@@ -65,6 +72,11 @@ export const AdminPageTextsView = (): ReactElement => {
         setActivePage(firstPage);
         const firstSection = data.catalog.find((e) => e.page === firstPage)?.section ?? "";
         if (firstSection) setOpenSections(new Set([`${firstPage}.${firstSection}`]));
+
+        if (prevRes.ok) {
+          const prevData = (await prevRes.json()) as { texts: PageTextsMap | null };
+          setHasPrevious(prevData.texts !== null);
+        }
       } catch {
         setErrorMessage("Não foi possível carregar os textos.");
         setLoadState("error");
@@ -107,10 +119,39 @@ export const AdminPageTextsView = (): ReactElement => {
       if (!res.ok) throw new Error(`status ${res.status}`);
       setSuccessMessage("Textos salvos com sucesso!");
       setTimeout(() => setSuccessMessage(""), 3000);
+      setHasPrevious(true);
     } catch {
       setErrorMessage("Erro ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRestore = async (): Promise<void> => {
+    const confirmed = window.confirm(
+      "Restaurar a versão anterior? Os textos atuais serão substituídos (mas poderão ser restaurados novamente)."
+    );
+    if (!confirmed) return;
+
+    setRestoring(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+    try {
+      const token = localStorage.getItem("jlr_token") ?? "";
+      const res = await fetch(`${API_URL}/api/admin/page-texts/restore`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const data = (await res.json()) as { texts: PageTextsMap };
+      setTexts(data.texts ?? {});
+      setSuccessMessage('Versão anterior restaurada. Clique em "Salvar tudo" para confirmar.');
+      setTimeout(() => setSuccessMessage(""), 5000);
+      setHasPrevious(true);
+    } catch {
+      setErrorMessage("Erro ao restaurar versão anterior.");
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -146,15 +187,28 @@ export const AdminPageTextsView = (): ReactElement => {
           <h1 className="text-2xl font-bold text-forest display-hero">Textos das Páginas</h1>
           <p className="text-sm text-forest/60 mt-1">Edite os textos visíveis do site público.</p>
         </div>
-        <button
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-white font-bold text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-60"
-          type="button"
-          disabled={saving}
-          onClick={handleSave}
-        >
-          <span className="material-symbols-outlined text-base">{saving ? "progress_activity" : "save"}</span>
-          {saving ? "Salvando..." : "Salvar tudo"}
-        </button>
+        <div className="flex items-center gap-2">
+          {hasPrevious && (
+            <button
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#d6ccb3] bg-white text-forest-green font-semibold text-sm hover:bg-champagne/40 transition-colors disabled:opacity-60"
+              type="button"
+              disabled={saving || restoring}
+              onClick={() => { void handleRestore(); }}
+            >
+              <span className="material-symbols-outlined text-base">history</span>
+              {restoring ? "Restaurando..." : "Restaurar versão anterior"}
+            </button>
+          )}
+          <button
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-white font-bold text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-60"
+            type="button"
+            disabled={saving || restoring}
+            onClick={() => { void handleSave(); }}
+          >
+            <span className="material-symbols-outlined text-base">{saving ? "progress_activity" : "save"}</span>
+            {saving ? "Salvando..." : "Salvar tudo"}
+          </button>
+        </div>
       </div>
 
       {successMessage && (

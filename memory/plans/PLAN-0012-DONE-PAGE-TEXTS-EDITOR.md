@@ -345,8 +345,35 @@ apps/web/src/components/pages/
 
 ## Git Record of Delivery
 
-- [ ] Step 1 — Pre-commit review: arquivos + validações
-- [ ] Step 2 — Commit authorization: confirmação explícita do usuário
+### Step 1 — Pre-commit review ✅
+
+**Arquivos alterados neste plano + sessão de fechamento:**
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `apps/api/src/modules/pageTexts/catalog.ts` | criado — 129 entradas, 4 páginas (home/franquias/assinaturas/global) |
+| `apps/api/src/modules/pageTexts/service.ts` | criado + histórico Opção A (snapshot anterior) |
+| `apps/api/src/routes/admin.ts` | 5 rotas pageTexts + 2 rotas history (GET previous, POST restore) |
+| `apps/web/src/modules/public-site/pageTexts.ts` | criado — tipos + STYLE_CLASS_MAP |
+| `apps/web/src/modules/public-site/pageTexts.runtime.ts` | criado + remoção de `pageTextsVersion` (lint) |
+| `apps/web/src/components/ui/RichText.tsx` | criado + suporte a `\n` → `<br />` |
+| `apps/web/src/modules/admin-page-texts/` | criado — AdminPageTextsView, SegmentEditor, Island |
+| `apps/web/src/modules/admin-page-texts/components/AdminPageTextsView.tsx` | histórico UI (hasPrevious, handleRestore) |
+| `apps/web/src/modules/admin-media-gallery/components/AdminMediaGalleryView.tsx` | Masonry Grid 4 colunas (Flowbite pattern) |
+
+**Validações executadas:**
+- `apps/api`: `npm run build` → PASS (zero erros TypeScript)
+- `apps/web`: `npm run lint` → PASS (zero erros)
+- `apps/web`: `npm run build` → PASS
+
+**Funcionalidades validadas pelo usuário:**
+- Editor de textos (129 campos, 4 páginas, abas + acordeão) ✅
+- Segmentos estilizados (gold-gradient, bold, etc.) ✅
+- Quebra de linha via `\n` no textarea ✅
+- Histórico: restaurar versão anterior ✅
+- Galeria Admin: Masonry Grid 4 colunas, legenda abaixo ✅
+
+- [ ] Step 2 — Commit authorization: aguardando confirmação explícita do usuário
 - [ ] Step 3 — Commit confirmation: hash / branch / mensagem / estatísticas
 - [ ] Step 4 — Push authorization e resultado
 - Push status: PENDING

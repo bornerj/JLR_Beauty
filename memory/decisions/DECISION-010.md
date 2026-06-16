@@ -1,0 +1,5 @@
+Status: ACTIVE
+Date: 2026-06-13
+Context: PLAN-0014 — a MissionSection (Missão/Visão/Valores) aparece idêntica nas 3 páginas públicas (Home, Franquias, Assinaturas). O catálogo de pageTexts usava apenas 3 pages: `home`, `franquias`, `assinaturas`. Duplicar as mesmas entradas de texto para cada página criaria redundância e obrigaria editar o mesmo conteúdo em 3 lugares.
+Decision: Adicionar `"global"` como quarta opção do tipo `page` no catálogo de pageTexts. Textos compartilhados entre múltiplas páginas são registrados sob `page: "global"`, aparecendo em uma aba separada "Missão & Valores" no Admin. O mesmo padrão deve ser seguido para qualquer conteúdo futuro que apareça em mais de uma página sem variação.
+Consequences: Conteúdo editado uma única vez reflete automaticamente nas 3 páginas; admin tem tab "Missão & Valores" separada das tabs de páginas; media slot `mission_center_img_01` também registrado como `page: "global"` — deve ser adicionado nos dois catálogos (api e web) simultaneamente (ver ERR-0031).

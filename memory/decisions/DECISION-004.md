@@ -1,0 +1,5 @@
+Status: ACTIVE
+Date: 2026-06-10
+Context: O projeto JLR_AI_Studio rodava em Railway (backend) e Vercel (frontend) com banco MySQL. Dependência de PaaS externo gerava custo variável, limitações de uploads, impossibilidade de ter nginx próprio e risco de lock-in. PLAN-0009 criou uma cópia independente do projeto em Development/GitHub/JLR_Beauty como base para a migração.
+Decision: (1) Criar repositório independente JLR_Beauty separado do JLR_AI_Studio, preservando o projeto original intacto e operacional durante toda a migração. (2) Substituir Railway + Vercel por stack Docker Compose auto-hospedada em VPS Ubuntu/Debian — 4 serviços: nginx (reverse proxy + serve SPA), api (Express), web (Vite build via nginx), postgres (PostgreSQL 16). Nenhuma dependência de PaaS externo para runtime.
+Consequences: Controle total sobre infra e dados; custo fixo de VPS; nginx próprio permite configuração avançada de proxy/cache/SSL; uploads persistem em volume Docker no host; SSL/Certbot configurado manualmente após provisionar domínio; CI/CD não automatizado nesta fase; backups e segurança são responsabilidade própria.

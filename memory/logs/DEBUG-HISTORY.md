@@ -189,6 +189,12 @@ CAUSA_RAIZ: O projeto mantém dois catálogos de media slots paralelos e indepen
 ACAO: Adicionado `mission_center_img_01` em `apps/web/src/modules/public-site/mediaSlots.ts` — entrada idêntica à do backend (`page: "global"`, `section: "mission"`, `fallbackUrl: "/images/about_img1.webp"`). Build passou sem erros após a correção.
 CONTEXTO: Sessão 2026-06-13; PLAN-0014; padrão arquitetural — qualquer novo slot de mídia precisa ser adicionado nos **dois** arquivos simultaneamente.
 
+# ID: ERR-0033: nginx sem config após ligar o computador — contingência de drive externo
+SINTOMA: Containers todos UP (`docker compose ps` mostra 4 serviços healthy), mas `http://localhost` retorna `ERR_SOCKET_NOT_CONNECTED` no browser. `curl http://localhost` conecta mas recebe "Conexão fechada pela outra ponta" imediatamente. `docker exec nginx ls /etc/nginx/conf.d/` retorna vazio.
+CAUSA_RAIZ: O projeto reside em `/media/jeiel/A8FEADE5FEADABCE6/` — partição Linux criada dentro de um HD secundário compartilhado com Windows (dual-boot). O GNOME/udisks2 só monta essa partição quando o usuário clica explicitamente no gerenciador de arquivos. O Docker daemon sobe cedo no boot com `restart: unless-stopped` e recria os containers antes da partição estar montada. O bind-mount `./nginx/ → /etc/nginx/conf.d/` captura o diretório vazio (caminho inexistente no momento do start). Após a montagem manual do drive, a partição fica acessível no host mas o container já tem o bind-mount capturado apontando para nada. Nginx sobe sem nenhum `server {}` definido — aceita TCP mas fecha imediatamente.
+ACAO: Não é um bug — é contingência do setup. Procedimento após ligar o computador: (1) montar o drive pelo gerenciador de arquivos; (2) executar `./scripts/fix-nginx.sh` (ou `docker compose up -d --force-recreate nginx`). Script de conveniência criado em `scripts/fix-nginx.sh`.
+CONTEXTO: Sessão 2026-06-14; setup dual-boot HD compartilhado Windows/Linux; não requer alteração de código.
+
 # ID: ERR-0030: 502 Bad Gateway + tela branca após `docker compose up --build` ##bug
 SINTOMA: Após rebuild com `docker compose up -d --build`, site retornava `502 Bad Gateway`. Após restart manual do nginx, site carregava mas ficava tela branca — JS do bundle era servido com `Content-Type: text/html` e tamanho 533 bytes (= index.html gzipado) em vez de 955 KB.
 CAUSA_RAIZ: Dois problemas encadeados:

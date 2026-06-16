@@ -21,7 +21,7 @@ export const MissionSection = (): ReactElement => {
 
   return (
     <section className="w-full">
-      <div className="grid grid-cols-1 md:grid-cols-3">
+      <div className="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-3">
         {/* Left column — teal */}
         <div className="bg-primary px-10 py-16 lg:px-14 lg:py-20 flex flex-col justify-center gap-12">
           {/* MISSÃO */}

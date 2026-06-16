@@ -39,6 +39,11 @@ docker compose up -d --build web
 ## reconstruir os containers após as lateracoes
 docker compose up -d --build
 
+## ao voltar e3 religar a maquina , precisa subir o nginx
+docker compose up -d --force-recreate nginx
+
+## como ele sobe antes do drive "montar" sempre dará erro. 
+
 ---
 
 ## Pré-requisitos do servidor

@@ -10,6 +10,7 @@ export const publicSectionToggles = {
     about: false,
     contact: true,
     hero: true,
+    hero_gallery: false,
     mission: false,
     models: true,
     vision: true

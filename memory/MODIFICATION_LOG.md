@@ -2,6 +2,54 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-06-16 — Ajustes de sessão (sessão 2)
+
+- **Franquias Hero Gallery Toggle** — grid de fotos do hero de franquias oculto por padrão via section toggle (`hero_gallery: false`); switch em Admin > Seções permite reativar sem código
+  - Arquivos: `sectionToggles.ts`, `admin.ts` (`DEFAULT_PUBLIC_SECTION_TOGGLES`), `FranquiasHeroSection.tsx`
+  - Grid torna-se layout 1-coluna quando galeria oculta; 2-colunas quando visível
+  - Lint PASS, Build PASS (web 18.97s + api tsc zero erros)
+- **MissionSection width** — corrigido container ocupando 100vw; adicionado `max-w-[1440px] mx-auto` no grid div (padrão das demais seções)
+
+---
+
+## 2026-06-16 — PLAN-0012 FECHADO — Editor de Textos + ajustes de sessão
+
+- **PLAN-0012-DONE** — Page Texts Editor validado e fechado pelo usuário
+- Editor funcional com 129 campos, 4 páginas (home/franquias/assinaturas/global), segmentos estilizados
+- Adicionado suporte a quebra de linha (`\n` → `<br />`) em `RichText.tsx`
+- Adicionado histórico de textos (Opção A): `public.pageTexts.previous` salvo automaticamente ao salvar; botão "Restaurar versão anterior" no Admin
+- Galeria Admin refatorada para Masonry Grid 4 colunas (padrão Flowbite) — legenda abaixo de cada imagem em cor neutra
+- Lint PASS (removida variável `pageTextsVersion` não usada em `pageTexts.runtime.ts`)
+- Build PASS em api e web
+
+---
+
+## 2026-06-14 — ERR-0033 registrado + scripts/fix-nginx.sh
+
+- Diagnosticado comportamento de nginx com `/etc/nginx/conf.d/` vazio após boot
+- Causa: partição Linux em HD dual-boot não monta automaticamente — Docker sobe antes do drive estar disponível
+- Não é bug de código — contingência do setup local
+- `ERR-0033` registrado em `memory/logs/DEBUG-HISTORY.md`
+- `scripts/fix-nginx.sh` criado — executa `docker compose up -d --force-recreate nginx`
+
+---
+
+## 2026-06-13 — DECISION-004 a DECISION-010 criados
+
+Revisão retroativa de PLAN-0001 a PLAN-0014 identificou decisões arquiteturais não registradas. Criados 7 novos arquivos em `memory/decisions/`:
+
+| DECISION | Tema |
+|----------|------|
+| 004 | Migração Railway/Vercel → VPS Docker Compose (auto-hospedagem) |
+| 005 | Migração MySQL → PostgreSQL |
+| 006 | Section toggles exclusivamente via banco (remoção de fs.writeFileSync) |
+| 007 | Divisão routes/index.ts em 9 domínios — camada service/repository adiada |
+| 008 | Sistema de textos editáveis — Setting + vocabulário fechado de 6 estilos (não WYSIWYG) |
+| 009 | Uploads em volume Docker persistente no host (não S3/CDN) |
+| 010 | Textos compartilhados entre páginas sob `page: "global"` no catálogo de pageTexts |
+
+---
+
 ## 2026-06-13 — SESSION AUDIT — PASS
 
 **Checklist executado em:** 2026-06-13 (encerramento de sessão)

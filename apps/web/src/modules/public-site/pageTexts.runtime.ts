@@ -8,7 +8,6 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 const PAGE_TEXTS_STORAGE_KEY = "jlr.public.pageTexts.snapshot.v1";
 
 let pageTextsSnapshot: PageTextsMap = { ...DEFAULT_PAGE_TEXTS };
-let pageTextsVersion = 0;
 let pageTextsBootstrapPromise: Promise<void> | null = null;
 let pageTextsReady = false;
 
@@ -60,7 +59,6 @@ const persistSnapshot = (value: PageTextsMap): void => {
 const applySnapshot = (next: PageTextsMap): void => {
   pageTextsSnapshot = next;
   persistSnapshot(pageTextsSnapshot);
-  pageTextsVersion += 1;
   notifySubscribers();
 };
 

@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { useBranding } from "../branding.runtime";
 import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
+import { usePublicSectionEnabled } from "../sectionToggles.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
 export const FranquiasHeroSection = (): ReactElement => {
@@ -15,6 +16,8 @@ export const FranquiasHeroSection = (): ReactElement => {
   const heroGalleryImage06 = useMediaSlot("franquias_hero_gallery_img_06");
   const heroGalleryImage07 = useMediaSlot("franquias_hero_gallery_img_07");
   const heroGalleryImage08 = useMediaSlot("franquias_hero_gallery_img_08");
+
+  const showGallery = usePublicSectionEnabled("franquias", "hero_gallery");
 
   const badge        = usePageText("franquias.hero.badge");
   const title        = usePageText("franquias.hero.title");
@@ -32,7 +35,7 @@ export const FranquiasHeroSection = (): ReactElement => {
           className="absolute inset-0 bg-center bg-no-repeat bg-contain opacity-20 pointer-events-none"
           style={{ backgroundImage: `url(${heroBackgroundMap})` }}
         ></div>
-        <div className="mx-auto max-w-[1200px] px-6 lg:px-10 grid items-center gap-14 lg:grid-cols-2 relative z-10">
+        <div className={`mx-auto max-w-[1200px] px-6 lg:px-10 grid items-center gap-14 ${showGallery ? "lg:grid-cols-2" : ""} relative z-10`}>
             <div className="flex flex-col items-start">
                 <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-forest/20 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-forest shadow-sm dark:border-white/20 dark:bg-white/10 dark:text-white">
                     <RichText value={badge} />
@@ -52,6 +55,7 @@ export const FranquiasHeroSection = (): ReactElement => {
                     </a>
                 </div>
             </div>
+            {showGallery && (
             <div className="relative flex justify-center lg:justify-end">
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 max-w-[520px]">
                     <div className="space-y-4">
@@ -70,6 +74,7 @@ export const FranquiasHeroSection = (): ReactElement => {
                     </div>
                 </div>
             </div>
+            )}
         </div>
     </section>
     </>
