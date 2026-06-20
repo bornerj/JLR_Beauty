@@ -195,6 +195,42 @@ CAUSA_RAIZ: O projeto reside em `/media/jeiel/A8FEADE5FEADABCE6/` — partição
 ACAO: Não é um bug — é contingência do setup. Procedimento após ligar o computador: (1) montar o drive pelo gerenciador de arquivos; (2) executar `./scripts/fix-nginx.sh` (ou `docker compose up -d --force-recreate nginx`). Script de conveniência criado em `scripts/fix-nginx.sh`.
 CONTEXTO: Sessão 2026-06-14; setup dual-boot HD compartilhado Windows/Linux; não requer alteração de código.
 
+# ID: ERR-0034: Chaves de page text com prefixo incorreto em 3 seções — textos não carregavam ##bug
+SINTOMA: Textos das seções FranquiasEtapasAbertura, FranquiasPerfilFranqueado e FranquiasSuporteFranqueadora retornavam string vazia ou fallback na tela pública após PLAN-0015.
+CAUSA_RAIZ: Os 3 componentes foram codificados com prefixos longos nas chaves de page text (`etapas_abertura.*`, `perfil_franqueado.*`, `suporte_franqueadora.*`) que não correspondiam às chaves registradas em `catalog.ts` — que usavam os prefixos curtos `etapas.*`, `perfil.*`, `suporte.*`. `usePageText()` retorna a própria chave como fallback quando não encontra match, exibindo o literal da chave em vez do texto.
+ACAO: Renomeadas as chaves nos 3 componentes para corresponder exatamente ao catálogo: `FranquiasEtapasAberturaSection.tsx` (`etapas_abertura` → `etapas`), `FranquiasPerfilFranqueadoSection.tsx` (`perfil_franqueado` → `perfil`), `FranquiasSuporteFranqueadoraSection.tsx` (`suporte_franqueadora` → `suporte`).
+CONTEXTO: Sessão 2026-06-16; pós-PLAN-0015; `apps/web/src/modules/public-site/sections/`; padrão — ao criar seções novas, as chaves do componente devem ser copiadas literalmente do `catalog.ts`.
+
+# ID: ERR-0035: Seções 2-col sem max-width — conteúdo esticado em monitores largos ##bug
+SINTOMA: Em viewports > 1400px, as seções FounderSection, ExpansaoSection, MarketingCrmSection, PerfilFranqueadoSection e SuporteFranqueadoraSection apresentavam o grid de 2 colunas expandido indefinidamente até a borda da tela, gerando blocos de texto e imagem excessivamente largos.
+CAUSA_RAIZ: Os containers internos das seções (`<div className="grid grid-cols-1 lg:grid-cols-2">`) eram filhos diretos de `<section className="w-full">` sem nenhum `max-w` limitador. O padrão do projeto é envolver o grid em `mx-auto max-w-[1200px]`, como já era feito em outras seções da mesma página.
+ACAO: Adicionado `mx-auto max-w-[1200px]` ao div de grid nas 5 seções afetadas. ExpansaoSection também tinha cor de fundo incorreta (`bg-beige` — classe inexistente no Tailwind config do projeto) corrigida para `bg-gold-light`; gradiente de overlay ajustado de `to-beige/30` para `to-gold-light/30`.
+CONTEXTO: Sessão 2026-06-16; pós-PLAN-0015; `apps/web/src/modules/public-site/sections/`; padrão — novas seções de largura total com grid interno devem sempre usar `mx-auto max-w-[1200px]` no container do grid.
+
+# ID: ERR-0036: Ícones ✦ decorativos causando desalinhamento de baseline em títulos ##bug
+SINTOMA: Títulos das seções BenefitsSection, GestaoAppSection e PerfilFranqueadoSection exibiam desalinhamento visual — o `<h2>` ficava fora de eixo devido à diferença de tamanho de fonte entre o ícone e o texto do título.
+CAUSA_RAIZ: `<span>✦</span>` inseridos como irmãos inline de `<h2>` em contexto flex não têm alinhamento de baseline consistente com text-4xl/5xl. Em mobile, o ícone occupava espaço fora da caixa do título quebrando o layout do cabeçalho.
+ACAO: Removidos os spans decorativos ✦ de BenefitsSection (2 flanqueando o h2), GestaoAppSection (após o título inline) e PerfilFranqueadoSection (antes do h2 junto com container flex).
+CONTEXTO: Sessão 2026-06-16; pós-PLAN-0015; `apps/web/src/modules/public-site/sections/`.
+
+# ID: ERR-0037: FluxoCaixaSection — layout decorativo sem imagens + 3 media slots ausentes do catálogo ##bug
+SINTOMA: A seção FluxoCaixaSection exibia layout 2-col com stripe teal à direita contendo apenas ícones ✦ decorativos, sem imagem real. O conteúdo visual da seção era insuficiente para comunicar as features. Além disso, os 3 media slots de imagem por feature não existiam no catálogo (api nem web).
+CAUSA_RAIZ: O PLAN-0015 implementou o layout inicial com stripe decorativa como placeholder visual, sem adicionar media slots de imagem ao catálogo. A seção foi entregue sem os slots `franquias_fluxo_caixa_feature_img_0*` em `service.ts` (api) nem em `mediaSlots.ts` (web).
+ACAO: Layout substituído por grid 3-col de cards (imagem + título + descrição) com `h-[200px]` e `object-cover` por imagem. Adicionados 3 media slots (`franquias_fluxo_caixa_feature_img_01/02/03`) em `apps/api/src/modules/mediaSlots/service.ts` e em `apps/web/src/modules/public-site/mediaSlots.ts` — padrão ERR-0031 aplicado: slots devem ser adicionados nos dois arquivos simultaneamente.
+CONTEXTO: Sessão 2026-06-16; pós-PLAN-0015; `FranquiasFluxoCaixaSection.tsx`, `service.ts`, `mediaSlots.ts`.
+
+# ID: ERR-0038: EtapasAberturaSection — snake layout desproporcional em viewports médias ##bug
+SINTOMA: Em telas entre 768px e 1100px, o snake de 10 passos extrapolava o container — bolhas numéricas (w-14 h-14) demasiado grandes para o espaço disponível, empurrando o texto dos passos para fora ou quebrando a linha de conexão entre os steps.
+CAUSA_RAIZ: O PLAN-0015 dimensionou o container com `max-w-[1100px]` e bolhas `w-14 h-14` para um snake de 4 itens por linha. Em viewports médias, cada bolha de 56px + gap + texto `max-w-[120px]` não cabia em 4 colunas sem overflow.
+ACAO: Bolhas reduzidas para `w-10 h-10` (40px), fonte interna de `text-lg` → `text-sm`; `max-w-[120px]` do texto → `max-w-[100px]`; container reduzido para `max-w-[620px]` — snake fica em layout mais compacto mas com proporções corretas. Adicionados `min-w-0` nas células e `Fragment` substituindo o wrapper extra para evitar overflow implícito.
+CONTEXTO: Sessão 2026-06-16; pós-PLAN-0015; `apps/web/src/modules/public-site/sections/FranquiasEtapasAberturaSection.tsx`.
+
+# ID: ERR-0039: AdminMediaGalleryView — Masonry Grid com alturas irregulares entre cards ##bug
+SINTOMA: Na galeria Admin > Mídia, os cards de imagem exibiam alturas completamente diferentes entre si — fotos em portrait dominavam colunas inteiras enquanto imagens em landscape ficavam comprimidas, criando layout visualmente inconsistente.
+CAUSA_RAIZ: O Masonry Grid de 4 colunas (PLAN-0012) distribuía slots entre colunas via `i % numCols` e renderizava imagens com `h-auto` respeitando a proporção original. Slots de franquias adicionados no PLAN-0015 têm proporções heterogêneas (ícones quadrados + fotos landscape + fotos portrait).
+ACAO: Layout Masonry substituído por grid flat `grid-cols-2 md:grid-cols-4` com cada card em `div.h-[180px]` + `img.object-cover` — altura uniforme em todos os slots independente da proporção original. Lógica de colunização (`columns[]`, `i % numCols`) removida.
+CONTEXTO: Sessão 2026-06-16; pós-PLAN-0015; `apps/web/src/modules/admin-media-gallery/components/AdminMediaGalleryView.tsx`.
+
 # ID: ERR-0030: 502 Bad Gateway + tela branca após `docker compose up --build` ##bug
 SINTOMA: Após rebuild com `docker compose up -d --build`, site retornava `502 Bad Gateway`. Após restart manual do nginx, site carregava mas ficava tela branca — JS do bundle era servido com `Content-Type: text/html` e tamanho 533 bytes (= index.html gzipado) em vez de 955 KB.
 CAUSA_RAIZ: Dois problemas encadeados:

@@ -19,7 +19,7 @@ export const FranquiasFounderSection = (): ReactElement => {
 
   return (
     <section className="w-full" id="founder">
-      <div className="grid grid-cols-1 lg:grid-cols-2">
+      <div className="mx-auto max-w-[1200px] grid grid-cols-1 lg:grid-cols-2">
 
         {/* Left — teal background + founder photo */}
         <div className="relative bg-primary min-h-[480px] lg:min-h-0 overflow-hidden order-2 lg:order-1">

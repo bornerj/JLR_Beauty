@@ -371,10 +371,6 @@ export const AdminMediaGalleryView = (): ReactElement => {
       ) : (
         <section className="grid grid-cols-1 gap-5">
           {groupedCatalog.map(({ page, slots }) => {
-            const numCols = 4;
-            const columns: typeof slots[number][][] = Array.from({ length: numCols }, () => []);
-            slots.forEach((slot, i) => columns[i % numCols].push(slot));
-
             return (
               <article key={page} className="bg-gray-100 rounded-2xl p-4 md:p-5">
                 <div className="flex items-center justify-between gap-2 mb-4">
@@ -383,37 +379,33 @@ export const AdminMediaGalleryView = (): ReactElement => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {columns.map((colSlots, colIdx) => (
-                    <div key={colIdx} className="grid gap-3 content-start">
-                      {colSlots.map((slot) => {
-                        const currentValue = formSlots[slot.id];
-                        const currentPreviewUrl = resolveUploadedAssetUrl(currentValue) || currentValue;
+                  {slots.map((slot) => {
+                    const currentValue = formSlots[slot.id];
+                    const currentPreviewUrl = resolveUploadedAssetUrl(currentValue) || currentValue;
 
-                        return (
-                          <button
-                            key={slot.id}
-                            type="button"
-                            className="w-full text-left group"
-                            onClick={() => {
-                              setEditorSlotId(slot.id);
-                            }}
-                          >
-                            <div className="relative overflow-hidden rounded-xl shadow-sm">
-                              <img
-                                src={currentPreviewUrl}
-                                alt={slot.label}
-                                className="h-auto max-w-full w-full block rounded-xl transition-transform duration-500 group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 rounded-xl pointer-events-none" />
-                            </div>
-                            <p className="mt-1.5 text-xs text-gray-600 font-semibold truncate px-0.5">
-                              {slot.label}
-                            </p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
+                    return (
+                      <button
+                        key={slot.id}
+                        type="button"
+                        className="w-full text-left group"
+                        onClick={() => {
+                          setEditorSlotId(slot.id);
+                        }}
+                      >
+                        <div className="relative overflow-hidden rounded-xl shadow-sm h-[180px]">
+                          <img
+                            src={currentPreviewUrl}
+                            alt={slot.label}
+                            className="w-full h-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 rounded-xl pointer-events-none" />
+                        </div>
+                        <p className="mt-1.5 text-xs text-gray-600 font-semibold truncate px-0.5">
+                          {slot.label}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               </article>
             );

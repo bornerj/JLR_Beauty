@@ -21,6 +21,7 @@
 | Docker Status Modal | stable | 2026-06-13 | PLAN-0013 CONCLUÍDO — modal flutuante admin, auto-fecha 10s, ícone topbar com LED |
 | Mission Section | stable | 2026-06-16 | PLAN-0014 CONCLUÍDO — About Franquias + MissionSection 3-col; width corrigido (max-w-[1440px]) |
 | Franquias Hero Gallery | stable | 2026-06-16 | toggle hero_gallery via section toggles — oculto por padrão, reativável pelo Admin |
+| Franquias Page Upgrade | stable | 2026-06-20 | PLAN-0015 DONE — 18 seções; correções pós-entrega: ERR-0034..0039 (chaves page text, max-width, ✦ removidos, FluxoCaixa layout+slots, Etapas snake, AdminGallery grid) |
 
 ---
 
@@ -45,3 +46,4 @@
 - 2026-06-11: Page Texts Editor — 129 campos, 11 componentes migrados, Admin UI (PLAN-0012 CONCLUÍDO)
 - 2026-06-12: Docker Status Modal + fix nginx boot/inode/proxy_pass (PLAN-0013 em andamento)
 - 2026-06-13: About em Franquias + MissionSection global (PLAN-0014 em andamento)
+- 2026-06-16: Franquias Page Upgrade — 13 novas seções, 13 componentes TSX, ~145 page texts, ~26 media slots, 13 toggles (PLAN-0015 DONE)

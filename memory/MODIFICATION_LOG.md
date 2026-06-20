@@ -2,6 +2,77 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-06-20 — Correções pós-PLAN-0015 — Bugs de formatação Franquias (point-in-time)
+
+**Contexto:** 6 bugs de formatação e dados identificados após o commit f31d986 do PLAN-0015 e registrados em DEBUG-HISTORY (ERR-0034 a ERR-0039).
+
+### Arquivos alterados (12)
+
+| Arquivo | Correção |
+|---------|----------|
+| `FranquiasEtapasAberturaSection.tsx` | Chaves page text (`etapas_abertura` → `etapas`); snake redimensionado (ERR-0034, ERR-0038) |
+| `FranquiasPerfilFranqueadoSection.tsx` | Chaves page text (`perfil_franqueado` → `perfil`); max-w + remoção ✦ (ERR-0034, ERR-0035, ERR-0036) |
+| `FranquiasSuporteFranqueadoraSection.tsx` | Chaves page text (`suporte_franqueadora` → `suporte`); max-w (ERR-0034, ERR-0035) |
+| `FranquiasFounderSection.tsx` | Adicionado `max-w-[1200px]` (ERR-0035) |
+| `FranquiasExpansaoSection.tsx` | `max-w-[1200px]`; cor `bg-beige` → `bg-gold-light` (ERR-0035) |
+| `FranquiasMarketingCrmSection.tsx` | `max-w-[1200px]`; hierarquia de lista com sub-bullets (ERR-0035) |
+| `FranquiasBenefitsSection.tsx` | Remoção dos ✦ flanqueando h2 (ERR-0036) |
+| `FranquiasGestaoAppSection.tsx` | Remoção do ✦ inline no título (ERR-0036) |
+| `FranquiasFluxoCaixaSection.tsx` | Layout 2-col → grid 3-col de cards com imagens; `useMediaSlot` adicionado (ERR-0037) |
+| `apps/api/src/modules/mediaSlots/service.ts` | +3 slots `franquias_fluxo_caixa_feature_img_0*` (ERR-0037) |
+| `apps/web/src/modules/public-site/mediaSlots.ts` | +3 slots `franquias_fluxo_caixa_feature_img_0*` (ERR-0037) |
+| `AdminMediaGalleryView.tsx` | Masonry → grid flat `h-[180px]` object-cover (ERR-0039) |
+
+### Validações
+- TypeScript: PASS
+- Build: PASS
+- ERR-0034 a ERR-0039 registrados em `memory/logs/DEBUG-HISTORY.md`
+- PLAN-0015 renomeado para `PLAN-0015-DONE-FRANQUIAS-PAGE-UPGRADE.md`
+
+---
+
+## 2026-06-16 — PLAN-0015 CONCLUÍDO — Franquias Page Upgrade (sessão 3)
+
+**Commit:** `f31d986` — 20 arquivos, 1428 inserções
+
+### Seções criadas (13 componentes TSX)
+
+| Componente | Layout |
+|-----------|--------|
+| `FranquiasFounderSection` | 2-col: foto esq, texto dir |
+| `FranquiasBenefitsSection` | grid 3×3: ícone + texto |
+| `FranquiasModelDetailSection` | base 3-col reutilizável (conceito / investimento / métricas) |
+| `FranquiasFran01Section` | wrapper ModelDetail — Master |
+| `FranquiasFran02Section` | wrapper ModelDetail — Prime |
+| `FranquiasFran03Section` | wrapper ModelDetail — Essencial I |
+| `FranquiasGestaoAppSection` | 2-col: 4 features esq, mockup dir |
+| `FranquiasFluxoCaixaSection` | 2-col: 3 features com dividers, stripe teal |
+| `FranquiasMarketingCrmSection` | 2-col: lista + sub-bullets esq, foto dir |
+| `FranquiasExpansaoSection` | 2-col: mapa esq, texto+quotes dir |
+| `FranquiasPerfilFranqueadoSection` | 2-col: foto esq, numbered list 7 itens |
+| `FranquiasSuporteFranqueadoraSection` | 2-col: 3 grupos com bullets, foto dir |
+| `FranquiasEtapasAberturaSection` | full-width snake 10 passos + CTA |
+
+### Data layer
+
+- `catalog.ts` — ~145 novos page text keys (api)
+- `service.ts` — ~26 novos media slots + IDs (api)
+- `mediaSlots.ts` — espelho dos slots acima (web)
+- `sectionToggles.ts` — 13 novos toggles em `franquias` (web)
+- `admin.ts` — 13 novos toggles em `DEFAULT_PUBLIC_SECTION_TOGGLES.franquias` (api)
+- `sections/index.ts` — 13 novos exports
+- `FranquiasContent.tsx` — 18 seções no total
+
+### Validação
+
+- TypeScript: PASS (zero erros)
+- Build: PASS — vite 11.22s
+- Push: autorizado e executado (`origin/main` → `f31d986`)
+
+### Audit: PASS — `memory/logs/AUDIT_CHECKLIST_2026-06-16-PASS.md`
+
+---
+
 ## 2026-06-16 — Ajustes de sessão (sessão 2)
 
 - **Franquias Hero Gallery Toggle** — grid de fotos do hero de franquias oculto por padrão via section toggle (`hero_gallery: false`); switch em Admin > Seções permite reativar sem código

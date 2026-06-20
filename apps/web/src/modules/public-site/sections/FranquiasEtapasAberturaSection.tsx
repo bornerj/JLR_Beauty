@@ -1,20 +1,20 @@
-import type { ReactElement } from "react";
+import { Fragment, type ReactElement } from "react";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
 export const FranquiasEtapasAberturaSection = (): ReactElement => {
-  const title = usePageText("franquias.etapas_abertura.title");
-  const step1  = usePageText("franquias.etapas_abertura.step_1");
-  const step2  = usePageText("franquias.etapas_abertura.step_2");
-  const step3  = usePageText("franquias.etapas_abertura.step_3");
-  const step4  = usePageText("franquias.etapas_abertura.step_4");
-  const step5  = usePageText("franquias.etapas_abertura.step_5");
-  const step6  = usePageText("franquias.etapas_abertura.step_6");
-  const step7  = usePageText("franquias.etapas_abertura.step_7");
-  const step8  = usePageText("franquias.etapas_abertura.step_8");
-  const step9  = usePageText("franquias.etapas_abertura.step_9");
-  const step10 = usePageText("franquias.etapas_abertura.step_10");
-  const cta    = usePageText("franquias.etapas_abertura.cta");
+  const title = usePageText("franquias.etapas.title");
+  const step1  = usePageText("franquias.etapas.step_1");
+  const step2  = usePageText("franquias.etapas.step_2");
+  const step3  = usePageText("franquias.etapas.step_3");
+  const step4  = usePageText("franquias.etapas.step_4");
+  const step5  = usePageText("franquias.etapas.step_5");
+  const step6  = usePageText("franquias.etapas.step_6");
+  const step7  = usePageText("franquias.etapas.step_7");
+  const step8  = usePageText("franquias.etapas.step_8");
+  const step9  = usePageText("franquias.etapas.step_9");
+  const step10 = usePageText("franquias.etapas.step_10");
+  const cta    = usePageText("franquias.etapas.cta");
 
   // Snake layout: row1 left-to-right (1–4), row2 right-to-left (5–8), row3 left + CTA (9–10)
   const row1 = [step1, step2, step3, step4];
@@ -22,11 +22,11 @@ export const FranquiasEtapasAberturaSection = (): ReactElement => {
   const row3 = [step9, step10];
 
   const StepBubble = ({ num, label }: { num: number; label: ReturnType<typeof usePageText> }) => (
-    <div className="flex flex-col items-center gap-3 flex-1">
-      <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-md">
+    <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
+      <div className="shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md">
         {num}
       </div>
-      <p className="text-xs text-center text-forest/80 dark:text-white/80 leading-snug max-w-[120px]">
+      <p className="text-sm text-center text-forest/80 dark:text-white/80 leading-snug max-w-[100px]">
         <RichText value={label} />
       </p>
     </div>
@@ -40,7 +40,7 @@ export const FranquiasEtapasAberturaSection = (): ReactElement => {
 
   return (
     <section className="w-full bg-white dark:bg-background-dark py-20" id="etapas-abertura">
-      <div className="mx-auto max-w-[1100px] px-6 lg:px-10">
+      <div className="mx-auto max-w-[620px] px-6 lg:px-10">
 
         <div className="text-center mb-16">
           <h2 className="display-hero text-4xl md:text-5xl text-forest dark:text-white leading-tight">
@@ -51,10 +51,10 @@ export const FranquiasEtapasAberturaSection = (): ReactElement => {
         {/* Row 1 — steps 1–4, L→R */}
         <div className="flex items-start justify-between gap-2 mb-10">
           {row1.map((s, i) => (
-            <>
-              <StepBubble key={i} num={i + 1} label={s} />
-              {i < row1.length - 1 && <Connector key={`c-${i}`} />}
-            </>
+            <Fragment key={i}>
+              <StepBubble num={i + 1} label={s} />
+              {i < row1.length - 1 && <Connector />}
+            </Fragment>
           ))}
         </div>
 
@@ -66,10 +66,10 @@ export const FranquiasEtapasAberturaSection = (): ReactElement => {
         {/* Row 2 — steps 8→5, displayed R→L so snake goes right-to-left */}
         <div className="flex items-start justify-between gap-2 mb-10">
           {row2.map((s, i) => (
-            <>
-              <StepBubble key={i} num={8 - i} label={s} />
-              {i < row2.length - 1 && <Connector key={`c-${i}`} flip />}
-            </>
+            <Fragment key={i}>
+              <StepBubble num={8 - i} label={s} />
+              {i < row2.length - 1 && <Connector flip />}
+            </Fragment>
           ))}
         </div>
 
@@ -81,10 +81,10 @@ export const FranquiasEtapasAberturaSection = (): ReactElement => {
         {/* Row 3 — steps 9–10 + CTA */}
         <div className="flex items-start justify-start gap-2">
           {row3.map((s, i) => (
-            <>
-              <StepBubble key={i} num={i + 9} label={s} />
-              {i < row3.length - 1 && <Connector key={`c-${i}`} />}
-            </>
+            <Fragment key={i}>
+              <StepBubble num={i + 9} label={s} />
+              {i < row3.length - 1 && <Connector />}
+            </Fragment>
           ))}
           <Connector />
           {/* CTA */}

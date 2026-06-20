@@ -6,24 +6,24 @@ import { RichText } from "../../../components/ui/RichText";
 export const FranquiasSuporteFranqueadoraSection = (): ReactElement => {
   const suporteImg = useMediaSlot("franquias_suporte_img_01");
 
-  const title      = usePageText("franquias.suporte_franqueadora.title");
-  const g1Title    = usePageText("franquias.suporte_franqueadora.g1_title");
-  const g1Item1    = usePageText("franquias.suporte_franqueadora.g1_item_1");
-  const g1Item2    = usePageText("franquias.suporte_franqueadora.g1_item_2");
-  const g1Item3    = usePageText("franquias.suporte_franqueadora.g1_item_3");
-  const g2Title    = usePageText("franquias.suporte_franqueadora.g2_title");
-  const g2Item1    = usePageText("franquias.suporte_franqueadora.g2_item_1");
-  const g2Item2    = usePageText("franquias.suporte_franqueadora.g2_item_2");
-  const g2Item3    = usePageText("franquias.suporte_franqueadora.g2_item_3");
-  const g2Item4    = usePageText("franquias.suporte_franqueadora.g2_item_4");
-  const g2Item5    = usePageText("franquias.suporte_franqueadora.g2_item_5");
-  const g2Item6    = usePageText("franquias.suporte_franqueadora.g2_item_6");
-  const g2Item7    = usePageText("franquias.suporte_franqueadora.g2_item_7");
-  const g3Title    = usePageText("franquias.suporte_franqueadora.g3_title");
-  const g3Item1    = usePageText("franquias.suporte_franqueadora.g3_item_1");
-  const g3Item2    = usePageText("franquias.suporte_franqueadora.g3_item_2");
-  const g3Item3    = usePageText("franquias.suporte_franqueadora.g3_item_3");
-  const g3SubItems = usePageText("franquias.suporte_franqueadora.g3_subitems");
+  const title      = usePageText("franquias.suporte.title");
+  const g1Title    = usePageText("franquias.suporte.g1_title");
+  const g1Item1    = usePageText("franquias.suporte.g1_item_1");
+  const g1Item2    = usePageText("franquias.suporte.g1_item_2");
+  const g1Item3    = usePageText("franquias.suporte.g1_item_3");
+  const g2Title    = usePageText("franquias.suporte.g2_title");
+  const g2Item1    = usePageText("franquias.suporte.g2_item_1");
+  const g2Item2    = usePageText("franquias.suporte.g2_item_2");
+  const g2Item3    = usePageText("franquias.suporte.g2_item_3");
+  const g2Item4    = usePageText("franquias.suporte.g2_item_4");
+  const g2Item5    = usePageText("franquias.suporte.g2_item_5");
+  const g2Item6    = usePageText("franquias.suporte.g2_item_6");
+  const g2Item7    = usePageText("franquias.suporte.g2_item_7");
+  const g3Title    = usePageText("franquias.suporte.g3_title");
+  const g3Item1    = usePageText("franquias.suporte.g3_item_1");
+  const g3Item2    = usePageText("franquias.suporte.g3_item_2");
+  const g3Item3    = usePageText("franquias.suporte.g3_item_3");
+  const g3SubItems = usePageText("franquias.suporte.g3_subitems");
 
   const groups = [
     { title: g1Title, items: [g1Item1, g1Item2, g1Item3] },
@@ -33,7 +33,7 @@ export const FranquiasSuporteFranqueadoraSection = (): ReactElement => {
 
   return (
     <section className="w-full bg-background-light dark:bg-background-dark" id="suporte-franqueadora">
-      <div className="grid grid-cols-1 lg:grid-cols-2">
+      <div className="mx-auto max-w-[1200px] grid grid-cols-1 lg:grid-cols-2">
 
         {/* LEFT — groups */}
         <div className="px-10 py-20 lg:px-14 lg:py-24 flex flex-col justify-center">

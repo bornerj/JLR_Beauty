@@ -43,11 +43,9 @@ export const FranquiasBenefitsSection = (): ReactElement => {
 
         {/* Title with decorative stars */}
         <div className="mb-16 flex items-center justify-center gap-4">
-          <span className="text-primary text-3xl select-none leading-none">✦</span>
           <h2 className="display-hero text-4xl md:text-5xl text-forest dark:text-white text-center leading-tight">
             <RichText value={title} />
           </h2>
-          <span className="text-primary text-3xl select-none leading-none">✦</span>
         </div>
 
         {/* 3×3 grid */}

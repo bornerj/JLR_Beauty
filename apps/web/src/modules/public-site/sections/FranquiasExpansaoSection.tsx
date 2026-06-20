@@ -14,8 +14,8 @@ export const FranquiasExpansaoSection = (): ReactElement => {
   const quote3 = usePageText("franquias.expansao.quote_3");
 
   return (
-    <section className="w-full bg-beige dark:bg-forest/20" id="expansao">
-      <div className="grid grid-cols-1 lg:grid-cols-2">
+    <section className="w-full bg-gold-light dark:bg-forest/20" id="expansao">
+      <div className="mx-auto max-w-[1200px] grid grid-cols-1 lg:grid-cols-2">
 
         {/* LEFT — map image */}
         <div className="relative min-h-[360px] lg:min-h-[520px] overflow-hidden order-2 lg:order-1">
@@ -24,7 +24,7 @@ export const FranquiasExpansaoSection = (): ReactElement => {
             alt=""
             className="absolute inset-0 w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-beige/30 dark:to-forest/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-gold-light/30 dark:to-forest/30" />
         </div>
 
         {/* RIGHT — text */}
@@ -40,7 +40,6 @@ export const FranquiasExpansaoSection = (): ReactElement => {
             <RichText value={para2} />
           </p>
 
-          {/* Quote trio */}
           <div className="space-y-4 border-l-4 border-primary pl-6">
             {[quote1, quote2, quote3].map((q, i) => (
               <p key={i} className="text-primary font-semibold text-sm italic leading-relaxed">

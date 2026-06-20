@@ -31,7 +31,7 @@ export const FranquiasGestaoAppSection = (): ReactElement => {
           {/* LEFT — Title + features */}
           <div>
             <h2 className="display-hero text-4xl md:text-5xl text-forest dark:text-white leading-tight mb-10">
-              <RichText value={title} /> <span className="text-primary">✦</span>
+              <RichText value={title} />
             </h2>
             <div className="space-y-8">
               {features.map((f, i) => (
