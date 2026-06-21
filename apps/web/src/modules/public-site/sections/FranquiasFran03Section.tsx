@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { FranquiasModelDetailSection } from "./FranquiasModelDetailSection";
 
-export const FranquiasFran03Section = (): ReactElement => {
+export const FranquiasFran03Section = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const floorplan     = useMediaSlot("franquias_fran03_floorplan_img_01");
   const metricIcon01  = useMediaSlot("franquias_fran03_metric_icon_01");
   const metricIcon02  = useMediaSlot("franquias_fran03_metric_icon_02");
@@ -50,6 +50,7 @@ export const FranquiasFran03Section = (): ReactElement => {
   return (
     <FranquiasModelDetailSection
       sectionId="fran03"
+      alt={alt}
       label={label}
       conceptBadge={conceptBadge}
       conceptDesc={conceptDesc}

@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasMarketingCrmSection = (): ReactElement => {
+export const FranquiasMarketingCrmSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const crmImg = useMediaSlot("franquias_marketing_crm_img_01");
 
   const title = usePageText("franquias.marketing_crm.title");
@@ -18,7 +18,7 @@ export const FranquiasMarketingCrmSection = (): ReactElement => {
   const tip   = usePageText("franquias.marketing_crm.tip");
 
   return (
-    <section className="w-full bg-background-light dark:bg-background-dark" id="marketing-crm">
+    <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'} dark:bg-background-dark`} id="marketing-crm">
       <div className="mx-auto max-w-[1200px] grid grid-cols-1 lg:grid-cols-2">
 
         {/* LEFT — text content */}

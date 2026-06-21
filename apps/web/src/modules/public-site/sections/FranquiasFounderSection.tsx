@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasFounderSection = (): ReactElement => {
+export const FranquiasFounderSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const founderImage = useMediaSlot("franquias_founder_main_img_01");
 
   const title      = usePageText("franquias.founder.title");
@@ -18,7 +18,7 @@ export const FranquiasFounderSection = (): ReactElement => {
   const tagline2   = usePageText("franquias.founder.tagline_2");
 
   return (
-    <section className="w-full" id="founder">
+    <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'}`} id="founder">
       <div className="mx-auto max-w-[1200px] grid grid-cols-1 lg:grid-cols-2">
 
         {/* Left — teal background + founder photo */}
@@ -30,20 +30,19 @@ export const FranquiasFounderSection = (): ReactElement => {
           />
           <span className="absolute bottom-10 left-5 text-white/30 text-5xl select-none leading-none pointer-events-none">✦</span>
           <span className="absolute bottom-4 left-12 text-white/20 text-3xl select-none leading-none pointer-events-none">✦</span>
+          {/* Quote circle — same pattern as VisionSection */}
+          <div className="absolute -bottom-10 -left-[56px] z-10 hidden h-64 w-64 rounded-full border-[1px] border-gold/30 bg-forest p-8 lg:flex items-center justify-center">
+            <p className="text-center display-quote text-xl text-gold"><RichText value={quote} /></p>
+          </div>
         </div>
 
         {/* Right — text content */}
-        <div className="bg-white px-10 py-16 lg:px-14 lg:py-20 flex flex-col justify-center order-1 lg:order-2">
+        <div className="px-10 py-16 lg:px-14 lg:py-20 flex flex-col justify-center order-1 lg:order-2">
 
-          {/* Title row + quote */}
-          <div className="flex flex-col gap-3 mb-8 lg:flex-row lg:items-start lg:gap-10">
-            <h2 className="text-5xl lg:text-6xl display-hero text-forest leading-tight shrink-0">
-              <RichText value={title} />
-            </h2>
-            <p className="text-primary italic font-light text-lg leading-relaxed lg:pt-2">
-              <RichText value={quote} />
-            </p>
-          </div>
+          {/* Title */}
+          <h2 className="text-5xl lg:text-6xl display-hero text-forest leading-tight shrink-0 mb-8">
+            <RichText value={title} />
+          </h2>
 
           {/* Intro bold */}
           <p className="text-forest text-sm leading-relaxed font-semibold mb-5">

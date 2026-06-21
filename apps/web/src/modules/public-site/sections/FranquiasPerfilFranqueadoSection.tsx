@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasPerfilFranqueadoSection = (): ReactElement => {
+export const FranquiasPerfilFranqueadoSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const perfilImg = useMediaSlot("franquias_perfil_img_01");
 
   const title = usePageText("franquias.perfil.title");
@@ -18,7 +18,7 @@ export const FranquiasPerfilFranqueadoSection = (): ReactElement => {
   const items = [item1, item2, item3, item4, item5, item6, item7];
 
   return (
-    <section className="w-full bg-white dark:bg-background-dark" id="perfil-franqueado">
+    <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'} dark:bg-background-dark`} id="perfil-franqueado">
       <div className="mx-auto max-w-[1200px] grid grid-cols-1 lg:grid-cols-2">
 
         {/* LEFT — photo */}
@@ -26,13 +26,13 @@ export const FranquiasPerfilFranqueadoSection = (): ReactElement => {
           <img
             src={perfilImg}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-top"
+            className="absolute inset-0 w-full h-full object-contain object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
 
         {/* RIGHT — title + checklist */}
-        <div className="relative z-10 px-10 py-20 lg:px-14 lg:py-24 flex flex-col justify-center order-1 lg:order-2 bg-background-light dark:bg-background-dark">
+        <div className={`relative z-10 px-10 py-20 lg:px-14 lg:py-24 flex flex-col justify-center order-1 lg:order-2 ${alt ? 'bg-white' : 'bg-background-light'} dark:bg-background-dark`}>
           <h2 className="display-hero text-4xl md:text-5xl text-forest dark:text-white leading-tight mb-8">
             <RichText value={title} />
           </h2>

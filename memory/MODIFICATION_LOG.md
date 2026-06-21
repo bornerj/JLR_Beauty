@@ -2,6 +2,59 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-06-21 — Fine-tuning Franquias — Ajustes visuais (imagens, cards, círculo, ordem)
+
+**Contexto:** Sessão de ajustes finos pós-alternância de fundos. Sem novo plano — alterações incrementais de formatação guiadas pelo usuário.
+
+**Arquivos alterados:** 4
+
+| Arquivo | Mudança |
+|---------|---------|
+| `FranquiasExpansaoSection.tsx` | Imagem: `object-cover object-center` → `object-contain object-center` (menos zoom/recorte) |
+| `FranquiasPerfilFranqueadoSection.tsx` | Imagem: `object-cover object-top` → `object-contain object-center` |
+| `FranquiasSuporteFranqueadoraSection.tsx` | Imagem: `object-cover object-top` → `object-contain object-center` |
+| `FranquiasFounderSection.tsx` | Quote movida de coluna direita para círculo `bg-forest/border-gold` sobre a foto (padrão Vision); posicionado em `-bottom-10 -left-[56px]` |
+| `FranquiasModelsSection.tsx` | Overlay escuro (`bg-gradient-to-t from-black/60`) removido dos 3 cards; nome/subtítulo movidos de cima da imagem para corpo do card (`display-hero text-primary`); botões convertidos de `<button>` para `<a href="#franXX">`; ordem das seções: fran01/02/03 → fran03/02/01 (ESSENCIAL I → PRIME → MASTER) |
+| `FranquiasContent.tsx` | Ordem de renderização invertida: fran03, fran02, fran01; altKeys atualizado na mesma ordem |
+
+**Destaques:**
+- Cards de modelos agora navegam por âncora para a seção de detalhe correspondente
+- Nomes dos modelos em `text-primary` (verde forte) sobre fundo branco — legíveis sem overlay
+- TypeScript PASS implícito (sem alterações de tipos além das já validadas)
+
+---
+
+## 2026-06-21 — Fine-tuning Franquias — Alternância de cor de fundo nas seções (A/B pattern)
+
+**Contexto:** Ajuste fino de formatação — seções da página Franquias passaram a alternar entre `bg-white` e `bg-background-light` de forma dinâmica, respeitando os toggles de visibilidade.
+
+**Arquivos alterados:** 15
+
+| Arquivo | Mudança |
+|---------|---------|
+| `FranquiasContent.tsx` | `altMap` computado dinamicamente a partir das seções visíveis; `alt` prop passada a 13 seções participantes |
+| `HomeAboutSection.tsx` | Assinatura com `alt?: boolean`; bg condicional |
+| `FranquiasVisionSection.tsx` | Assinatura com `alt?: boolean`; fix `bg-cream-dark` → bg condicional |
+| `FranquiasFounderSection.tsx` | Assinatura com `alt?: boolean`; outer section bg condicional; inner col sem bg explícito |
+| `FranquiasBenefitsSection.tsx` | Assinatura com `alt?: boolean`; outer section bg condicional |
+| `FranquiasModelsSection.tsx` | Assinatura com `alt?: boolean`; inner div bg condicional |
+| `FranquiasModelDetailSection.tsx` | Interface: `alt?: boolean`; section bg condicional |
+| `FranquiasFran01Section.tsx` | Assinatura com `alt?: boolean`; repassa `alt` a ModelDetail |
+| `FranquiasFran02Section.tsx` | Assinatura com `alt?: boolean`; repassa `alt` a ModelDetail |
+| `FranquiasFran03Section.tsx` | Assinatura com `alt?: boolean`; repassa `alt` a ModelDetail |
+| `FranquiasGestaoAppSection.tsx` | Assinatura com `alt?: boolean`; outer section bg condicional |
+| `FranquiasMarketingCrmSection.tsx` | Assinatura com `alt?: boolean`; outer section bg condicional |
+| `FranquiasPerfilFranqueadoSection.tsx` | Assinatura com `alt?: boolean`; outer bg + inner right col invertidos |
+| `FranquiasSuporteFranqueadoraSection.tsx` | Assinatura com `alt?: boolean`; outer section bg condicional |
+| `FranquiasEtapasAberturaSection.tsx` | Assinatura com `alt?: boolean`; outer section bg condicional |
+
+**Destaques:**
+- 5 seções excluídas do ciclo alternante (bg fixo intencional): hero, mission, fluxo_caixa, expansao, contact
+- Sequência reinicia automaticamente se seções forem desligadas no Admin
+- TypeScript PASS · Build PASS (vite 44.29s)
+
+---
+
 ## 2026-06-20 — PLAN-0016 CONCLUÍDO — Unified Navigation Menu
 
 **Arquivos alterados:** 4

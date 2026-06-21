@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasBenefitsSection = (): ReactElement => {
+export const FranquiasBenefitsSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const cellImg01 = useMediaSlot("franquias_benefits_cell_img_01");
   const cellImg02 = useMediaSlot("franquias_benefits_cell_img_02");
   const cellImg03 = useMediaSlot("franquias_benefits_cell_img_03");
@@ -38,7 +38,7 @@ export const FranquiasBenefitsSection = (): ReactElement => {
   ];
 
   return (
-    <section className="w-full bg-white py-20 dark:bg-background-dark" id="benefits">
+    <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'} py-20 dark:bg-background-dark`} id="benefits">
       <div className="mx-auto max-w-[1200px] px-6 lg:px-10">
 
         {/* Title with decorative stars */}

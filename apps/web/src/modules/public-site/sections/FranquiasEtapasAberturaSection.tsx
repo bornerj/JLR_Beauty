@@ -2,7 +2,7 @@ import { Fragment, type ReactElement } from "react";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasEtapasAberturaSection = (): ReactElement => {
+export const FranquiasEtapasAberturaSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const title = usePageText("franquias.etapas.title");
   const step1  = usePageText("franquias.etapas.step_1");
   const step2  = usePageText("franquias.etapas.step_2");
@@ -39,7 +39,7 @@ export const FranquiasEtapasAberturaSection = (): ReactElement => {
   );
 
   return (
-    <section className="w-full bg-white dark:bg-background-dark py-20" id="etapas-abertura">
+    <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'} dark:bg-background-dark py-20`} id="etapas-abertura">
       <div className="mx-auto max-w-[620px] px-6 lg:px-10">
 
         <div className="text-center mb-16">

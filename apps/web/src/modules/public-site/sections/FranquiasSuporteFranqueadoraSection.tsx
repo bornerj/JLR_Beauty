@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasSuporteFranqueadoraSection = (): ReactElement => {
+export const FranquiasSuporteFranqueadoraSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const suporteImg = useMediaSlot("franquias_suporte_img_01");
 
   const title      = usePageText("franquias.suporte.title");
@@ -32,7 +32,7 @@ export const FranquiasSuporteFranqueadoraSection = (): ReactElement => {
   ];
 
   return (
-    <section className="w-full bg-background-light dark:bg-background-dark" id="suporte-franqueadora">
+    <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'} dark:bg-background-dark`} id="suporte-franqueadora">
       <div className="mx-auto max-w-[1200px] grid grid-cols-1 lg:grid-cols-2">
 
         {/* LEFT — groups */}
@@ -75,7 +75,7 @@ export const FranquiasSuporteFranqueadoraSection = (): ReactElement => {
           <img
             src={suporteImg}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-top"
+            className="absolute inset-0 w-full h-full object-contain object-center"
           />
           <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-background-light/40 to-transparent dark:from-background-dark/40" />
         </div>

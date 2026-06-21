@@ -10,6 +10,7 @@ export interface ModelMetric {
 
 export interface FranquiasModelDetailProps {
   sectionId: string;
+  alt?: boolean;
   label: PageTextValue;
   conceptBadge: PageTextValue;
   conceptDesc: PageTextValue;
@@ -28,6 +29,7 @@ export interface FranquiasModelDetailProps {
 
 export const FranquiasModelDetailSection = ({
   sectionId,
+  alt,
   label,
   conceptBadge,
   conceptDesc,
@@ -44,7 +46,7 @@ export const FranquiasModelDetailSection = ({
   metrics,
 }: FranquiasModelDetailProps): ReactElement => {
   return (
-    <section className="w-full bg-background-light dark:bg-background-dark py-16 border-t border-forest/10 dark:border-white/10" id={sectionId}>
+    <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'} dark:bg-background-dark py-16 border-t border-forest/10 dark:border-white/10`} id={sectionId}>
       <div className="mx-auto max-w-[1200px] px-6 lg:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12">
 

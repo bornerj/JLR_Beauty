@@ -4,7 +4,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const HomeAboutSection = (): ReactElement => {
+export const HomeAboutSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const branding = useBranding();
   const aboutImage01 = useMediaSlot("home_about_img_01");
   const aboutImage02 = useMediaSlot("home_about_img_02");
@@ -30,7 +30,7 @@ export const HomeAboutSection = (): ReactElement => {
   return (
     <>
     {/* Sobre */}
-    <section className="py-16 px-6 bg-white" id="about">
+    <section className={`py-16 px-6 ${alt ? 'bg-background-light' : 'bg-white'}`} id="about">
         <div className="max-w-[1200px] mx-auto">
             <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
                 <div className="order-1">

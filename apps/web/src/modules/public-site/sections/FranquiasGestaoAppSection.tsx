@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasGestaoAppSection = (): ReactElement => {
+export const FranquiasGestaoAppSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const appImg = useMediaSlot("franquias_gestao_app_img_01");
 
   const title = usePageText("franquias.gestao_app.title");
@@ -24,7 +24,7 @@ export const FranquiasGestaoAppSection = (): ReactElement => {
   ];
 
   return (
-    <section className="w-full bg-background-light dark:bg-background-dark py-20" id="gestao-app">
+    <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'} dark:bg-background-dark py-20`} id="gestao-app">
       <div className="mx-auto max-w-[1200px] px-6 lg:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
 

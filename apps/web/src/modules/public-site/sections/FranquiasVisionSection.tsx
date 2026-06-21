@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasVisionSection = (): ReactElement => {
+export const FranquiasVisionSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const visionImage = useMediaSlot("franquias_vision_img_01");
 
   const label      = usePageText("franquias.vision.label");
@@ -21,7 +21,7 @@ export const FranquiasVisionSection = (): ReactElement => {
   return (
     <>
     {/* Editorial / Vision Section */}
-    <div className="relative bg-cream-dark py-24 dark:bg-background-dark" id="vision">
+    <div className={`relative ${alt ? 'bg-background-light' : 'bg-white'} py-24 dark:bg-background-dark`} id="vision">
         <div className="mx-auto max-w-[1200px] px-6 lg:px-10">
             <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
                 <div className="order-2 lg:order-1">

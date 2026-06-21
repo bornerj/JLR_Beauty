@@ -3,7 +3,7 @@ import { useMediaSlot } from "../media.runtime";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
-export const FranquiasModelsSection = (): ReactElement => {
+export const FranquiasModelsSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const modelCardImage01 = useMediaSlot("franquias_models_card_img_01");
   const modelCardImage02 = useMediaSlot("franquias_models_card_img_02");
   const modelCardImage03 = useMediaSlot("franquias_models_card_img_03");
@@ -39,7 +39,7 @@ export const FranquiasModelsSection = (): ReactElement => {
   return (
     <>
     {/* Franchise Models Section */}
-    <div className="bg-background-light py-24 dark:bg-zinc-900" id="models">
+    <div className={`${alt ? 'bg-background-light' : 'bg-white'} py-24 dark:bg-zinc-900`} id="models">
         <div className="mx-auto max-w-[1200px] px-6 lg:px-10">
             <div className="mb-16 text-center">
                 <span className="mb-2 block text-sm font-bold uppercase tracking-widest text-primary"><RichText value={label} /></span>
@@ -58,13 +58,11 @@ export const FranquiasModelsSection = (): ReactElement => {
                           style={{ backgroundImage: `url(${modelCardImage01})` }}
                         >
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div className="absolute bottom-4 left-6">
-                            <h3 className="text-2xl font-bold text-white"><RichText value={c1Name} /></h3>
-                            <p className="text-sm font-medium text-white/90"><RichText value={c1Subtitle} /></p>
-                        </div>
+
                     </div>
                     <div className="flex flex-1 flex-col p-8">
+                        <h3 className="display-hero text-xl text-primary mb-1"><RichText value={c1Name} /></h3>
+                        <p className="text-sm text-forest/60 mb-5"><RichText value={c1Subtitle} /></p>
                         <div className="mb-6">
                             <p className="text-sm text-forest/60 dark:text-white/60 mb-1">Investimento Inicial</p>
                             <p className="text-3xl display-number text-shadow-strong text-gold"><RichText value={c1Investment} /></p>
@@ -87,7 +85,7 @@ export const FranquiasModelsSection = (): ReactElement => {
                                 <span><RichText value={c1Feat4} /></span>
                             </li>
                         </ul>
-                        <button className="mt-auto w-full rounded-lg border border-forest/10 bg-forest/5 py-3 text-sm font-bold text-forest transition-colors hover:bg-primary hover:text-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-primary" data-franquia="Esmalteria" type="button">Ver Detalhes</button>
+                        <a href="#fran03" className="mt-auto w-full rounded-lg border border-forest/10 bg-forest/5 py-3 text-sm font-bold text-forest transition-colors hover:bg-primary hover:text-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-primary block text-center">Ver Detalhes</a>
                     </div>
                 </div>
                 {/* Standard Model */}
@@ -101,13 +99,11 @@ export const FranquiasModelsSection = (): ReactElement => {
                           style={{ backgroundImage: `url(${modelCardImage02})` }}
                         >
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div className="absolute bottom-4 left-6">
-                            <h3 className="text-2xl font-bold text-white"><RichText value={c2Name} /></h3>
-                            <p className="text-sm font-medium text-white/90"><RichText value={c2Subtitle} /></p>
-                        </div>
+
                     </div>
                     <div className="flex flex-1 flex-col p-8">
+                        <h3 className="display-hero text-xl text-primary mb-1"><RichText value={c2Name} /></h3>
+                        <p className="text-sm text-forest/60 mb-5"><RichText value={c2Subtitle} /></p>
                         <div className="mb-6">
                             <p className="text-sm text-forest/60 dark:text-white/60 mb-1">Investimento Inicial</p>
                             <p className="text-3xl display-number text-shadow-strong text-gold"><RichText value={c2Investment} /></p>
@@ -130,9 +126,9 @@ export const FranquiasModelsSection = (): ReactElement => {
                                 <span><RichText value={c2Feat4} /></span>
                             </li>
                         </ul>
-                        <button className="mt-auto w-full rounded-lg bg-forest py-3 text-sm font-bold text-white transition-colors hover:bg-primary dark:bg-primary dark:text-forest dark:hover:bg-white" data-franquia="Padrao" type="button">
+                        <a href="#fran02" className="mt-auto w-full rounded-lg bg-forest py-3 text-sm font-bold text-white transition-colors hover:bg-primary dark:bg-primary dark:text-forest dark:hover:bg-white block text-center">
                             Selecionar <RichText value={c2Name} />
-                        </button>
+                        </a>
                     </div>
                 </div>
                 {/* Flagship Model */}
@@ -144,13 +140,11 @@ export const FranquiasModelsSection = (): ReactElement => {
                           style={{ backgroundImage: `url(${modelCardImage03})` }}
                         >
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div className="absolute bottom-4 left-6">
-                            <h3 className="text-2xl font-bold text-white"><RichText value={c3Name} /></h3>
-                            <p className="text-sm font-medium text-white/90"><RichText value={c3Subtitle} /></p>
-                        </div>
+
                     </div>
                     <div className="flex flex-1 flex-col p-8">
+                        <h3 className="display-hero text-xl text-primary mb-1"><RichText value={c3Name} /></h3>
+                        <p className="text-sm text-forest/60 mb-5"><RichText value={c3Subtitle} /></p>
                         <div className="mb-6">
                             <p className="text-sm text-forest/60 dark:text-white/60 mb-1">Investimento Inicial</p>
                             <p className="text-3xl display-number text-shadow-strong text-gold"><RichText value={c3Investment} /></p>
@@ -173,7 +167,7 @@ export const FranquiasModelsSection = (): ReactElement => {
                                 <span><RichText value={c3Feat4} /></span>
                             </li>
                         </ul>
-                        <button className="mt-auto w-full rounded-lg border border-forest/10 bg-forest/5 py-3 text-sm font-bold text-forest transition-colors hover:bg-primary hover:text-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-primary" data-franquia="Principal" type="button">Ver Detalhes</button>
+                        <a href="#fran01" className="mt-auto w-full rounded-lg border border-forest/10 bg-forest/5 py-3 text-sm font-bold text-forest transition-colors hover:bg-primary hover:text-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-primary block text-center">Ver Detalhes</a>
                     </div>
                 </div>
             </div>
