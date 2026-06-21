@@ -15,7 +15,7 @@ export type JwtPayload = {
 };
 
 export function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, 12);
 }
 
 export function verifyPassword(password: string, hash: string) {
@@ -23,7 +23,7 @@ export function verifyPassword(password: string, hash: string) {
 }
 
 export function signToken(payload: JwtPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN, algorithm: "HS256" });
 }
 
 export function verifyToken(token: string) {

@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
-import { requireAdmin, requireAuth, type AuthRequest } from "../middleware/auth";
+import { requireAdmin, requireAuth, requireStaff, type AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import { logger } from "../utils/logger";
 import {
@@ -1718,7 +1718,7 @@ scheduleRouter.delete("/professional-shifts/:id", requireAdmin, async (req, res)
 
 // --- Professionals/me/shifts ---
 
-scheduleRouter.get("/professionals/me/shifts", requireAuth, async (req, res) => {
+scheduleRouter.get("/professionals/me/shifts", requireStaff, async (req, res) => {
   const userId = Number(req.user?.id);
   if (!Number.isFinite(userId)) {
     res.status(401).json({ message: MSG.UNAUTHORIZED });
@@ -1781,7 +1781,7 @@ scheduleRouter.get("/professionals/me/shifts", requireAuth, async (req, res) => 
   res.json({ professional, items });
 });
 
-scheduleRouter.post("/professionals/me/shifts", requireAuth, async (req, res) => {
+scheduleRouter.post("/professionals/me/shifts", requireStaff, async (req, res) => {
   const userId = Number(req.user?.id);
   if (!Number.isFinite(userId)) {
     res.status(401).json({ message: MSG.UNAUTHORIZED });
@@ -1840,7 +1840,7 @@ scheduleRouter.post("/professionals/me/shifts", requireAuth, async (req, res) =>
   res.status(201).json(created);
 });
 
-scheduleRouter.patch("/professionals/me/shifts/:id", requireAuth, async (req, res) => {
+scheduleRouter.patch("/professionals/me/shifts/:id", requireStaff, async (req, res) => {
   const userId = Number(req.user?.id);
   const shiftId = Number(req.params.id);
   if (!Number.isFinite(userId) || !Number.isFinite(shiftId)) {
@@ -1907,7 +1907,7 @@ scheduleRouter.patch("/professionals/me/shifts/:id", requireAuth, async (req, re
   res.json(updated);
 });
 
-scheduleRouter.delete("/professionals/me/shifts/:id", requireAuth, async (req, res) => {
+scheduleRouter.delete("/professionals/me/shifts/:id", requireStaff, async (req, res) => {
   const userId = Number(req.user?.id);
   const shiftId = Number(req.params.id);
   if (!Number.isFinite(userId) || !Number.isFinite(shiftId)) {

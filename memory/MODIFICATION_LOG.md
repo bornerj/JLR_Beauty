@@ -24,6 +24,31 @@ This log tracks changes applied to the project from 2026-01-27 onward.
 
 ---
 
+## 2026-06-21 — PLAN-0017 Fase 1 — Segurança: Auth + Rate Limiter + Guards + Trust Proxy
+
+**Contexto:** Fase 1 do plano de revisão de segurança (SEC-01, 02, 05, 12, 13, 18, 19). Rate limiter migrado de Map in-memory para PostgreSQL. Login restrito a email. Guards de role expandidos.
+
+**Arquivos alterados:** 7 + 1 migration
+
+| Arquivo | Mudança |
+|---------|---------|
+| `prisma/schema.prisma` | Novo model `LoginAttempt` para rate limiter persistido |
+| `prisma/migrations/20260621000000_sec_login_attempt_table/migration.sql` | Tabela `login_attempts` criada no PostgreSQL |
+| `lib/rateLimiter.ts` | Rewrite completo — async PostgreSQL via Prisma (SEC-01) |
+| `lib/auth.ts` | bcrypt rounds 10 → 12 (SEC-19); `algorithm: 'HS256'` explícito (SEC-18) |
+| `middleware/auth.ts` | Novos guards: `requireStaff` (não-CLIENT) e `requireMaster` (SaaS owner only) (SEC-05) |
+| `routes/auth.ts` | Login aceita apenas email (remove name login, SEC-02); todos os calls de rate limiter com `await`; rate limit aplicado ao `/auth/register` (SEC-13) |
+| `routes/users.ts` | `PATCH /users/:id/role` → `requireMaster` (só o dono do SaaS pode trocar roles) |
+| `routes/schedule.ts` | `/professionals/me/shifts` (GET/POST/PATCH/DELETE) → `requireStaff` (não-CLIENT) |
+| `app.ts` | `app.set("trust proxy", 1)` — pré-requisito para IP real via X-Forwarded-For (SEC-12) |
+
+**Destaques:**
+- Rate limit agora sobrevive restarts e funciona em múltiplas instâncias
+- Troca de role protegida por `requireMaster` — nenhum ADMIN pode promover outro usuário
+- TypeScript PASS · Build PASS (API)
+
+---
+
 ## 2026-06-21 — Fine-tuning Franquias — Alternância de cor de fundo nas seções (A/B pattern)
 
 **Contexto:** Ajuste fino de formatação — seções da página Franquias passaram a alternar entre `bg-white` e `bg-background-light` de forma dinâmica, respeitando os toggles de visibilidade.

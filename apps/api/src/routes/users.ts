@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { hashPassword } from "../lib/auth";
-import { requireAuth, requireAdmin, type AuthRequest } from "../middleware/auth";
+import { requireAuth, requireAdmin, requireMaster, type AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import { withDetail, formatZodDetail, urlOrPathSchema } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
@@ -166,7 +166,7 @@ usersRouter.patch("/users/:id", requireAuth, requireAdmin, async (req: AuthReque
   });
 });
 
-usersRouter.patch("/users/:id/role", requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+usersRouter.patch("/users/:id/role", requireAuth, requireMaster, async (req: AuthRequest, res) => {
   const userId = Number(req.params.id);
   if (!Number.isFinite(userId)) {
     res.status(400).json({ message: MSG.INVALID_PAYLOAD });

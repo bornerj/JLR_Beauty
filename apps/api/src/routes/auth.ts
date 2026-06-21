@@ -14,7 +14,7 @@ import { withDetail, formatZodDetail } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
 
 const authSchema = z.object({
-  identifier: z.string().min(1),
+  identifier: z.string().email("Informe um e-mail válido"),
   password: z.string().min(8),
 });
 
@@ -38,7 +38,7 @@ authRouter.post("/auth/login", async (req, res) => {
     }
 
     const { identifier, password } = parsed.data;
-    const blockState = checkLoginAttemptBlock(req, identifier);
+    const blockState = await checkLoginAttemptBlock(req, identifier);
     if (blockState.blocked) {
       res.status(429).json({
         message: MSG.TOO_MANY_REQUESTS,
@@ -47,12 +47,8 @@ authRouter.post("/auth/login", async (req, res) => {
       return;
     }
 
-    const where = identifier.includes("@")
-      ? { email: identifier.toLowerCase() }
-      : { name: identifier };
-
-    const user = await prisma.user.findFirst({
-      where,
+    const user = await prisma.user.findUnique({
+      where: { email: identifier.toLowerCase() },
       select: {
         id: true,
         name: true,
@@ -62,19 +58,19 @@ authRouter.post("/auth/login", async (req, res) => {
       },
     });
     if (!user || !user.passwordHash) {
-      registerFailedLoginAttempt(req, identifier);
+      await registerFailedLoginAttempt(req, identifier);
       res.status(401).json({ message: MSG.USER_NOT_REGISTERED });
       return;
     }
 
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {
-      registerFailedLoginAttempt(req, identifier);
+      await registerFailedLoginAttempt(req, identifier);
       res.status(401).json({ message: MSG.WRONG_PASSWORD });
       return;
     }
 
-    clearFailedLoginAttempts(req, identifier);
+    await clearFailedLoginAttempts(req, identifier);
 
     prisma.user
       .update({
@@ -110,6 +106,15 @@ authRouter.post("/auth/login", async (req, res) => {
 
 authRouter.post("/auth/register", async (req, res) => {
   try {
+    const registerBlock = await checkLoginAttemptBlock(req, "__register__");
+    if (registerBlock.blocked) {
+      res.status(429).json({
+        message: MSG.TOO_MANY_REQUESTS,
+        ...withDetail(`tente novamente em ${registerBlock.retryAfterSeconds}s`),
+      });
+      return;
+    }
+
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
@@ -127,6 +132,7 @@ authRouter.post("/auth/register", async (req, res) => {
 
     const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (existing) {
+      await registerFailedLoginAttempt(req, "__register__");
       res.status(409).json({ message: MSG.EMAIL_EXISTS });
       return;
     }

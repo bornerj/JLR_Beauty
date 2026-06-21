@@ -70,3 +70,25 @@ export async function requireAdmin(req: AuthRequest, res: Response, next: NextFu
   }
   next();
 }
+
+// Qualquer usuário autenticado que não seja CLIENT (professional, manager, admin, master)
+export async function requireStaff(req: AuthRequest, res: Response, next: NextFunction) {
+  const user = await resolveAuthenticatedUser(req, res);
+  if (!user) return;
+  if (user.role === "CLIENT") {
+    res.status(403).json({ message: MSG.FORBIDDEN });
+    return;
+  }
+  next();
+}
+
+// Exclusivo para o proprietário da plataforma (SaaS owner)
+export async function requireMaster(req: AuthRequest, res: Response, next: NextFunction) {
+  const user = await resolveAuthenticatedUser(req, res);
+  if (!user) return;
+  if (user.role !== "MASTER") {
+    res.status(403).json({ message: MSG.FORBIDDEN });
+    return;
+  }
+  next();
+}

@@ -551,6 +551,18 @@ model FranchiseLead {
   updatedAt DateTime @updatedAt
 }
 
+model LoginAttempt {
+  key             String   @id
+  failures        Int      @default(0)
+  windowStartedAt DateTime @default(now())
+  blockedUntil    DateTime @default(now())
+  lastSeenAt      DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([blockedUntil])
+  @@map("login_attempts")
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   name         String
