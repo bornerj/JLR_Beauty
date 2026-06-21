@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { Outlet, useLocation, useSearchParams } from "react-router-dom";
 import PublicNav from "../../components/public/PublicNav";
-import FranquiasNav from "../../components/public/FranquiasNav";
 import VideoModal from "../../components/public/VideoModal";
 import PublicFooter from "../../components/public/PublicFooter";
 import CheckoutModal from "../../components/public/CheckoutModal";
@@ -18,7 +17,6 @@ export default function PublicLayout() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const isCheckoutOpen = searchParams.get("checkout") === "1";
-  const isFranquias = location.pathname.startsWith("/franquias");
   usePublicSectionTogglesBootstrap();
   usePublicBrandingBootstrap();
   usePublicMediaSlotsBootstrap();
@@ -91,7 +89,7 @@ export default function PublicLayout() {
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-body text-forest dark:text-white antialiased selection:bg-primary selection:text-forest">
-      {isFranquias ? <FranquiasNav /> : <PublicNav />}
+      <PublicNav />
       <VideoModal />
       <main>
         <Outlet />

@@ -22,6 +22,7 @@
 | Mission Section | stable | 2026-06-16 | PLAN-0014 CONCLUÍDO — About Franquias + MissionSection 3-col; width corrigido (max-w-[1440px]) |
 | Franquias Hero Gallery | stable | 2026-06-16 | toggle hero_gallery via section toggles — oculto por padrão, reativável pelo Admin |
 | Franquias Page Upgrade | stable | 2026-06-20 | PLAN-0015 DONE — 18 seções; correções pós-entrega: ERR-0034..0039 (chaves page text, max-width, ✦ removidos, FluxoCaixa layout+slots, Etapas snake, AdminGallery grid) |
+| Unified Navigation Menu | stable | 2026-06-20 | PLAN-0016 DONE — nav único para Home/Assinaturas/Franquias; dropdowns Assinaturas (novo) e Franquias (7 landmarks); mobile menu unificado |
 
 ---
 

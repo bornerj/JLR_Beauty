@@ -2,6 +2,26 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-06-20 — PLAN-0016 CONCLUÍDO — Unified Navigation Menu
+
+**Arquivos alterados:** 4
+
+| Arquivo | Mudança |
+|---------|---------|
+| `modules/menu/components/PublicMenu.tsx` | Rewrite completo — UnifiedNav com 4 dropdowns (JLR Beauty, Assinaturas, Franquias, Produtos) |
+| `modules/menu/components/FranquiasMenu.tsx` | Re-export de 1 linha → elimina duplicação |
+| `app/layouts/PublicLayout.tsx` | Removida branch `isFranquias`; único `<PublicNav />` para todas as páginas |
+| `sections/MissionSection.tsx` | Adicionado `id="mission"` |
+
+**Destaques:**
+- Dropdown Assinaturas novo: Planos & Benefícios, Quem Somos, Depoimentos
+- Dropdown Franquias renovado: 7 landmarks (Sobre a Marca, Modelos, Tecnologia, Fluxo de Caixa, Perfil, Etapas, Seja Parceiro)
+- Mobile menu unificado com 3 grupos (Salão / Assinaturas / Franquias / Produtos)
+- Typos corrigidos: `Colecao` → `Coleção`, `Lancar` → `Lançar`, `Oleo` → `Óleo`
+- TypeScript PASS · Build PASS (vite 34.79s)
+
+---
+
 ## 2026-06-20 — Correções pós-PLAN-0015 — Bugs de formatação Franquias (point-in-time)
 
 **Contexto:** 6 bugs de formatação e dados identificados após o commit f31d986 do PLAN-0015 e registrados em DEBUG-HISTORY (ERR-0034 a ERR-0039).
