@@ -24,6 +24,22 @@ This log tracks changes applied to the project from 2026-01-27 onward.
 
 ---
 
+## 2026-06-21 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|------|-----------|
+| Decision Integrity | OK — nenhuma decisão anterior contraditada |
+| State Integrity | OK — PLAN-0017 em andamento, fases 2–4 documentadas |
+| Operational Memory | OK — MODIFICATION_LOG, progress.md e PLAN-0017 atualizados |
+| Debug Memory | OK — nenhum bug formal; fix de card 3 resolvido na mesma sessão |
+| Technical Validation | OK — TS PASS, build web+api PASS, migration aplicada no container |
+| Regression Risk | OK com ressalva — auth alterada, sem testes automáticos (aceito) |
+| Git Governance | OK — 2 commits, push autorizado, nenhum secret exposto |
+
+Checklist salvo em: `memory/logs/AUDIT_CHECKLIST_2026-06-21-PASS.md`
+
+---
+
 ## 2026-06-21 — PLAN-0017 Fase 1 — Segurança: Auth + Rate Limiter + Guards + Trust Proxy
 
 **Contexto:** Fase 1 do plano de revisão de segurança (SEC-01, 02, 05, 12, 13, 18, 19). Rate limiter migrado de Map in-memory para PostgreSQL. Login restrito a email. Guards de role expandidos.

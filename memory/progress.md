@@ -23,6 +23,9 @@
 | Franquias Hero Gallery | stable | 2026-06-16 | toggle hero_gallery via section toggles — oculto por padrão, reativável pelo Admin |
 | Franquias Page Upgrade | stable | 2026-06-20 | PLAN-0015 DONE — 18 seções; correções pós-entrega: ERR-0034..0039 (chaves page text, max-width, ✦ removidos, FluxoCaixa layout+slots, Etapas snake, AdminGallery grid) |
 | Unified Navigation Menu | stable | 2026-06-20 | PLAN-0016 DONE — nav único para Home/Assinaturas/Franquias; dropdowns Assinaturas (novo) e Franquias (7 landmarks); mobile menu unificado |
+| Franquias Fine-Tuning Visual | stable | 2026-06-21 | bg alternante A/B (13 seções, altMap dinâmico); object-contain em 3 imagens; quote circle no Founder; cards modelos reordenados (ESSENCIAL→PRIME→MASTER); nomes abaixo das imagens; botões âncora |
+| Auth + Rate Limiter (Security) | in-progress | 2026-06-21 | PLAN-0017 Fase 1 DONE — rate limiter PostgreSQL, email-only login, guards requireMaster/requireStaff, trust proxy, bcrypt 12, HS256 explícito. Fases 2–4 pendentes (refresh token, Helmet, RLS, AuditLog) |
+| Prisma Schema | stable | 2026-06-21 | LoginAttempt model adicionado; migration 20260621000000 aplicada |
 
 ---
 
@@ -48,3 +51,6 @@
 - 2026-06-12: Docker Status Modal + fix nginx boot/inode/proxy_pass (PLAN-0013 em andamento)
 - 2026-06-13: About em Franquias + MissionSection global (PLAN-0014 em andamento)
 - 2026-06-16: Franquias Page Upgrade — 13 novas seções, 13 componentes TSX, ~145 page texts, ~26 media slots, 13 toggles (PLAN-0015 DONE)
+- 2026-06-20: Unified Nav — menu único Home/Assinaturas/Franquias, 4 dropdowns, 7 landmarks (PLAN-0016 DONE)
+- 2026-06-21: Fine-tuning Franquias — bg A/B, imagens contain, Founder circle, cards modelos (point-in-time)
+- 2026-06-21: Security Fase 1 — rate limiter PostgreSQL, requireMaster/Staff, email-only login (PLAN-0017 em andamento)

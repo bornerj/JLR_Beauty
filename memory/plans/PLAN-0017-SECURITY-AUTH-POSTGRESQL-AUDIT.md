@@ -1,6 +1,6 @@
 # PLAN-0017 — Revisão de Segurança: Autenticação e PostgreSQL
 
-**Status:** IN PROGRESS — Fase 1
+**Status:** IN PROGRESS — Fase 1 CONCLUÍDA · Fases 2–4 pendentes (retomar próxima sessão)
 **Data:** 2026-06-21
 **Agente:** security-auditor
 **Escopo:** apps/api — autenticação, autorização, PostgreSQL, headers HTTP
@@ -64,7 +64,7 @@
 
 ## Fases de execução
 
-### Fase 1 — Fundação (Críticos) — estimativa: 1 sessão
+### ✅ Fase 1 — Fundação (Críticos) — CONCLUÍDA 2026-06-21 · commit e368173
 
 **SEC-12** — Configurar `trust proxy` antes de tudo (pré-requisito para SEC-01 funcionar corretamente)
 ```ts
@@ -92,7 +92,7 @@ export async function requireProfessional(...) // todos exceto CLIENT
 
 ---
 
-### Fase 2 — Controle de sessão e tokens — estimativa: 1 sessão
+### ⏳ Fase 2 — Controle de sessão e tokens — PENDENTE (próxima sessão)
 
 **SEC-04** — Implementar refresh token + logout
 - Criar model `RefreshToken`: `userId`, `token` (hash), `expiresAt`, `revokedAt`
@@ -109,7 +109,7 @@ export async function requireProfessional(...) // todos exceto CLIENT
 
 ---
 
-### Fase 3 — PostgreSQL e headers — estimativa: 1 sessão
+### ⏳ Fase 3 — PostgreSQL e headers — PENDENTE
 
 **SEC-07** — Instalar e configurar Helmet.js
 ```ts
@@ -141,7 +141,7 @@ app.use(helmet({
 
 ---
 
-### Fase 4 — Auditoria e boas práticas — estimativa: 1 sessão
+### ⏳ Fase 4 — Auditoria e boas práticas — PENDENTE
 
 **SEC-09** — Criar tabela `AuditLog`
 ```prisma
