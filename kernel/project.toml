@@ -129,20 +129,9 @@ env_vars = ["STRIPE_ENABLED", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STR
 [[integrations]]
 name     = "Z-API (WhatsApp)"
 purpose  = "WhatsApp concierge — inbound webhook processing, outbound text messages, session orchestration"
-docs     = "docs/config/WHATSAPP_API_ZAPI_NGROK.md"
+docs     = "docs/config/WHATSAPP_API_ZAPI.md"
 webhook  = "https://SEU_DOMINIO/api/public/webhooks/zapi"
 env_vars = ["ZAPI_WEBHOOK_SECRET"]
-
-# ═══════════════════════════════════════
-# DEV TOOLS — Local environment only
-# ═══════════════════════════════════════
-
-[tools.dev.tunnel]
-provider  = "ngrok"
-purpose   = "Expose local API to receive Z-API and Stripe webhooks in dev"
-who_calls = "Z-API (WhatsApp webhook) and Stripe — both need a public HTTPS URL for POST callbacks"
-setup     = "ngrok http 3001 → copy HTTPS URL → set as webhook URL in Z-API dashboard and Stripe Dashboard"
-note      = "URL changes on every free-plan restart. See docs/config/WHATSAPP_API_ZAPI_NGROK.md for full setup."
 
 # ═══════════════════════════════════════
 # MONOREPO STRUCTURE

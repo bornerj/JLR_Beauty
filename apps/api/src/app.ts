@@ -1,8 +1,11 @@
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 import path from "path";
 import { MSG } from "./lib/messages";
 import prisma from "./lib/prisma";
+import { requireAdmin } from "./middleware/auth";
 import routes, { handleStripeWebhook } from "./routes";
 import { logger } from "./utils/logger";
 
@@ -55,12 +58,37 @@ app.use(
     credentials: true,
   })
 );
-app.use((req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("X-Frame-Options", "DENY");
-  next();
-});
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    frameguard: { action: "deny" },
+  })
+);
+
+app.use(cookieParser());
+
 app.post(
   "/api/public/payments/stripe/webhook",
   express.raw({ type: "application/json" }),
@@ -73,7 +101,7 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
-app.get("/health/services", async (_req, res) => {
+app.get("/health/services", requireAdmin, async (_req, res) => {
   let postgresStatus = "online";
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -91,7 +119,7 @@ app.get("/health/services", async (_req, res) => {
   });
 });
 
-app.get("/health/db", async (_req, res) => {
+app.get("/health/db", requireAdmin, async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({

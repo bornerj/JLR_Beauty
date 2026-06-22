@@ -30,4 +30,13 @@ export const MSG = {
   INVALID_TOKEN: "token invalido",
   FORBIDDEN: "acesso negado",
   TOO_MANY_REQUESTS: "muitas tentativas. tente novamente em instantes",
+  EMAIL_NOT_VERIFIED: "confirme seu e-mail antes de fazer login",
+  VERIFICATION_TOKEN_INVALID: "token de verificacao invalido ou expirado",
+  VERIFICATION_TOKEN_SENT: "token de verificacao enviado — verifique seu e-mail",
+  ALREADY_VERIFIED: "e-mail ja verificado",
+  REFRESH_TOKEN_INVALID: "sessao expirada — faca login novamente",
+  LOGOUT_SUCCESS: "sessao encerrada com sucesso",
+  PASSWORD_RESET_TOKEN_SENT: "se o e-mail existir, um link de recuperacao foi enviado",
+  PASSWORD_RESET_TOKEN_INVALID: "token de recuperacao invalido ou expirado",
+  PASSWORD_RESET_SUCCESS: "senha alterada com sucesso — faca login novamente",
 } as const;

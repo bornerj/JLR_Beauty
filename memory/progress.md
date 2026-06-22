@@ -24,8 +24,9 @@
 | Franquias Page Upgrade | stable | 2026-06-20 | PLAN-0015 DONE — 18 seções; correções pós-entrega: ERR-0034..0039 (chaves page text, max-width, ✦ removidos, FluxoCaixa layout+slots, Etapas snake, AdminGallery grid) |
 | Unified Navigation Menu | stable | 2026-06-20 | PLAN-0016 DONE — nav único para Home/Assinaturas/Franquias; dropdowns Assinaturas (novo) e Franquias (7 landmarks); mobile menu unificado |
 | Franquias Fine-Tuning Visual | stable | 2026-06-21 | bg alternante A/B (13 seções, altMap dinâmico); object-contain em 3 imagens; quote circle no Founder; cards modelos reordenados (ESSENCIAL→PRIME→MASTER); nomes abaixo das imagens; botões âncora |
-| Auth + Rate Limiter (Security) | in-progress | 2026-06-21 | PLAN-0017 Fase 1 DONE — rate limiter PostgreSQL, email-only login, guards requireMaster/requireStaff, trust proxy, bcrypt 12, HS256 explícito. Fases 2–4 pendentes (refresh token, Helmet, RLS, AuditLog) |
-| Prisma Schema | stable | 2026-06-21 | LoginAttempt model adicionado; migration 20260621000000 aplicada |
+| Auth + Rate Limiter (Security) | stable | 2026-06-22 | PLAN-0017 CONCLUÍDO (todas 4 fases) — AuditLog, Stripe sanitization, password reset, Helmet, RLS, pg_audit, DB segregation |
+| Prisma Schema | stable | 2026-06-22 | PasswordResetToken + AuditLog adicionados; passwordHash com doc comment; migration 20260622000000 aplicada |
+| Infra Docker | stable | 2026-06-22 | postgres customizado (Debian+pgaudit); jlr_api_rw/ro criados; RLS ativo; init-api-users.sh para fresh deployments |
 
 ---
 
@@ -54,3 +55,6 @@
 - 2026-06-20: Unified Nav — menu único Home/Assinaturas/Franquias, 4 dropdowns, 7 landmarks (PLAN-0016 DONE)
 - 2026-06-21: Fine-tuning Franquias — bg A/B, imagens contain, Founder circle, cards modelos (point-in-time)
 - 2026-06-21: Security Fase 1 — rate limiter PostgreSQL, requireMaster/Staff, email-only login (PLAN-0017 em andamento)
+- 2026-06-22: Security Fase 2 — refresh token, logout, emailVerified enforcement, verify-email flow (PLAN-0017 em andamento)
+- 2026-06-22: Security Fase 3 — Helmet, DB segregation jlr_api_rw, RLS, pg_audit, health endpoints protegidos (PLAN-0017 em andamento)
+- 2026-06-22: Security Fase 4 — AuditLog, Stripe payload sanitization, password reset flow, passwordHash comment (PLAN-0017 CONCLUÍDO)

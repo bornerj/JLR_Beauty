@@ -1,11 +1,10 @@
-# Capitulo: API WhatsApp (Z-API + ngrok)
+# Capitulo: API WhatsApp (Z-API)
 
-Este capitulo consolida as orientacoes operacionais de WhatsApp discutidas no ciclo de 2026-02-12, incluindo uso da Z-API, webhook, tokens/chaves e tunel ngrok.
+Este capitulo consolida as orientacoes operacionais de WhatsApp discutidas no ciclo de 2026-02-12, incluindo uso da Z-API, webhook e tokens/chaves.
 
 ## Objetivo
 - Enviar mensagens do fluxo concierge via Z-API.
 - Receber mensagens de entrada via webhook Z-API.
-- Permitir testes externos via ngrok quando rodando localmente.
 
 ## Variaveis de ambiente (API)
 Definir no `apps/api/.env`:
@@ -26,7 +25,7 @@ A API resolve o endpoint de envio nesta ordem:
 3. Se `ZAPI_BASE_URL` ja vier com `/instances/.../token/...`, apenas garante sufixo `/send-text`.
 
 ## Endpoints atuais de WhatsApp/Concierge
-Base local: `http://localhost:3001/api`
+Base: `https://SEU_DOMINIO/api`
 
 - `GET /public/concierge/options`
   - Carrega servicos/unidades/horarios dinamicos para o chatbot.
@@ -52,24 +51,7 @@ Base local: `http://localhost:3001/api`
 - `ZAPI_CLIENT_TOKEN`: header HTTP opcional adicional da Z-API.
 - `ZAPI_WEBHOOK_SECRET`: valida chamadas inbound no webhook.
 - Link do webhook no painel Z-API:
-  - `https://SEU_DOMINIO_PUBLICO/api/public/webhooks/zapi`
-  - Em ambiente local com ngrok:
-    - `https://SEU_SUBDOMINIO.ngrok-free.app/api/public/webhooks/zapi`
-
-## Ngrok (ambiente local)
-Com API local rodando na porta `3001`:
-
-```bash
-ngrok http 3001
-```
-
-Se ainda nao configurado (uma vez):
-
-```bash
-ngrok config add-authtoken SEU_TOKEN_NGROK
-```
-
-Depois copie a URL HTTPS do ngrok e configure no painel da Z-API como webhook.
+  - `https://SEU_DOMINIO/api/public/webhooks/zapi`
 
 ## Comportamento da interface (site x admin)
 - Chatbot publico do site:
@@ -82,7 +64,7 @@ Depois copie a URL HTTPS do ngrok e configure no painel da Z-API como webhook.
 
 ## Testes operacionais recomendados
 1. Validar status do webhook:
-   - `GET https://SEU_NGROK/api/public/webhooks/zapi` -> esperado `200`.
+   - `GET https://SEU_DOMINIO/api/public/webhooks/zapi` -> esperado `200`.
 2. Testar envio direto de resumo:
    - `POST /api/public/concierge/whatsapp-summary` -> esperado `202` com `{ "success": true }`.
 3. Testar webhook inbound:
@@ -123,7 +105,7 @@ O script:
   - parser atual prioriza telefone do remetente e usa `connectedPhone` apenas como fallback.
 
 ## Seguranca
-- Nunca versionar tokens/chaves no repositório.
+- Nunca versionar tokens/chaves no repositorio.
 - Nunca expor `ZAPI_INSTANCE_TOKEN`, `ZAPI_CLIENT_TOKEN` e `ZAPI_WEBHOOK_SECRET` em logs/publico.
 - Em producao, `ZAPI_WEBHOOK_SECRET` deve estar sempre definido.
 

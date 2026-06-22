@@ -17,7 +17,7 @@
 - Product/service catalogs now have separate categories and statuses in the database schema.
 - Upload endpoint is available at `/api/uploads` with local storage under `apps/api/uploads` and static serving at `/uploads`.
 - Legacy root HTML files (`admin.html`, `index_base.html`, `franquias.html`, `checkout.html`) are not present in the current workspace.
-- `docs/config/INTEGRATIONS.md` atualmente cobre apenas o fluxo WhatsApp (Z-API + ngrok).
+- `docs/config/INTEGRATIONS.md` atualmente cobre apenas o fluxo WhatsApp (Z-API).
 - Existem endpoints placeholder para provedores externos (`/trinx/*`) e mock de pagamento, mas eles nao compoem o fluxo principal de agenda atual.
 - Pending verification: user avatar upload/save flow in the admin UI still needs confirmation in the running environment.
 
@@ -146,7 +146,7 @@
 - Recent highlights:
   - 2026-01-30: role MASTER + guards, admin role management UI/API, and “Acesso restrito” notice on index.
   - 2026-01-30: confirmation logged that changes are being documented.
-- `docs/config/INTEGRATIONS.md`: active integration contract doc focused on WhatsApp (Z-API + ngrok).
+- `docs/config/INTEGRATIONS.md`: active integration contract doc focused on WhatsApp (Z-API).
 - `docs/config/DEPLOY_ENV_REFERENCE.md`: referencia operacional de dominios e variaveis de ambiente (Vercel + Railway + Stripe webhook).
 - `docs/project/REQUIREMENTS.md`: backlog of requirements to implement.
 - `memory/WORKFLOW_MEMORY_PLAYBOOK.md`: manual de governanca de trabalho e memoria (bootstrap/rules/system/modification_log/plan/decision/skills).

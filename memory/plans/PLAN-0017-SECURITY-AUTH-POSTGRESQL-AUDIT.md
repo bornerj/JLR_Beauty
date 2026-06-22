@@ -1,6 +1,6 @@
 # PLAN-0017 — Revisão de Segurança: Autenticação e PostgreSQL
 
-**Status:** IN PROGRESS — Fase 1 CONCLUÍDA · Fases 2–4 pendentes (retomar próxima sessão)
+**Status:** ✅ CONCLUÍDO — Todas as 4 fases executadas · 2026-06-22
 **Data:** 2026-06-21
 **Agente:** security-auditor
 **Escopo:** apps/api — autenticação, autorização, PostgreSQL, headers HTTP
@@ -92,26 +92,30 @@ export async function requireProfessional(...) // todos exceto CLIENT
 
 ---
 
-### ⏳ Fase 2 — Controle de sessão e tokens — PENDENTE (próxima sessão)
+### ✅ Fase 2 — Controle de sessão e tokens — CONCLUÍDA 2026-06-22
 
-**SEC-04** — Implementar refresh token + logout
-- Criar model `RefreshToken`: `userId`, `token` (hash), `expiresAt`, `revokedAt`
-- Access token: 15 minutos
-- Refresh token: 7 dias, armazenado em HttpOnly cookie
-- Endpoints: `POST /auth/refresh`, `POST /auth/logout`
+**SEC-04** — Refresh token + logout ✅
+- `RefreshToken` model criado (token SHA-256, expiresAt 7d, revokedAt)
+- Access token: 15 min (JWT_EXPIRES_IN default "15m")
+- Refresh token: HttpOnly cookie `jlr_rt`, SameSite=lax, Secure=true em produção
+- `POST /auth/refresh` → valida RT, rotaciona (revoga old, emite new), retorna novo AT
+- `POST /auth/logout` → revoga RT, limpa cookie
 
-**SEC-03** — Enforçar `emailVerified` no login
-- Bloquear login de usuários com `emailVerified: false` (exceto se estiver se registrando agora)
-- Implementar `POST /auth/verify-email` com token de tempo limitado (15 min)
-- Implementar `POST /auth/resend-verification`
+**SEC-03** — emailVerified enforcement ✅
+- Login retorna 403 se `emailVerified: false`
+- `EmailVerificationToken` model (token SHA-256, expiresAt 15min)
+- `POST /auth/verify-email` — valida token, marca emailVerified=true, emite AT+RT
+- `POST /auth/resend-verification` — sem email enumeration
+- Usuários existentes grandfathered via migration UPDATE
+- `_dev_verification_token` retornado no register/resend em NODE_ENV=development
 
-**SEC-13** — Rate limiting no `/auth/register` (reusar a infraestrutura da Fase 1)
+**SEC-13** — Rate limiting em `/auth/register` ✅ (já estava na Fase 1)
 
 ---
 
-### ⏳ Fase 3 — PostgreSQL e headers — PENDENTE
+### ✅ Fase 3 — PostgreSQL e headers — CONCLUÍDA 2026-06-22
 
-**SEC-07** — Instalar e configurar Helmet.js
+**SEC-07** — Helmet.js ✅
 ```ts
 import helmet from 'helmet';
 app.use(helmet({
@@ -141,7 +145,7 @@ app.use(helmet({
 
 ---
 
-### ⏳ Fase 4 — Auditoria e boas práticas — PENDENTE
+### ✅ Fase 4 — Auditoria e boas práticas — CONCLUÍDA 2026-06-22
 
 **SEC-09** — Criar tabela `AuditLog`
 ```prisma

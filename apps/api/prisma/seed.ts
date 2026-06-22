@@ -21,6 +21,7 @@ async function main() {
           email: masterEmail,
           role: "MASTER",
           passwordHash,
+          emailVerified: true,
         },
       });
     }
@@ -38,6 +39,7 @@ async function main() {
           email: adminEmail,
           role: "ADMIN",
           passwordHash,
+          emailVerified: true,
         },
       });
     }

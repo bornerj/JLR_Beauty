@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getToken } from "../../../lib/auth";
 
 type DbLedState = "online" | "offline" | "unknown";
 
@@ -41,9 +42,11 @@ const toDbHealthStatus = (state: DbLedState): DbHealthStatus => {
 
 const fetchDbHealth = async (): Promise<DbLedState> => {
   try {
+    const token = getToken();
     const response = await fetch(`${API_URL}/health/db`, {
       method: "GET",
       cache: "no-store",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) return "offline";
     const payload = (await response.json()) as DbHealthResponse;

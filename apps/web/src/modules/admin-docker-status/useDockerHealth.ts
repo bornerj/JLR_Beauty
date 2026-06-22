@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getToken } from "../../lib/auth";
 
 export type ServiceStatus = "online" | "offline" | "loading";
 
@@ -24,7 +25,11 @@ const INITIAL: DockerStatus = {
 
 async function fetchDockerHealth(): Promise<DockerStatus> {
   try {
-    const res = await fetch(`${API_URL}/health/services`, { cache: "no-store" });
+    const token = getToken();
+    const res = await fetch(`${API_URL}/health/services`, {
+      cache: "no-store",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     if (!res.ok) return { nginx: "online", api: "offline", web: "online", postgres: "offline" };
     const data = (await res.json()) as ServicesResponse;
     const s = data.services ?? {};

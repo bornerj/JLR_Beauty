@@ -40,6 +40,106 @@ Checklist salvo em: `memory/logs/AUDIT_CHECKLIST_2026-06-21-PASS.md`
 
 ---
 
+## 2026-06-22 — PLAN-0017 Fase 4 — Segurança: AuditLog + Stripe Sanitization + Password Reset
+
+**Contexto:** Fase 4 e conclusão do PLAN-0017 (SEC-09, 10, 15, 16). AuditLog persistido; eventos de segurança rastreados; Stripe webhook sanitizado (sem PII); fluxo de reset de senha implementado.
+
+**Arquivos alterados:** 7 + 1 migration
+
+| Arquivo | Mudança |
+|---------|---------|
+| `prisma/schema.prisma` | Novos models: `PasswordResetToken` (password_reset_tokens) e `AuditLog` (audit_logs); `passwordHash` com doc comment explicando nullabilidade para staff users; User: relação `passwordResetTokens` |
+| `prisma/migrations/20260622000000_sec_phase4.../migration.sql` | Cria password_reset_tokens e audit_logs; GRANTs para jlr_api_rw com DO $$ IF EXISTS $$ |
+| `lib/auth.ts` | Novas funções: `createPasswordResetToken`, `consumePasswordResetToken`, `revokeAllRefreshTokens`; constante `PASSWORD_RESET_EXPIRES_MS = 15min` |
+| `lib/auditLog.ts` | Novo — helper fire-and-forget `recordAudit(action, opts)` — grava em AuditLog sem bloquear a request |
+| `lib/messages.ts` | Novas msgs: PASSWORD_RESET_TOKEN_SENT, PASSWORD_RESET_TOKEN_INVALID, PASSWORD_RESET_SUCCESS |
+| `routes/auth.ts` | Audit integrado em: login success/failed, register, email_verified, logout; novos endpoints: POST /auth/forgot-password (token em dev, sem enumeration), POST /auth/reset-password (valida token, atualiza hash, revoga todos os RT) |
+| `routes/users.ts` | PATCH /users/:id/role: audit ROLE_CHANGE com fromRole, toRole, changedBy |
+| `routes/orders.ts` | `sanitizeStripeEvent()` — remove billing_details, customer_details, shipping, metadata do payload; ambas as gravações de StripeWebhookEvent.payload usam a versão sanitizada |
+
+**Destaques técnicos:**
+- `recordAudit` é fire-and-forget: não await, falha silenciosa com log de warning
+- Stripe webhook: apenas id, type, livemode, created, api_version, e campos business do session (amount, status) persistidos
+- `/auth/forgot-password` sempre retorna a mesma mensagem (sem email enumeration)
+- `/auth/reset-password` revoga todos os refresh tokens → force re-login pós reset
+- `passwordHash` nullable com doc `///` explicitando que staff sem auto-registro pode ter NULL
+- TypeScript PASS, migration aplicada, Docker rebuild PASS, smoke tests OK (audit_log gravado)
+
+---
+
+## 2026-06-22 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|------|-----------|
+| Decision Integrity | OK — nenhuma decisão ativa contraditada |
+| State Integrity | OK — PLAN-0017 marcado CONCLUÍDO, todas 4 fases |
+| Operational Memory | OK — MODIFICATION_LOG, progress.md e PLAN-0017 atualizados |
+| Debug Memory | OK — erro TS resolvido durante implementação, não registrado formalmente |
+| Technical Validation | OK — TS PASS, Docker build PASS, migration aplicada, smoke tests OK |
+| Regression Risk | OK com ressalva — auth alterada, sem testes automáticos (aceito) |
+| Git Governance | OK — commit pendente de autorização do usuário |
+
+Checklist salvo em: `memory/logs/AUDIT_CHECKLIST_2026-06-22-PASS.md`
+
+---
+
+## 2026-06-22 — PLAN-0017 Fase 3 — Segurança: Helmet + DB Segregation + RLS + pg_audit
+
+**Contexto:** Fase 3 do plano de revisão de segurança (SEC-06, 07, 08, 11, 20). Helmet.js configurado; DB segregado em usuário de runtime vs. migration; RLS habilitado nas 5 tabelas sensíveis; pg_audit ativo; health endpoints protegidos com requireAdmin; frontend atualizado para enviar Bearer token.
+
+**Arquivos alterados:** 7 + infra Docker
+
+| Arquivo | Mudança |
+|---------|---------|
+| `apps/api/src/app.ts` | Helmet.js com CSP + HSTS + frameguard; cookie-parser posicionado; headers manuais removidos; /health/services e /health/db → requireAdmin |
+| `apps/web/src/modules/admin-docker-status/useDockerHealth.ts` | Fetch /health/services com Bearer token via getToken() |
+| `apps/web/src/modules/menu/hooks/useDbHealthStatus.ts` | Fetch /health/db com Bearer token via getToken() |
+| `docker-compose.yml` | postgres: build do Dockerfile customizado (Debian+pgaudit); command com pgaudit.log=ddl,role + log_connections=on; env DB_API_RW/RO_PASSWORD; init script volume |
+| `docker/postgres/Dockerfile` | FROM postgres:16 + postgresql-16-pgaudit |
+| `docker/postgres/init-api-users.sh` | Script de init para fresh volumes: cria jlr_api_rw, jlr_api_ro, grants e DEFAULT PRIVILEGES |
+| `apps/api/docker-entrypoint.sh` | DATABASE_URL overrideado por DATABASE_MIGRATION_URL para prisma migrate deploy |
+| `.env` | DATABASE_URL → jlr_api_rw; DATABASE_MIGRATION_URL = jlrbeauty; DB_API_RW_PASSWORD/RO_PASSWORD; JWT_EXPIRES_IN=15m |
+
+**SQL aplicado manualmente no container atual:**
+- CREATE USER jlr_api_rw + jlr_api_ro
+- GRANT DML (sem DDL) para jlr_api_rw em todas as tabelas existentes e futuras
+- RLS habilitado: User, Payment, Customer, Subscription, Order
+- Políticas rls_api_rw (ALL) e rls_api_ro (SELECT) em todas as 5 tabelas
+- pgaudit extension criada; log_connections/disconnections=on
+
+**Destaques técnicos:**
+- jlr_api_rw: SELECT/INSERT/UPDATE/DELETE apenas — DROP TABLE bloqueado com "must be owner"
+- Migrations continuam usando jlrbeauty (superuser) via DATABASE_MIGRATION_URL
+- pgaudit.log=ddl,role auditará CREATE/ALTER/DROP e mudanças de role
+- TypeScript PASS (API + Web), Docker build PASS, todos smoke tests OK
+
+---
+
+## 2026-06-22 — PLAN-0017 Fase 2 — Segurança: Refresh Token + Logout + emailVerified
+
+**Contexto:** Fase 2 do plano de revisão de segurança (SEC-03, 04, 13). Refresh token persistido em PostgreSQL com rotação automática, logout com revogação, email verification flow completo. Access token reduzido para 15 min.
+
+**Arquivos alterados:** 7 + 1 migration
+
+| Arquivo | Mudança |
+|---------|---------|
+| `prisma/schema.prisma` | Novos models: `RefreshToken` (refresh_tokens) e `EmailVerificationToken` (email_verification_tokens); campo `emailVerified Boolean @default(false)` em User |
+| `prisma/migrations/20260621010000_.../migration.sql` | Cria refresh_tokens, email_verification_tokens, adiciona emailVerified a User; grandfathers usuarios existentes como verificados |
+| `lib/auth.ts` | Adicionadas funções: `createRefreshToken`, `findValidRefreshToken`, `rotateRefreshToken`, `revokeRefreshToken`, `createVerificationToken`, `consumeVerificationToken`; JWT default 12h → 15m |
+| `app.ts` | `cookie-parser` adicionado antes de `express.json()` |
+| `routes/auth.ts` | Login: checa emailVerified (403 se false), define refresh cookie HttpOnly; Register: gera verification token, token dev retornado em NODE_ENV=development; POST /auth/refresh (rotação de RT); POST /auth/logout (revogação + clear cookie); POST /auth/verify-email (valida token, marca verified, emite JWT); POST /auth/resend-verification (sem enumeration); GET /auth/me inclui emailVerified |
+| `lib/messages.ts` | Novas msgs: EMAIL_NOT_VERIFIED, VERIFICATION_TOKEN_INVALID, VERIFICATION_TOKEN_SENT, ALREADY_VERIFIED, REFRESH_TOKEN_INVALID, LOGOUT_SUCCESS |
+| `prisma/seed.ts` | MASTER e ADMIN criados com emailVerified: true |
+
+**Destaques técnicos:**
+- Token armazenado como SHA-256 hash no banco; plaintext jamais persiste
+- Rotação obrigatória no refresh (revoga old, emite new)
+- SameSite: lax, HttpOnly: true, Secure: true em produção
+- Todos os usuarios existentes grandfathered como verificados na migration
+- TypeScript PASS, build Docker PASS, migration aplicada, smoke tests OK
+
+---
+
 ## 2026-06-21 — PLAN-0017 Fase 1 — Segurança: Auth + Rate Limiter + Guards + Trust Proxy
 
 **Contexto:** Fase 1 do plano de revisão de segurança (SEC-01, 02, 05, 12, 13, 18, 19). Rate limiter migrado de Map in-memory para PostgreSQL. Login restrito a email. Guards de role expandidos.

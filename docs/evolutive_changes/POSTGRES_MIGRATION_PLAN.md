@@ -130,7 +130,7 @@ Escolher uma das abordagens:
 Durante a migracao final React, separar responsabilidade por modulo para facilitar reaproveitamento:
 1. `menu` (frontend e adaptadores necessarios).
 2. `footer`.
-3. `chatbot` (frontend + backend + integracao Z-API/ngrok).
+3. `chatbot` (frontend + backend + integracao Z-API).
 4. `health`/observabilidade (inclui status de banco no menu).
 
 Isso reduz acoplamento e simplifica migracoes futuras de infraestrutura (como esta de banco).

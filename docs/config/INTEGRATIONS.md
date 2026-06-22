@@ -3,12 +3,11 @@
 This document defines active third-party integration contracts.
 Backend stack target: Express + Prisma + PostgreSQL (Docker), serving the React/Vite frontend via nginx.
 
-## WhatsApp (Z-API + ngrok)
-- Full operational chapter: `docs/config/WHATSAPP_API_ZAPI_NGROK.md`
+## WhatsApp (Z-API)
+- Full operational chapter: `docs/config/WHATSAPP_API_ZAPI.md`
 - Scope:
   - Z-API send-text integration
   - webhook inbound processing
-  - ngrok tunnel for local webhook testing
   - environment keys/tokens and endpoint map
 
 ## Payments (Stripe Checkout)

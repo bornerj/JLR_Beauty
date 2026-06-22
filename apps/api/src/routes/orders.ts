@@ -1544,6 +1544,48 @@ const syncStripeCheckoutSessionPayment = async (
   });
 };
 
+function sanitizeStripeEvent(event: unknown): Record<string, unknown> {
+  if (!event || typeof event !== "object") return {};
+  const e = event as Record<string, unknown>;
+
+  const sanitized: Record<string, unknown> = {
+    id: e.id,
+    object: e.object,
+    type: e.type,
+    livemode: e.livemode,
+    created: e.created,
+    api_version: e.api_version,
+  };
+
+  const data = e.data as Record<string, unknown> | undefined;
+  if (data && typeof data === "object") {
+    const obj = data.object as Record<string, unknown> | undefined;
+    if (obj && typeof obj === "object") {
+      sanitized.data = {
+        object: {
+          id: obj.id,
+          object: obj.object,
+          amount_total: obj.amount_total,
+          amount_subtotal: obj.amount_subtotal,
+          currency: obj.currency,
+          payment_status: obj.payment_status,
+          status: obj.status,
+          mode: obj.mode,
+          payment_intent:
+            typeof obj.payment_intent === "string"
+              ? obj.payment_intent
+              : obj.payment_intent !== null &&
+                typeof obj.payment_intent === "object"
+              ? (obj.payment_intent as Record<string, unknown>).id
+              : null,
+        },
+      };
+    }
+  }
+
+  return sanitized;
+}
+
 export const handleStripeWebhook = async (req: Request, res: Response): Promise<void> => {
   const signatureHeader = req.headers["stripe-signature"];
   if (typeof signatureHeader !== "string" || !signatureHeader.trim()) {
@@ -1605,7 +1647,7 @@ export const handleStripeWebhook = async (req: Request, res: Response): Promise<
         eventType: event.type,
         livemode: Boolean(event.livemode),
         status: "PROCESSED",
-        payload: event as unknown as Prisma.InputJsonValue,
+        payload: sanitizeStripeEvent(event) as Prisma.InputJsonValue,
         processedAt: new Date(),
       },
     });
@@ -1626,7 +1668,7 @@ export const handleStripeWebhook = async (req: Request, res: Response): Promise<
           livemode: Boolean(event.livemode),
           status: "FAILED",
           errorMessage: detail,
-          payload: event as unknown as Prisma.InputJsonValue,
+          payload: sanitizeStripeEvent(event) as Prisma.InputJsonValue,
           processedAt: new Date(),
         },
       })

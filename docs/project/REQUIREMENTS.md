@@ -48,7 +48,7 @@ This backlog now reflects the current state of the product: the scheduling/conci
 - Expand role-based access beyond current admin-focused guards (admin, manager, professional, client) with permission granularity aligned to agenda operations.
 
 ## Integrations
-- WhatsApp (Z-API + ngrok local webhook testing): harden configuration, webhook security, retry/error handling, and observability.
+- WhatsApp (Z-API): harden configuration, webhook security, retry/error handling, and observability.
 - Store webhook payloads and audit trail (including retention policy / archival strategy).
 - Payment gateway integration: replace current payment intent mock with a real provider while preserving payment/audit records.
 - External agenda/ERP connectors are optional future integrations only if business requires sync with third-party systems (not a dependency for current scheduling operation).

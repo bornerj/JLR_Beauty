@@ -1,13 +1,26 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    build:
+      context: ./docker/postgres
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-jlrbeauty}
       POSTGRES_USER: ${POSTGRES_USER:-jlrbeauty}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_API_RW_PASSWORD: ${DB_API_RW_PASSWORD:-JLRapiRW_Dev2026!}
+      DB_API_RO_PASSWORD: ${DB_API_RO_PASSWORD:-JLRapiRO_Dev2026!}
+    command: >
+      postgres
+      -c shared_preload_libraries=pgaudit
+      -c pgaudit.log=ddl,role
+      -c pgaudit.log_catalog=off
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_min_duration_statement=2000
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-api-users.sh:/docker-entrypoint-initdb.d/01-init-api-users.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jlrbeauty} -d ${POSTGRES_DB:-jlrbeauty}"]
       interval: 10s

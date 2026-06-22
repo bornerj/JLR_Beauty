@@ -36,7 +36,7 @@ Observacao: este documento substitui, para a frente de refatoracao, o uso de `do
 2. `footer`
    - Rodape institucional reutilizavel e parametrizavel.
 3. `chatbot`
-   - Fluxo completo (frontend, backend, integracoes Z-API/ngrok, contratos de API e estados).
+   - Fluxo completo (frontend, backend, integracoes Z-API, contratos de API e estados).
 4. `admin-cadastros`
    - Submodulos: usuarios, clientes, profissionais, produtos, estoque, vendas.
 5. `admin-kpis`

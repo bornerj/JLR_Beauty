@@ -6,6 +6,7 @@ import { requireAuth, requireAdmin, requireMaster, type AuthRequest } from "../m
 import prisma from "../lib/prisma";
 import { withDetail, formatZodDetail, urlOrPathSchema } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
+import { recordAudit } from "../lib/auditLog";
 
 const userCreateSchema = z.object({
   name: z.string().min(2),
@@ -193,6 +194,17 @@ usersRouter.patch("/users/:id/role", requireAuth, requireMaster, async (req: Aut
     where: { id: userId },
     data: { role: parsed.data.role },
   });
+
+  recordAudit("ROLE_CHANGE", {
+    userId,
+    req,
+    meta: {
+      fromRole: existing.role,
+      toRole: parsed.data.role,
+      changedBy: req.user?.id,
+    },
+  });
+
   res.json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
 });
 
