@@ -57,22 +57,6 @@ export const mediaSlotCatalog = [
     fallbackUrl: "/images/about_img6.webp",
   },
   {
-    id: "home_about_img_07",
-    page: "home",
-    section: "about",
-    order: 7,
-    label: "Home About - Colagem 7",
-    fallbackUrl: "/images/about_img7.webp",
-  },
-  {
-    id: "home_about_img_08",
-    page: "home",
-    section: "about",
-    order: 8,
-    label: "Home About - Colagem 8",
-    fallbackUrl: "/images/about_img1.webp",
-  },
-  {
     id: "home_services_card_img_01",
     page: "home",
     section: "services",

@@ -1,5 +1,11 @@
 # Debug History (extraido de memory/MODIFICATION_LOG.md)
 
+# ID: ERR-0040: Tailwind CSS pré-compilado — classes novas não refletem sem rebuild Docker ##bug
+SINTOMA: Classes Tailwind adicionadas ao TSX (`grid-cols-5`, `aspect-square`) não tinham efeito visual mesmo após Ctrl+Shift+R. Imagens empilhavam verticalmente e ficavam em tamanho errado.
+CAUSA_RAIZ: O projeto usa CSS Tailwind pré-compilado commitado no repositório (`tailwind.react.patch.css`, `tailwind.css`). O Vite roda DENTRO do container Docker — não há dev server local. Classes novas que não estavam no CSS compilado simplesmente não existiam na build servida.
+ACAO: 1) Adicionadas as classes faltantes manualmente ao `tailwind.react.patch.css`. 2) Layout reescrito com `style` inline no React para garantir independência do CSS compilado. 3) Usuário executou `docker compose up -d --build web` para rebuild do container.
+CONTEXTO: 2026-06-22; Zorin Linux; Chrome; projeto rodando inteiramente em Docker (sem npm run dev local).
+
 # ID: ERR-0001: Erro 500 no login por dependencia de schema acessorio
 SINTOMA: `POST /auth/login` retornando erro 500 ("correcao de erro 500 no /auth/login").
 CAUSA_RAIZ: Fluxo de login dependia de colunas alem do minimo; divergencias de schema/coluna auxiliar podiam derrubar a autenticacao.

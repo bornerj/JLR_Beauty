@@ -23,6 +23,7 @@
 | Franquias Hero Gallery | stable | 2026-06-16 | toggle hero_gallery via section toggles — oculto por padrão, reativável pelo Admin |
 | Franquias Page Upgrade | stable | 2026-06-20 | PLAN-0015 DONE — 18 seções; correções pós-entrega: ERR-0034..0039 (chaves page text, max-width, ✦ removidos, FluxoCaixa layout+slots, Etapas snake, AdminGallery grid) |
 | Unified Navigation Menu | stable | 2026-06-20 | PLAN-0016 DONE — nav único para Home/Assinaturas/Franquias; dropdowns Assinaturas (novo) e Franquias (7 landmarks); mobile menu unificado |
+| Home About Section Gallery | stable | 2026-06-22 | Flowbite Featured Image (1 destaque + 5 miniaturas); layout top/bottom; slots img_07/08 removidos; CSS via style inline (Docker build) |
 | Franquias Fine-Tuning Visual | stable | 2026-06-21 | bg alternante A/B (13 seções, altMap dinâmico); object-contain em 3 imagens; quote circle no Founder; cards modelos reordenados (ESSENCIAL→PRIME→MASTER); nomes abaixo das imagens; botões âncora |
 | Auth + Rate Limiter (Security) | stable | 2026-06-22 | PLAN-0017 CONCLUÍDO (todas 4 fases) — AuditLog, Stripe sanitization, password reset, Helmet, RLS, pg_audit, DB segregation |
 | Prisma Schema | stable | 2026-06-22 | PasswordResetToken + AuditLog adicionados; passwordHash com doc comment; migration 20260622000000 aplicada |

@@ -12,8 +12,6 @@ export const HomeAboutSection = ({ alt }: { alt?: boolean } = {}): ReactElement 
   const aboutImage04 = useMediaSlot("home_about_img_04");
   const aboutImage05 = useMediaSlot("home_about_img_05");
   const aboutImage06 = useMediaSlot("home_about_img_06");
-  const aboutImage07 = useMediaSlot("home_about_img_07");
-  const aboutImage08 = useMediaSlot("home_about_img_08");
 
   const label      = usePageText("home.about.label");
   const title      = usePageText("home.about.title");
@@ -31,41 +29,59 @@ export const HomeAboutSection = ({ alt }: { alt?: boolean } = {}): ReactElement 
     <>
     {/* Sobre */}
     <section className={`py-16 px-6 ${alt ? 'bg-background-light' : 'bg-white'}`} id="about">
-        <div className="max-w-[1200px] mx-auto">
-            <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
-                <div className="order-1">
-                    <div className="relative flex justify-center lg:justify-start">
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 max-w-[520px]">
-                            <div className="space-y-4">
-                                <img className="h-32 w-36 rounded-2xl object-cover shadow-lg shadow-forest/10 border border-forest/10" src={aboutImage01} alt={`${branding.fullName} - equipe`} />
-                                <img className="h-40 w-36 rounded-2xl object-cover shadow-lg shadow-forest/10 border border-forest/10" src={aboutImage02} alt={`Salão ${branding.fullName}`} />
-                                <img className="h-32 w-36 rounded-2xl object-cover shadow-lg shadow-forest/10 border border-forest/10" src={aboutImage03} alt={`Ambiente ${branding.fullName}`} />
-                            </div>
-                            <div className="space-y-4 pt-6">
-                                <img className="h-40 w-36 rounded-2xl object-cover shadow-lg shadow-forest/10 border border-forest/10" src={aboutImage04} alt="Salao premium" />
-                                <img className="h-32 w-36 rounded-2xl object-cover shadow-lg shadow-forest/10 border border-forest/10" src={aboutImage05} alt="Ambiente sofisticado" />
-                                <img className="h-32 w-36 rounded-2xl object-cover shadow-lg shadow-forest/10 border border-forest/10" src={aboutImage06} alt="Detalhes do salao" />
-                            </div>
-                            <div className="hidden sm:flex flex-col gap-4 pt-12">
-                                <img className="h-32 w-36 rounded-2xl object-cover shadow-lg shadow-forest/10 border border-forest/10" src={aboutImage07} alt={`Sobre nós ${branding.fullName}`} />
-                                <img className="h-40 w-36 rounded-2xl object-cover shadow-lg shadow-forest/10 border border-forest/10" src={aboutImage08} alt={`${branding.fullName} - ambiente`} />
-                            </div>
-                        </div>
+        <div className="max-w-[1200px] mx-auto flex flex-col gap-10">
+
+            {/* Galeria — topo, largura total */}
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+                <div className="overflow-hidden rounded-2xl shadow-lg border border-forest/10" style={{ height: '26rem' }}>
+                    <img
+                        className="w-full h-full object-cover"
+                        src={aboutImage01}
+                        alt={`${branding.fullName} - destaque`}
+                    />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '0.75rem' }}>
+                    <div className="overflow-hidden rounded-xl shadow-md border border-forest/10" style={{ aspectRatio: '1/1' }}>
+                        <img className="w-full h-full object-cover" src={aboutImage02} alt={`${branding.fullName} 2`} />
+                    </div>
+                    <div className="overflow-hidden rounded-xl shadow-md border border-forest/10" style={{ aspectRatio: '1/1' }}>
+                        <img className="w-full h-full object-cover" src={aboutImage03} alt={`${branding.fullName} 3`} />
+                    </div>
+                    <div className="overflow-hidden rounded-xl shadow-md border border-forest/10" style={{ aspectRatio: '1/1' }}>
+                        <img className="w-full h-full object-cover" src={aboutImage04} alt={`${branding.fullName} 4`} />
+                    </div>
+                    <div className="overflow-hidden rounded-xl shadow-md border border-forest/10" style={{ aspectRatio: '1/1' }}>
+                        <img className="w-full h-full object-cover" src={aboutImage05} alt={`${branding.fullName} 5`} />
+                    </div>
+                    <div className="overflow-hidden rounded-xl shadow-md border border-forest/10" style={{ aspectRatio: '1/1' }}>
+                        <img className="w-full h-full object-cover" src={aboutImage06} alt={`${branding.fullName} 6`} />
                     </div>
                 </div>
-                <div className="order-2 flex flex-col justify-center">
+            </div>
+
+            {/* Texto — abaixo, dividido em 2 colunas para aproveitar a largura */}
+            <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+                {/* Coluna esquerda: label + título + CTA */}
+                <div className="flex flex-col justify-center">
                     <div className="mb-4 flex items-center gap-2">
                         <div className="h-px w-12 bg-gold"></div>
                         <span className="text-sm font-bold uppercase tracking-widest text-gold"><RichText value={label} /></span>
                     </div>
-                    <h3 className="mb-6 text-4xl md:text-5xl display-hero text-shadow-strong text-primary dark:text-white">
-                      <RichText value={title} />
+                    <h3 className="mb-8 text-4xl md:text-5xl display-hero text-shadow-strong text-primary dark:text-white">
+                        <RichText value={title} />
                     </h3>
-                    <div className="space-y-6 text-lg font-light leading-relaxed text-forest/80">
+                    <button className="flex w-fit items-center gap-2 rounded-lg border border-forest/20 bg-forest/5 px-4 py-2 text-sm font-bold uppercase tracking-wider text-forest transition-colors hover:bg-primary hover:text-white">
+                        <a href="#spotlightprod"><RichText value={ctaButton} /></a>
+                        <span className="material-symbols-outlined text-sm">arrow_outward</span>
+                    </button>
+                </div>
+                {/* Coluna direita: parágrafos + stats */}
+                <div className="flex flex-col gap-6">
+                    <div className="space-y-4 text-lg font-light leading-relaxed text-forest/80">
                         <p><RichText value={para1} context={ctx} /></p>
                         <p><RichText value={para2} context={ctx} /></p>
                     </div>
-                    <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div className="grid grid-cols-2 gap-6 pt-4 border-t border-forest/10">
                         <div className="flex flex-col gap-2 border-l border-forest/10 pl-4">
                             <span className="text-3xl display-number text-shadow-strong text-gold"><RichText value={stat1Value} /></span>
                             <span className="text-sm font-medium uppercase tracking-wider text-forest/60"><RichText value={stat1Label} /></span>
@@ -75,12 +91,9 @@ export const HomeAboutSection = ({ alt }: { alt?: boolean } = {}): ReactElement 
                             <span className="text-sm font-medium uppercase tracking-wider text-forest/60"><RichText value={stat2Label} /></span>
                         </div>
                     </div>
-                    <button className="mt-10 flex w-fit items-center gap-2 rounded-lg border border-forest/20 bg-forest/5 px-4 py-2 text-sm font-bold uppercase tracking-wider text-forest transition-colors hover:bg-primary hover:text-white">
-                        <a href="#spotlightprod"><RichText value={ctaButton} /></a>
-                        <span className="material-symbols-outlined text-sm">arrow_outward</span>
-                    </button>
                 </div>
             </div>
+
         </div>
     </section>
     {/* Produtos */}

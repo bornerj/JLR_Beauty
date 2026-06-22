@@ -2,6 +2,74 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-06-22 — SESSION AUDIT (tarde) — PASS
+
+| Item | Resultado |
+|------|-----------|
+| Decision Integrity | OK — nenhuma decisão contradita |
+| State Integrity | OK — PLAN-0017 renomeado para DONE (pendência do bootstrap) |
+| Operational Memory | OK — MODIFICATION_LOG, progress.md atualizados |
+| Debug Memory | OK — ERR-0040 registrado (Tailwind pré-compilado + Docker build) |
+| Technical Validation | OK — TS PASS web+api, build Docker confirmado pelo usuário |
+| Regression Risk | OK — apenas frontend visual, sem auth/pagamento/schema |
+| Git Governance | OK — aguardando autorização de commit e push |
+
+Checklist salvo em: `memory/logs/AUDIT_CHECKLIST_2026-06-22b-PASS.md`
+
+---
+
+## 2026-06-22 — HomeAboutSection: layout top/bottom + galeria largura total (point-in-time)
+
+**Contexto:** Usuário solicitou que galeria e texto deixassem o layout lado-a-lado (2 colunas) e passassem para cima/baixo, com galeria ocupando 100% da largura do container (max-w-[1200px]). Texto abaixo dividido em 2 colunas internas (título+CTA à esquerda, parágrafos+stats à direita) para evitar linhas excessivamente longas.
+
+**Arquivos alterados:** 1
+
+| Arquivo | Mudança |
+|---------|---------|
+| `apps/web/src/modules/public-site/sections/HomeAboutSection.tsx` | Removido `lg:grid-cols-2` externo; galeria sobe para topo com largura total (destaque `h-26rem`); texto abaixo em `lg:grid-cols-2` interno |
+
+**Validações:** TypeScript PASS · Confirmado visualmente pelo usuário após `docker compose up -d --build web`
+
+---
+
+## 2026-06-22 — HomeAboutSection: galeria Flowbite Featured Image — FUNCIONA ✅
+
+**Resultado confirmado pelo usuário após:** `docker compose up -d --build api web`
+
+**O que funciona:** imagem destaque (h-20rem) no topo + 5 miniaturas quadradas em linha horizontal (repeat(5, 1fr)), tudo via `style` inline no React — independente do CSS Tailwind compilado.
+
+**Causa raiz dos problemas anteriores:**
+1. `grid-cols-5` e `aspect-square` não existiam no CSS pré-compilado (`tailwind.react.patch.css`) — adicionados manualmente
+2. Hard refresh (Ctrl+Shift+R) não resolve porque o projeto roda **dentro do Docker** — o Vite compila no build do container, não em dev server local. **Qualquer mudança visual exige `docker compose up -d --build web`**
+
+---
+
+## 2026-06-22 — CSS patch: grid-cols-5 + aspect-square adicionados ao tailwind.react.patch.css
+
+**Contexto:** O projeto usa CSS Tailwind pré-compilado (sem PostCSS no Vite). `grid-cols-5` (sem prefixo breakpoint) e `aspect-square` não estavam nos arquivos gerados `tailwind.css` nem `tailwind.react.patch.css`. Classes adicionadas no patch junto com grid-cols-3/4/6 que também estavam ausentes.
+
+**Arquivos alterados:** 1
+
+| Arquivo | Mudança |
+|---------|---------|
+| `apps/web/src/styles/tailwind.react.patch.css` | `.aspect-square` após `.aspect-video`; `.grid-cols-3/4/5/6` junto aos demais `grid-cols-*` |
+
+---
+
+## 2026-06-22 — HomeAboutSection: galeria Flowbite Featured Image (point-in-time)
+
+**Contexto:** Substituição da colagem 3-col de 8 fotos pequenas por galeria Featured Image do Flowbite — 1 imagem em destaque (img_01) + linha de 5 miniaturas (img_02 a img_06). Slots img_07 e img_08 removidos do catálogo do frontend e da API (e desaparecem automaticamente do painel Admin).
+
+**Arquivos alterados:** 3
+
+| Arquivo | Mudança |
+|---------|---------|
+| `apps/web/src/modules/public-site/sections/HomeAboutSection.tsx` | Grid masonry 3-col → `grid gap-4` com featured + `grid-cols-5`; hooks img_07/img_08 removidos |
+| `apps/web/src/modules/public-site/mediaSlots.ts` | Entradas `home_about_img_07` e `home_about_img_08` removidas |
+| `apps/api/src/modules/mediaSlots/service.ts` | `home_about_img_07` e `home_about_img_08` removidos do array `MEDIA_SLOT_IDS` e do catálogo de objetos |
+
+**Validações:** TypeScript PASS (web + api)
+
 ## 2026-06-21 — Fine-tuning Franquias — Ajustes visuais (imagens, cards, círculo, ordem)
 
 **Contexto:** Sessão de ajustes finos pós-alternância de fundos. Sem novo plano — alterações incrementais de formatação guiadas pelo usuário.
@@ -64,6 +132,14 @@ Checklist salvo em: `memory/logs/AUDIT_CHECKLIST_2026-06-21-PASS.md`
 - `/auth/reset-password` revoga todos os refresh tokens → force re-login pós reset
 - `passwordHash` nullable com doc `///` explicitando que staff sem auto-registro pode ter NULL
 - TypeScript PASS, migration aplicada, Docker rebuild PASS, smoke tests OK (audit_log gravado)
+
+---
+
+## 2026-06-22 — SESSION CLOSE
+
+**Commit:** `7477e9c` — security(plan-0017): fases 2-4 + ngrok removal + SECURITY_OVERVIEW  
+**Push:** origin/main ✅  
+**Adicionais pós-audit:** remoção ngrok (DECISION-011), docs/SECURITY_OVERVIEW.md (15 pontos de segurança em linguagem de negócio)
 
 ---
 
