@@ -2,6 +2,32 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-07-05 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|------|-----------|
+| Decision Integrity | OK — DECISION-001 a 011 não contraditas; DECISION-012 (nova, SEC-27/CORS) sem conflito |
+| State Integrity | OK — PLAN-0018 fechado como DONE; PLAN-0019 (TLS) intencionalmente não-DONE, bloqueado por domínio |
+| Operational Memory | OK — MODIFICATION_LOG, progress.md, PLAN-0018 e roteiro de testes documentados |
+| Debug Memory | OK — ERR-0041 e ERR-0042 registrados com template completo |
+| Technical Validation | OK — TypeScript PASS, testes 5/5 PASS, build Docker PASS, migrations aplicadas e validadas. Lint: não aplicável a apps/api (sem script no projeto, gap pré-existente); apps/web não foi tocado nesta sessão |
+| Regression Risk | OK — áreas sensíveis (auth, DB, cupom, agendamento) alteradas conscientemente; validado com pentest manual extensivo. Recomendação registrada: adicionar testes automatizados para as novas rotinas de segurança em sessão futura |
+| Git Governance | OK — 2 commits + 2 pushes autorizados explicitamente (`e01d4ef`, `299e00a`). Roteiro de testes ainda não commitado — pendente de autorização |
+
+Checklist salvo em: `memory/logs/AUDIT_CHECKLIST_2026-07-05-PASS.md`
+
+---
+
+## 2026-07-05 — Roteiro de Testes Manuais (PLAN-0015 a PLAN-0019)
+
+**Contexto:** Usuário solicitou um roteiro de testes manuais cobrindo tudo entregue a partir do PLAN-0015, para validação visual/funcional do site.
+
+**Arquivo criado:** `docs/config/ROTEIRO_TESTES_PLAN-0015-A-0019.md` — 43 testes numerados em 7 blocos (A: Página de Franquias/PLAN-0015; B: fine-tuning visual Franquias; C: Navegação Unificada/PLAN-0016; D: galeria Home; E: Autenticação/PLAN-0017; F: Hardening/PLAN-0018; G: TLS/PLAN-0019, marcado como não testável ainda). Cada teste segue o formato Como testar → Resultado Esperado → Critério de DONE.
+
+**Validações:** Documento apenas — sem alteração de código. Rotas/anchors/mensagens de erro referenciados foram conferidos contra o código-fonte atual antes de escrever cada teste.
+
+---
+
 ## 2026-07-05 — PLAN-0018 commit/push + fechamento (DONE) + SEC-30 desmembrado em PLAN-0019
 
 **Commit:** `e01d4ef` — "security(plan-0018): endpoints públicos, least-privilege DB, RLS, JWT 15min, timing jitter — ondas 1-4" (19 arquivos, 1085 inserções, 6 remoções). Autorizado explicitamente pelo usuário.
