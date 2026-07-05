@@ -1,40 +1,12 @@
 # PLAN-0018 — Remediar Vulnerabilidades Críticas: Endpoints Públicos, Banco, JWT
 
-**Status:** ✅ ESCOPO ORIGINAL CONCLUÍDO (Ondas 1-4 validadas) · ⚠️ ABERTO por **SEC-30 🔴 CRÍTICO PENDENTE (bloqueado por domínio, fora do escopo de código)** · Aguardando autorização de commit
-**Data Início:** 2026-07-05
+**Status:** ✅ DONE — escopo original (9 vulnerabilidades, ondas 1-4) 100% concluído, validado e commitado (`e01d4ef`, push completo para `origin/main`)
+**Data Início:** 2026-07-05 · **Data Conclusão:** 2026-07-05
 **Agente:** security-auditor + backend-specialist + penetration-tester (orchestrator)
 **Escopo:** apps/api, docker-compose.yml, prisma schema, middleware auth
 **Razão:** Remediação de invasão recente (MITM + credenciais capturadas + acesso direto ao backend/banco)
 
----
-
-## 🔴 SEC-30 — CRÍTICO — Ausência de TLS/HTTPS em produção (provável causa raiz do incidente original)
-
-**Descoberto durante:** Onda 4 (validação final), ao investigar o cenário completo do incidente relatado.
-
-**Achado:** `nginx/production.conf` só escuta na porta 80 (HTTP puro). `docs/config/DEPLOY_VPS.md` documenta a configuração de SSL/Certbot como etapa **opcional pós-deploy** ("quando tiver domínio"). **Confirmado com o usuário em 2026-07-05: o servidor de produção ainda roda em HTTP puro, sem domínio configurado.**
-
-**Por que isso é provavelmente a causa raiz real:** se o tráfego nunca foi criptografado, um "sniffer" não precisou de nenhuma técnica sofisticada de MITM (ARP spoofing, proxy malicioso, etc.) — bastou capturar pacotes HTTP em texto claro em qualquer ponto da rede (Wi-Fi público, roteador comprometido, ISP, ou até o próprio provedor de hospedagem) para obter login, senha e o token JWT do `Authorization` header. Todo o trabalho de hardening feito nas Ondas 1-3 (HMAC, rate limits, RLS, JWT de 15min, jitter) protege contra o *uso* de uma credencial já roubada — mas nenhum deles impede o roubo em si se o canal de transporte não for criptografado.
-
-**Por que não foi implementado agora:** Let's Encrypt (Certbot) não emite certificado para IP puro — exige um domínio com DNS apontado para a VPS. O usuário confirmou que ainda não tem domínio configurado. Sem esse pré-requisito, não há como ativar TLS de verdade (um certificado autoassinado seria possível tecnicamente, mas geraria warnings de segurança no browser e não resolveria o problema para usuários reais).
-
-**Ação pendente (quando houver domínio):**
-1. Apontar DNS do domínio para o IP da VPS
-2. Seguir o guia já existente em `docs/config/DEPLOY_VPS.md` seção "SSL com Certbot":
-   ```bash
-   sudo apt install certbot python3-certbot-nginx
-   docker compose stop nginx
-   sudo certbot certonly --standalone -d seudominio.com
-   ```
-3. Atualizar `nginx/production.conf`:
-   - Adicionar `listen 443 ssl;` + `ssl_certificate`/`ssl_certificate_key` apontando para os arquivos do Certbot
-   - Adicionar bloco de redirecionamento `listen 80` → `return 301 https://$host$request_uri;`
-   - Montar o volume `/etc/letsencrypt` no container nginx via `docker-compose.yml`
-4. Atualizar `APP_API_URL`, `APP_WEB_URL`, `CORS_ORIGIN` no `.env` de produção para `https://seudominio.com`
-5. Configurar renovação automática do certificado (cron `certbot renew` ou similar)
-6. **Revisitar SEC-27/DECISION-012** neste momento: se o domínio final resultar em web e api servidos por **subdomínios diferentes** (não mais same-origin), a restrição de `Origin` obrigatório volta a ser viável e deve ser reavaliada — refazer o teste com browser real antes de reativar.
-
-**Prioridade:** Esta é, na prática, mais urgente que qualquer item das Ondas 1-3 já concluídas — mas depende de uma ação externa do usuário (registrar/configurar o domínio) que não pode ser feita a partir deste ambiente de desenvolvimento local.
+> **SEC-30 (TLS/HTTPS ausente em produção)** foi descoberto durante a Onda 4 deste plano, mas é uma pendência de infraestrutura (bloqueada por falta de domínio), não de código — foi desmembrado para `memory/plans/PLAN-0019-TLS-HTTPS-SETUP.md`, que fica em espera até o usuário providenciar um domínio. Ver esse plano para o achado completo e passo a passo de remediação.
 
 ---
 
@@ -553,17 +525,15 @@ curl http://localhost/api/users -H "Authorization: Bearer <token_válido>"
 - 1 investigada e formalmente decidida como não-implementável nesta arquitetura, com decisão registrada (SEC-27 / DECISION-012)
 - 1 já estava mitigada, apenas confirmada (SEC-29)
 
-**Achado adicional fora do escopo original:** SEC-30 (TLS/HTTPS ausente em produção) — provável causa raiz real do incidente. Não pode ser fechado nesta sessão por depender de um domínio que o usuário ainda não tem. Este plano **permanece ABERTO** (não renomeado para `-DONE-`) até que:
-1. SEC-30 seja resolvido (quando houver domínio), OU
-2. O usuário decida explicitamente tratar SEC-30 como um plano separado e fechar este PLAN-0018 quanto ao escopo original
+**Achado adicional fora do escopo original:** SEC-30 (TLS/HTTPS ausente em produção) — provável causa raiz real do incidente. O usuário optou explicitamente por desmembrar esse achado em `PLAN-0019-TLS-HTTPS-SETUP.md` (status BLOCKED, aguardando domínio) e fechar este PLAN-0018 quanto ao escopo original das 9 vulnerabilidades, já 100% entregue.
 
 ## Git Record of Delivery
 
-- **Step 1 (Pre-commit review):** 13 arquivos alterados/criados (ver lista abaixo) + validações (TypeScript PASS api+web, Docker build PASS, testes 5/5 PASS, penetration test completo executado)
-- **Step 2 (Commit authorization):** aguardando
-- **Step 3 (Commit confirmation):** aguardando
-- **Step 4 (Push authorization e resultado):** aguardando
-- **Push status:** PENDING
+- **Step 1 (Pre-commit review):** 19 arquivos alterados/criados (ver lista abaixo) + validações (TypeScript PASS api+web, Docker build PASS, testes 5/5 PASS, penetration test completo executado)
+- **Step 2 (Commit authorization):** confirmado explicitamente pelo usuário em 2026-07-05
+- **Step 3 (Commit confirmation):** hash `e01d4ef` · branch `main` · 19 files changed, 1085 insertions(+), 6 deletions(-)
+- **Step 4 (Push authorization e resultado):** confirmado explicitamente pelo usuário em 2026-07-05 · `origin/main` atualizado `c57562d..e01d4ef`
+- **Push status:** COMPLETED
 
 **Arquivos alterados/criados nesta sessão (Ondas 1-4):**
 - `apps/api/prisma/schema.prisma`

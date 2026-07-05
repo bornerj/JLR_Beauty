@@ -2,6 +2,18 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-07-05 — PLAN-0018 commit/push + fechamento (DONE) + SEC-30 desmembrado em PLAN-0019
+
+**Commit:** `e01d4ef` — "security(plan-0018): endpoints públicos, least-privilege DB, RLS, JWT 15min, timing jitter — ondas 1-4" (19 arquivos, 1085 inserções, 6 remoções). Autorizado explicitamente pelo usuário.
+
+**Push:** `origin/main` atualizado `c57562d..e01d4ef`. Autorizado explicitamente pelo usuário (segunda aprovação, separada da autorização de commit).
+
+**Fechamento do plano:** usuário optou por (1) fechar `PLAN-0018` como `-DONE-` já que o escopo original das 9 vulnerabilidades está 100% entregue e commitado, e (2) desmembrar o achado crítico SEC-30 (TLS/HTTPS ausente em produção, descoberto na Onda 4) para um plano próprio: `memory/plans/PLAN-0019-TLS-HTTPS-SETUP.md`, com status `BLOCKED` até haver domínio disponível.
+
+**Arquivos:** `memory/plans/PLAN-0018-SECURITY-CRITICAL-ENDPOINTS-RLS-MITIGATION.md` renomeado para `PLAN-0018-DONE-...md`; `memory/plans/PLAN-0019-TLS-HTTPS-SETUP.md` criado (novo); `memory/progress.md` atualizado refletindo os dois planos separadamente.
+
+---
+
 ## 2026-07-05 — PLAN-0018 Onda 4 (Validação Final) — CONCLUÍDA + achado crítico novo (SEC-30)
 
 **Contexto:** Validação final consolidada do PLAN-0018, com rebuild completo do zero (api+web+postgres) e um penetration test end-to-end replicando o cenário completo do incidente original.
