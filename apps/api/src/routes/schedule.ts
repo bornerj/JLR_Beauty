@@ -32,6 +32,7 @@ import {
   formatZodDetail,
 } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
+import { checkConciergePublicLimit, recordConciergePublicAttempt } from "../lib/rateLimiter";
 
 const phoneSchema = z
   .string()
@@ -1015,6 +1016,24 @@ scheduleRouter.put("/professionals/:id/services", requireAdmin, async (req, res)
 });
 
 // --- Public concierge ---
+
+// SEC-26: shared rate limit (10 req/min per IP) across all public concierge endpoints
+scheduleRouter.use("/public/concierge", async (req, res, next) => {
+  const rateLimit = await checkConciergePublicLimit(req);
+  if (!rateLimit.allowed) {
+    res.status(429).json({
+      message: "taxa de requisições excedida",
+      retryAfter: rateLimit.retryAfterSeconds,
+    });
+    return;
+  }
+
+  await recordConciergePublicAttempt(req).catch((err) => {
+    logger.warn("Falha ao registrar tentativa de acesso ao concierge publico", { error: err });
+  });
+
+  next();
+});
 
 scheduleRouter.get("/public/concierge/options", async (_req, res) => {
   try {

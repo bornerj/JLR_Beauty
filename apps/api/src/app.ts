@@ -42,6 +42,14 @@ if (isProduction && configuredOrigins.length === 0 && !webAppOrigin) {
 
 const isAllowedOrigin = (origin: string): boolean => allowedOrigins.includes(origin);
 
+// SEC-27 (investigated 2026-07-05): rejecting requests with no Origin header was considered,
+// but web and api are served from the same nginx origin in production, and real-browser
+// verification (Chrome, same-origin fetch to /api/... from a page served on that same origin)
+// confirmed the browser does NOT send an Origin header for that same-origin GET request either.
+// Enforcing "Origin required" would have blocked the SPA's own traffic, not just attackers.
+// CORS's `!origin` allowance is therefore correct here — the actual boundary against
+// unauthorized direct API access is the requireAuth/requireAdmin middleware (already enforced
+// on every non-public route), not CORS, which only ever constrains browser-mediated requests.
 app.use(
   cors({
     origin: (origin, callback) => {

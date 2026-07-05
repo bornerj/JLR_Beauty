@@ -4,6 +4,8 @@ import { z } from "zod";
 import { requireAdmin, requireAuth } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import { logger } from "../utils/logger";
+import { checkCouponValidationLimit, recordCouponValidationAttempt } from "../lib/rateLimiter";
+import { generateOrderHmac, verifyOrderHmac } from "../lib/hmacUtils";
 import {
   withDetail,
   formatZodDetail,
@@ -151,6 +153,21 @@ const ordersRouter = Router();
 // --- Public discount coupons & checkout ---
 
 ordersRouter.post("/public/discount-coupons/validate", async (req, res) => {
+  // Rate limit check: 5 requests per minute per IP (SEC-22)
+  const rateLimit = await checkCouponValidationLimit(req);
+  if (!rateLimit.allowed) {
+    res.status(429).json({
+      message: "taxa de requisições excedida",
+      retryAfter: rateLimit.retryAfterSeconds,
+    });
+    return;
+  }
+
+  // Record this attempt for rate limiting
+  await recordCouponValidationAttempt(req).catch((err) => {
+    logger.warn("Falha ao registrar tentativa de validação de cupom", { error: err });
+  });
+
   const parsed = publicDiscountCouponValidateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({
@@ -407,6 +424,15 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
         },
         select: { id: true, publicCode: true, total: true },
       });
+
+      // Generate and save HMAC for public order tracking (SEC-21)
+      if (order.publicCode) {
+        const orderHmac = generateOrderHmac(order.id, order.publicCode);
+        await tx.order.update({
+          where: { id: order.id },
+          data: { orderHmac },
+        });
+      }
 
       const payment = await tx.payment.create({
         data: {
@@ -667,6 +693,7 @@ ordersRouter.get("/public/payments/stripe/confirm-session", async (req, res) => 
       ? {
           id: refreshed.order.id,
           publicCode: refreshed.order.publicCode,
+          orderHmac: refreshed.order.orderHmac, // required to access /public/orders/track (SEC-21)
           status: refreshed.order.status,
           fulfillmentStatus: refreshed.order.fulfillmentStatus,
           total: toDecimalNumber(refreshed.order.total),
@@ -737,8 +764,17 @@ ordersRouter.post("/public/payments/stripe/cancel-pending", async (req, res) => 
 
 ordersRouter.get("/public/orders/track/:publicCode", async (req, res) => {
   const code = String(req.params.publicCode || "").trim();
+  const hmac = String(req.query.hmac || "").trim();
+
   if (!code) {
     res.status(400).json({ message: MSG.INVALID_PAYLOAD });
+    return;
+  }
+
+  // SEC-21: Validate HMAC to prevent enumeration of order codes
+  // Client must provide a valid HMAC that proves they know the order
+  if (!hmac) {
+    res.status(401).json({ message: "HMAC validation required for public order tracking" });
     return;
   }
 
@@ -767,8 +803,15 @@ ordersRouter.get("/public/orders/track/:publicCode", async (req, res) => {
       },
     },
   });
+
   if (!order) {
     res.status(404).json({ message: MSG.ORDER_NOT_FOUND });
+    return;
+  }
+
+  // Verify HMAC
+  if (!order.orderHmac || !verifyOrderHmac(order.id, order.publicCode || "", hmac)) {
+    res.status(401).json({ message: "Invalid HMAC for order tracking" });
     return;
   }
 
@@ -957,7 +1000,8 @@ ordersRouter.post("/orders", requireAdmin, async (req, res) => {
         )
       );
     }
-    return tx.order.create({
+
+    const createdOrder = await tx.order.create({
       data: {
         publicCode: buildOrderPublicCode(),
         total: new Prisma.Decimal(total || 0),
@@ -974,6 +1018,20 @@ ordersRouter.post("/orders", requireAdmin, async (req, res) => {
           })),
         },
       },
+      select: { id: true, publicCode: true, items: true },
+    });
+
+    // Generate and save HMAC for public order tracking (SEC-21)
+    if (createdOrder.publicCode) {
+      const orderHmac = generateOrderHmac(createdOrder.id, createdOrder.publicCode);
+      await tx.order.update({
+        where: { id: createdOrder.id },
+        data: { orderHmac },
+      });
+    }
+
+    return tx.order.findUnique({
+      where: { id: createdOrder.id },
       include: { items: true },
     });
   });

@@ -5,6 +5,15 @@ export const withDetail = (detail?: string) => {
   return process.env.NODE_ENV === "development" && detail ? { detail } : {};
 };
 
+// SEC-28: random delay (50-200ms) applied to both the "account exists" and "account
+// does not exist" branches of email-enumeration-sensitive endpoints (forgot-password,
+// resend-verification), so the extra DB writes on the "exists" branch don't produce a
+// measurable timing difference an attacker could use to enumerate registered emails.
+export const applyEmailEnumerationJitter = async (): Promise<void> => {
+  const delayMs = 50 + Math.random() * 150;
+  await new Promise((resolve) => setTimeout(resolve, delayMs));
+};
+
 export const parseOptionalDate = (value?: string | null): Date | null | undefined => {
   if (value === undefined) return undefined;
   if (value === null || value.trim() === "") return null;

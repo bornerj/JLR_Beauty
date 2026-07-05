@@ -28,6 +28,8 @@
 | Auth + Rate Limiter (Security) | stable | 2026-06-22 | PLAN-0017 CONCLUÍDO (todas 4 fases) — AuditLog, Stripe sanitization, password reset, Helmet, RLS, pg_audit, DB segregation |
 | Prisma Schema | stable | 2026-06-22 | PasswordResetToken + AuditLog adicionados; passwordHash com doc comment; migration 20260622000000 aplicada |
 | Infra Docker | stable | 2026-06-22 | postgres customizado (Debian+pgaudit); jlr_api_rw/ro criados; RLS ativo; init-api-users.sh para fresh deployments |
+| Security Hardening Pós-Incidente (PLAN-0018) | in-progress | 2026-07-05 | Escopo original (9 vulnerabilidades, ondas 1-4) 100% concluído e validado com penetration test end-to-end (HMAC order tracking, rate limits cupom/concierge, least-privilege DB, RLS 5 tabelas, JWT 15min, timing jitter). SEC-27 formalmente decidido como não aplicável (DECISION-012). Sem commit ainda — aguardando autorização. Ver ERR-0041, ERR-0042. |
+| **SEC-30 — TLS/HTTPS ausente em produção** | blocked | 2026-07-05 | 🔴 CRÍTICO — produção roda HTTP puro, sem domínio/TLS. Provável causa raiz real do incidente que motivou PLAN-0018. Bloqueado por falta de domínio (Let's Encrypt exige DNS). Plano de ação completo em PLAN-0018. Levantar proativamente quando usuário mencionar domínio/deploy. |
 
 ---
 

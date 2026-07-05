@@ -2,6 +2,146 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-07-05 — PLAN-0018 Onda 4 (Validação Final) — CONCLUÍDA + achado crítico novo (SEC-30)
+
+**Contexto:** Validação final consolidada do PLAN-0018, com rebuild completo do zero (api+web+postgres) e um penetration test end-to-end replicando o cenário completo do incidente original.
+
+**Validado nesta onda:**
+- Rebuild total do zero: as 8 migrations e as RLS policies das Ondas 1-2 sobrevivem corretamente (persistidas no volume `postgres_data`)
+- SEC-29 (tokens dev): confirmado que `NODE_ENV=production` no container real não expõe `_dev_reset_token`/`_dev_verification_token`
+- Regressão via **browser real** (Chrome headless, não só curl): home carrega corretamente, fluxo completo de login + fetch autenticado funciona ponta a ponta
+- Todas as proteções das Ondas 1-3 reconfirmadas funcionando em conjunto numa única passada
+
+**🔴 Achado crítico novo — SEC-30 (fora do escopo original das 9 vulnerabilidades):** ao montar o penetration test replicando o incidente original, verifiquei se o canal de transporte era parte do problema. Descoberto que a produção roda em **HTTP puro, sem TLS/domínio configurado** — confirmado diretamente com o usuário. Isso é muito provavelmente a causa raiz real do "sniffer" ter conseguido capturar credenciais verdadeiras: sem criptografia, um sniffer de rede não precisa de nenhuma técnica sofisticada de MITM, basta capturar pacotes HTTP em texto claro. Todo o hardening das Ondas 1-3 protege contra o *uso* de uma credencial já roubada, não contra o roubo em si.
+
+**Por que não foi corrigido agora:** Let's Encrypt/Certbot não emite certificado para IP puro — exige domínio com DNS apontado. Usuário confirmou que ainda não tem domínio. Registrado como **SEC-30 CRÍTICO PENDENTE** em `PLAN-0018` com plano de ação completo (passo a passo Certbot + nginx + docker-compose) pronto para quando o domínio existir. Também salvo em memória de projeto para persistir entre sessões e ser levantado proativamente em conversas futuras sobre deploy/domínio.
+
+**Validações executadas:** TypeScript PASS (api+web), testes existentes PASS (5/5), Docker build PASS (rebuild completo), penetration test end-to-end executado, dados de teste limpos do banco.
+
+**Status final do PLAN-0018:** escopo original das 9 vulnerabilidades 100% concluído (7 corrigidas, 1 formalmente decidida como não aplicável nesta arquitetura — SEC-27/DECISION-012 —, 1 já mitigada). Plano permanece **aberto** (não renomeado para DONE) por causa do SEC-30, que é uma pendência de infraestrutura fora do controle deste ambiente de desenvolvimento local.
+
+**Aguardando:** (1) autorização de commit para o escopo já pronto; (2) usuário providenciar domínio para desbloquear SEC-30.
+
+---
+
+## 2026-07-05 — PLAN-0018 Onda 3 (Médias) — CONCLUÍDA (1 corrigida, 1 revertida por risco de regressão)
+
+**Contexto:** Continuação da auditoria de segurança (PLAN-0018) após Onda 2. Das 2 vulnerabilidades de severidade MÉDIA, uma foi corrigida e validada; a outra foi implementada, testada com um browser real, e **revertida deliberadamente** ao detectar que quebraria a produção.
+
+**SEC-28 (corrigida):** Timing attack em `/auth/resend-verification` e `/auth/forgot-password` — o branch "usuário existe" fazia trabalho extra (geração + persistência de token) enquanto o branch "usuário não existe" respondia quase instantaneamente, criando um side-channel de timing para enumeração de emails mesmo com mensagens de resposta idênticas. Corrigido com jitter aleatório (50-200ms) aplicado a ambos os branches (`applyEmailEnumerationJitter` em `routeHelpers.ts`).
+
+**SEC-27 (revertida — achado importante):** A auditoria original apontou que o CORS aceita requisições sem header `Origin`. Implementei uma restrição bloqueando isso em produção (exceto para webhooks Stripe/Z-API e health checks, que são chamadas servidor-a-servidor legítimas sem Origin). Antes de validar apenas com `curl`, testei com um **Chrome real em modo headless**, servindo uma página de teste pela mesma origem do nginx e observando o fetch de fato feito pelo browser. Resultado: **o próprio Chrome não envia `Origin` em um fetch GET same-origin** — e como este projeto serve web+api na mesma origem via nginx (não são domínios separados), a restrição teria **bloqueado todo o tráfego legítimo do frontend em produção**, não apenas atacantes. Revertido imediatamente para o comportamento original, com comentário no código documentando a investigação para evitar reintrodução futura do mesmo erro. Conclusão: SEC-27 não é corrigível nesta arquitetura sem separar os domínios de web/api (fora de escopo); a proteção real contra o cenário de credencial roubada é a camada de autenticação (já reforçada nas Ondas 1-2), não o CORS. **Registrado formalmente em ERR-0042 (`DEBUG-HISTORY.md`) e DECISION-012 (`memory/decisions/`)**.
+
+**Arquivos alterados:** 2
+
+| Arquivo | Mudança |
+|---------|---------|
+| `apps/api/src/lib/routeHelpers.ts` | `applyEmailEnumerationJitter()` |
+| `apps/api/src/routes/auth.ts` | Jitter aplicado em resend-verification e forgot-password (ambos os branches) |
+
+**Arquivo tocado e revertido:** `apps/api/src/app.ts` — tentativa de SEC-27 implementada, testada, revertida; ficou apenas um comentário explicando a investigação (nenhuma mudança funcional líquida).
+
+**Validações executadas:**
+- TypeScript PASS (apps/api + apps/web)
+- Docker build PASS (2 rebuilds — um com SEC-27 ativo para teste, outro após revert)
+- Testes existentes PASS (5/5)
+- **Verificação com browser real (Chrome headless)**, não apenas curl — foi o que revelou o problema do SEC-27 antes de chegar em produção
+- Timing empírico de SEC-28: 5 amostras por branch, sem separação estatística clara entre "email existe" e "não existe"
+- Regressão completa: login, resend-verification, forgot-password, rate limit de cupom, CORS com origem maliciosa (continua bloqueando) — todos OK
+
+**Lição para sessões futuras:** ao mexer em CORS/comportamento de rede, validar sempre com um browser real (não só curl) quando a topologia de deploy não for trivial (aqui, web+api same-origin via nginx reverso).
+
+**Pendente (última onda do PLAN-0018):**
+- Onda 4: Validação final consolidada + penetration test completo de ponta a ponta
+
+**Aguardando:** autorização do usuário para commit (nenhum commit realizado ainda — Ondas 1, 2 e 3 seguem no working tree)
+
+---
+
+## 2026-07-05 — PLAN-0018 Onda 2 (Altas) — CONCLUÍDA E VALIDADA
+
+**Contexto:** Continuação da auditoria de segurança (PLAN-0018) após conclusão da Onda 1. Implementadas as 3 vulnerabilidades de severidade ALTA identificadas.
+
+**Vulnerabilidades corrigidas:**
+
+| ID | Vulnerabilidade | Correção |
+|----|---|---|
+| SEC-24 | Sem Row-Level Security no PostgreSQL — controle de acesso só na app | RLS habilitado em `User`, `Order`, `Payment`, `Customer`, `Subscription`; policy permissiva para `jlr_api_rw` (mantém funcionalidade), policy SELECT-only para `jlr_api_ro`; sem policy para outras roles → default deny fail-secure |
+| SEC-25 | Access token 12h — já estava 15m no código/`.env` local desde PLAN-0017 Fase 2 | Templates de produção (`.env.docker.example`, `apps/api/.env.example`) corrigidos de 12h→15m para não desalinhar deploys futuros |
+| SEC-26 | `/public/concierge/*` (10 endpoints) sem rate limit | Middleware único no prefixo `/public/concierge`, budget compartilhado 10 req/min por IP entre todos os endpoints |
+
+**Arquivos alterados:** 6
+
+| Arquivo | Mudança |
+|---------|---------|
+| `apps/api/prisma/schema.prisma` | Modelo `ConciergePublicAttempt` |
+| `apps/api/prisma/migrations/20260705010000_.../migration.sql` | Tabela rate limit concierge |
+| `apps/api/prisma/migrations/20260705020000_.../migration.sql` | RLS + policies nas 5 tabelas sensíveis |
+| `apps/api/src/lib/rateLimiter.ts` | `checkConciergePublicLimit`, `recordConciergePublicAttempt` |
+| `apps/api/src/routes/schedule.ts` | Middleware de rate limit aplicado via `scheduleRouter.use("/public/concierge", ...)` |
+| `.env.docker.example`, `apps/api/.env.example` | `JWT_EXPIRES_IN` 12h→15m |
+
+**Nota de arquitetura (transparência sobre limitação do RLS):** como a API usa uma única credencial (`jlr_api_rw`) para todas as requisições — sem `SET app.user_id` por request — a policy para essa role precisa ser permissiva. Isso significa que o RLS **não reduz o blast radius** caso o próprio `DATABASE_URL` vaze (essa mitigação já é feita pelo SEC-23 — sem privilégio de DDL). O valor real do RLS aqui é a garantia fail-secure: qualquer credencial futura ou mal configurada que não tenha uma policy explícita recebe automaticamente zero linhas, mesmo com GRANT de tabela. Isso foi comprovado experimentalmente criando uma role de teste com `GRANT SELECT` mas sem policy — retornou 0 registros.
+
+**Validações executadas:**
+- TypeScript PASS (apps/api + apps/web)
+- Docker build PASS + migrations aplicadas com sucesso
+- Testes existentes PASS (5/5)
+- RLS: `jlr_api_rw` mantém CRUD total (sem regressão); `jlr_api_ro` lê mas não escreve; role de teste sem policy → fail-secure confirmado (0 linhas)
+- JWT: token real decodificado, expiração confirmada em exatos 900s (15min)
+- Rate limit concierge: 10 requisições OK, 11ª+ → 429; budget confirmado como compartilhado entre endpoints diferentes (não por rota individual)
+- Regressão via API real (não só psql direto): login, GET/POST `/users`, GET `/orders`, GET `/customers` com RLS ativo — todos OK, incluindo um INSERT real através da aplicação
+
+**Pendente (próximas ondas do PLAN-0018):**
+- Onda 3 (Médias): CORS sem `Origin` header, timing attacks em resend-verification
+- Onda 4: Validação final + penetration test completo
+
+**Aguardando:** autorização do usuário para commit (nenhum commit realizado ainda — Ondas 1 e 2 seguem no working tree)
+
+---
+
+## 2026-07-05 — PLAN-0018 Onda 1 (Críticas) — CONCLUÍDA E VALIDADA
+
+**Contexto:** Investigação de invasão real relatada pelo usuário — credenciais capturadas via sniffer/MITM foram usadas para acessar o backend diretamente, contornando a autenticação (que só validava no frontend). Auditoria de segurança com orchestrator + security-auditor + backend-specialist + penetration-tester identificou 9 vulnerabilidades adicionais ao PLAN-0017, divididas em 4 ondas. Onda 1 (críticas) implementada e validada nesta sessão.
+
+**Vulnerabilidades corrigidas:**
+
+| ID | Vulnerabilidade | Correção |
+|----|---|---|
+| SEC-21 | `/public/orders/track/:publicCode` sem autenticação — permitia enumeration/rastreamento de qualquer pedido | HMAC-SHA256 obrigatório (query param `?hmac=`), gerado na criação do pedido e retornado no confirm-session |
+| SEC-22 | `/public/discount-coupons/validate` sem rate limit — permitia enumeration de cupons | Rate limit 5 req/min por IP (tabela `CouponValidationAttempt`), 429 ao exceder |
+| SEC-23 | `DATABASE_URL` usava usuário admin — se vazasse, atacante tinha acesso total ao banco | Confirmado uso de `jlr_api_rw` (least privilege); documentado em `.env.docker.example` |
+
+**Arquivos alterados:** 7
+
+| Arquivo | Mudança |
+|---------|---------|
+| `apps/api/prisma/schema.prisma` | Modelo `CouponValidationAttempt`; campo `orderHmac` único em `Order` |
+| `apps/api/prisma/migrations/20260705000000_.../migration.sql` | Nova tabela rate limit de cupons |
+| `apps/api/prisma/migrations/20260705000001_.../migration.sql` | Coluna `orderHmac` em Order |
+| `apps/api/src/lib/rateLimiter.ts` | `checkCouponValidationLimit`, `recordCouponValidationAttempt` |
+| `apps/api/src/lib/hmacUtils.ts` (novo) | `generateOrderHmac`, `verifyOrderHmac` (timing-safe) |
+| `apps/api/src/routes/orders.ts` | Rate limit no endpoint de cupom; HMAC obrigatório no tracking; geração de HMAC nos 2 pontos de criação de pedido; `orderHmac` exposto no confirm-session |
+| `.env.docker.example` | `DATABASE_URL` documentado para usar `jlr_api_rw` (least privilege) |
+
+**Bug encontrado e corrigido durante validação:** `crypto.timingSafeEqual` lançava exceção não tratada (→ 500) quando o HMAC fornecido tinha tamanho diferente do esperado, em vez de retornar 401. Corrigido com guard de comprimento antes da comparação timing-safe. **Registrado formalmente em ERR-0041 (`memory/logs/DEBUG-HISTORY.md`)**.
+
+**Validações executadas:**
+- TypeScript PASS (apps/api + apps/web)
+- Docker build PASS (3 rebuilds durante a sessão)
+- Testes existentes PASS (5/5)
+- 8 cenários de penetration test simulados executados via curl contra ambiente Docker real (nginx→api→postgres), incluindo replicação exata do vetor de ataque relatado (token JWT válido + origem maliciosa) — bloqueado corretamente com 403
+- Regressões verificadas: login, endpoints admin, produtos públicos, concierge público, health check, frontend — todos OK
+
+**Pendente (próximas ondas do PLAN-0018):**
+- Onda 2 (Altas): RLS no PostgreSQL, JWT 12h→15min, rate limit em `/public/concierge/*`
+- Onda 3 (Médias): CORS sem `Origin`, timing attacks em resend-verification
+- Onda 4: Validação final + penetration test completo
+
+**Aguardando:** autorização do usuário para commit (nenhum commit realizado ainda)
+
+---
+
 ## 2026-06-22 — SESSION AUDIT (tarde) — PASS
 
 | Item | Resultado |

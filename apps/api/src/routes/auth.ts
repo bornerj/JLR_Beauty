@@ -24,7 +24,7 @@ import {
   registerFailedLoginAttempt,
   clearFailedLoginAttempts,
 } from "../lib/rateLimiter";
-import { withDetail, formatZodDetail } from "../lib/routeHelpers";
+import { withDetail, formatZodDetail, applyEmailEnumerationJitter } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
 import { recordAudit } from "../lib/auditLog";
 
@@ -392,6 +392,7 @@ authRouter.post("/auth/resend-verification", async (req: Request, res: Response)
 
     // Always return the same message to avoid email enumeration
     if (!user || user.emailVerified) {
+      await applyEmailEnumerationJitter();
       res.json({ message: MSG.VERIFICATION_TOKEN_SENT });
       return;
     }
@@ -406,6 +407,7 @@ authRouter.post("/auth/resend-verification", async (req: Request, res: Response)
       responseBody._dev_verification_token = verificationToken;
     }
 
+    await applyEmailEnumerationJitter();
     res.json(responseBody);
   } catch (error) {
     const detail = error instanceof Error ? error.message : "erro inesperado";
@@ -434,6 +436,7 @@ authRouter.post("/auth/forgot-password", async (req: Request, res: Response) => 
 
     // Always return the same message to avoid email enumeration
     if (!user || !user.passwordHash) {
+      await applyEmailEnumerationJitter();
       res.json({ message: MSG.PASSWORD_RESET_TOKEN_SENT });
       return;
     }
@@ -450,6 +453,7 @@ authRouter.post("/auth/forgot-password", async (req: Request, res: Response) => 
       responseBody._dev_reset_token = resetToken;
     }
 
+    await applyEmailEnumerationJitter();
     res.json(responseBody);
   } catch (error) {
     const detail = error instanceof Error ? error.message : "erro inesperado";

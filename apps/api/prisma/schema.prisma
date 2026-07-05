@@ -235,6 +235,7 @@ model Subscription {
 model Order {
   id                   Int                @id @default(autoincrement())
   publicCode           String?            @unique
+  orderHmac            String?            @unique // HMAC-SHA256 for public order tracking validation (SEC-21)
   status               OrderStatus        @default(PENDENTE)
   fulfillmentStatus    FulfillmentStatus  @default(PENDENTE)
   total                Decimal            @db.Decimal(10, 2)
@@ -561,6 +562,28 @@ model LoginAttempt {
 
   @@index([blockedUntil])
   @@map("login_attempts")
+}
+
+model CouponValidationAttempt {
+  ip              String   @id
+  attemptCount    Int      @default(1)
+  windowStartedAt DateTime @default(now())
+  blockedUntil    DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([blockedUntil])
+  @@map("coupon_validation_attempts")
+}
+
+model ConciergePublicAttempt {
+  ip              String   @id
+  attemptCount    Int      @default(1)
+  windowStartedAt DateTime @default(now())
+  blockedUntil    DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([blockedUntil])
+  @@map("concierge_public_attempts")
 }
 
 model User {

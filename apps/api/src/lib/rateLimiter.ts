@@ -5,6 +5,16 @@ export const loginAttemptWindowMs   = Number(process.env.AUTH_RATE_LIMIT_WINDOW_
 export const loginAttemptMaxFailures = Number(process.env.AUTH_RATE_LIMIT_MAX_ATTEMPTS || 8);
 export const loginAttemptBlockMs    = Number(process.env.AUTH_RATE_LIMIT_BLOCK_MS     || 15 * 60 * 1000);
 
+// Coupon validation rate limit: 5 requests per minute per IP
+export const couponValidationWindowMs   = 60 * 1000; // 1 minute
+export const couponValidationMaxAttempts = 5;
+export const couponValidationBlockMs    = 60 * 1000; // 1 minute block
+
+// Public concierge rate limit: 10 requests per minute per IP (SEC-26)
+export const conciergePublicWindowMs   = 60 * 1000; // 1 minute
+export const conciergePublicMaxAttempts = 10;
+export const conciergePublicBlockMs    = 60 * 1000; // 1 minute block
+
 export const getClientIp = (req: Request): string => {
   const fwd = req.headers["x-forwarded-for"];
   if (typeof fwd === "string" && fwd.trim()) return fwd.split(",")[0]?.trim() || req.ip || "unknown";
@@ -71,4 +81,107 @@ export const registerFailedLoginAttempt = async (req: Request, identifier: strin
 export const clearFailedLoginAttempts = async (req: Request, identifier: string): Promise<void> => {
   const key = buildLoginAttemptKey(req, identifier);
   await prisma.loginAttempt.delete({ where: { key } }).catch(() => {});
+};
+
+// Coupon validation rate limiting
+export const checkCouponValidationLimit = async (
+  req: Request,
+): Promise<{ allowed: boolean; retryAfterSeconds: number }> => {
+  const ip = getClientIp(req);
+  const now = new Date();
+
+  const record = await prisma.couponValidationAttempt.findUnique({ where: { ip } });
+  if (!record) return { allowed: true, retryAfterSeconds: 0 };
+
+  if (record.blockedUntil > now) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((record.blockedUntil.getTime() - now.getTime()) / 1000)),
+    };
+  }
+
+  // Check if window expired
+  if (now.getTime() - record.windowStartedAt.getTime() > couponValidationWindowMs) {
+    await prisma.couponValidationAttempt.delete({ where: { ip } }).catch(() => {});
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+};
+
+export const recordCouponValidationAttempt = async (req: Request): Promise<void> => {
+  const ip = getClientIp(req);
+  const now = new Date();
+
+  const current = await prisma.couponValidationAttempt.findUnique({ where: { ip } });
+
+  if (!current || now.getTime() - current.windowStartedAt.getTime() > couponValidationWindowMs) {
+    await prisma.couponValidationAttempt.upsert({
+      where: { ip },
+      create: { ip, attemptCount: 1, windowStartedAt: now, blockedUntil: now },
+      update: { attemptCount: 1, windowStartedAt: now, blockedUntil: now },
+    });
+    return;
+  }
+
+  const nextAttempts = current.attemptCount + 1;
+  const blockedUntil = nextAttempts >= couponValidationMaxAttempts
+    ? new Date(now.getTime() + couponValidationBlockMs)
+    : now;
+
+  await prisma.couponValidationAttempt.update({
+    where: { ip },
+    data: { attemptCount: nextAttempts, blockedUntil },
+  });
+};
+
+// Public concierge rate limiting (SEC-26)
+export const checkConciergePublicLimit = async (
+  req: Request,
+): Promise<{ allowed: boolean; retryAfterSeconds: number }> => {
+  const ip = getClientIp(req);
+  const now = new Date();
+
+  const record = await prisma.conciergePublicAttempt.findUnique({ where: { ip } });
+  if (!record) return { allowed: true, retryAfterSeconds: 0 };
+
+  if (record.blockedUntil > now) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((record.blockedUntil.getTime() - now.getTime()) / 1000)),
+    };
+  }
+
+  if (now.getTime() - record.windowStartedAt.getTime() > conciergePublicWindowMs) {
+    await prisma.conciergePublicAttempt.delete({ where: { ip } }).catch(() => {});
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+};
+
+export const recordConciergePublicAttempt = async (req: Request): Promise<void> => {
+  const ip = getClientIp(req);
+  const now = new Date();
+
+  const current = await prisma.conciergePublicAttempt.findUnique({ where: { ip } });
+
+  if (!current || now.getTime() - current.windowStartedAt.getTime() > conciergePublicWindowMs) {
+    await prisma.conciergePublicAttempt.upsert({
+      where: { ip },
+      create: { ip, attemptCount: 1, windowStartedAt: now, blockedUntil: now },
+      update: { attemptCount: 1, windowStartedAt: now, blockedUntil: now },
+    });
+    return;
+  }
+
+  const nextAttempts = current.attemptCount + 1;
+  const blockedUntil = nextAttempts >= conciergePublicMaxAttempts
+    ? new Date(now.getTime() + conciergePublicBlockMs)
+    : now;
+
+  await prisma.conciergePublicAttempt.update({
+    where: { ip },
+    data: { attemptCount: nextAttempts, blockedUntil },
+  });
 };

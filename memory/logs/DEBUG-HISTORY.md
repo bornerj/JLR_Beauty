@@ -1,5 +1,17 @@
 # Debug History (extraido de memory/MODIFICATION_LOG.md)
 
+# ID: ERR-0042: CORS bloqueando fetch same-origin do próprio frontend (SEC-27) ##bug
+SINTOMA: Ao restringir o CORS da API para exigir header `Origin` em produção (exceto webhooks/health checks), um teste com Chrome real em modo headless (`fetch('/api/public/products')` a partir de página servida pela mesma origem nginx) retornou `403 acesso negado` — o próprio fetch same-origin do frontend real ficaria bloqueado em produção.
+CAUSA_RAIZ: Suposição incorreta de que "toda chamada do SPA sempre envia `Origin`". Nesta topologia, web e api são servidos pela MESMA origem via nginx (`APP_WEB_URL`/`CORS_ORIGIN` apontam para o mesmo host:porta que serve `/api/`). Browsers modernos (confirmado empiricamente com Chrome headless) não enviam o header `Origin` em um `fetch` GET same-origin. `curl` sem header simula esse caso mas não prova o comportamento real do browser — só o teste com browser revelou o problema antes de ir para produção.
+ACAO: Revertido o bloqueio em `apps/api/src/app.ts`, restaurando `!origin => allow` (comportamento original). Mantido apenas um comentário no código documentando a investigação e o motivo de não reimplementar isso sem repetir o teste com browser real. Ver DECISION-012 para o registro formal da decisão de não perseguir esse fix nesta arquitetura.
+CONTEXTO: 2026-07-05; PLAN-0018 Onda 3 (SEC-27); Express 5 + cors package; deploy nginx reverse-proxy same-origin (web+api no mesmo host:porta); validado com `google-chrome --headless=new --dump-dom`.
+
+# ID: ERR-0041: HMAC de rastreamento de pedido retorna 500 em vez de 401 com token de tamanho inválido (SEC-21) ##bug
+SINTOMA: `GET /public/orders/track/:publicCode?hmac=<valor_curto>` retornava `500 erro interno no servidor` em vez do `401 Invalid HMAC` esperado, quando o atacante envia um HMAC de tamanho diferente de 64 chars hex (ex.: um valor curto ou aleatório de outro tamanho).
+CAUSA_RAIZ: `crypto.timingSafeEqual(bufferA, bufferB)` do Node lança `ERR_CRYPTO_TIMING_SAFE_EQUAL_LENGTH` quando os dois buffers comparados têm tamanhos diferentes, em vez de retornar `false`. A função `verifyOrderHmac` não tratava esse caso, deixando a exceção subir e cair no handler de erro genérico (500).
+ACAO: Em `apps/api/src/lib/hmacUtils.ts`, adicionado guard de comprimento antes de chamar `timingSafeEqual`: se os buffers tiverem tamanhos diferentes, retorna `false` imediatamente. O comprimento do HMAC não é segredo (SHA-256 hex sempre tem 64 chars), então esse guard não introduz vazamento de informação útil ao atacante.
+CONTEXTO: 2026-07-05; PLAN-0018 Onda 1 (SEC-21); Node.js `crypto` nativo; encontrado durante penetration test simulado via curl contra ambiente Docker real, antes do fechamento da Onda 1.
+
 # ID: ERR-0040: Tailwind CSS pré-compilado — classes novas não refletem sem rebuild Docker ##bug
 SINTOMA: Classes Tailwind adicionadas ao TSX (`grid-cols-5`, `aspect-square`) não tinham efeito visual mesmo após Ctrl+Shift+R. Imagens empilhavam verticalmente e ficavam em tamanho errado.
 CAUSA_RAIZ: O projeto usa CSS Tailwind pré-compilado commitado no repositório (`tailwind.react.patch.css`, `tailwind.css`). O Vite roda DENTRO do container Docker — não há dev server local. Classes novas que não estavam no CSS compilado simplesmente não existiam na build servida.
