@@ -1,5 +1,11 @@
 # Debug History (extraido de memory/MODIFICATION_LOG.md)
 
+# ID: ERR-0043: PostgreSQL container Exited(127) após reboot — API em crash-loop P1001 ##bug
+SINTOMA: `jlr_beauty-postgres-1` com status `Exited (127)` por ~23h após reboot da máquina; `jlr_beauty-api-1` em crash-loop com `Error: P1001: Can't reach database server at postgres:5432`; SPA sem produtos, admin inoperante.
+CAUSA_RAIZ: O projeto vive em disco secundário (`/media/jeiel/A8FEADE5FEADABCE14/...`). No boot, o daemon Docker inicia antes do ponto de montagem do disco estar disponível; o bind mount de arquivo único do compose (`./docker/postgres/init-api-users.sh:/docker-entrypoint-initdb.d/01-...`) resolve para caminho inexistente → entrypoint falha com exit 127 (command/file not found) e o container não se recupera. A policy `restart: unless-stopped` está correta e NÃO é a causa.
+ACAO: `docker compose up -d postgres` (manual) recuperou tudo — banco `healthy`, API voltou sozinha, endpoint público devolvendo os 8 produtos. Sem mudança no compose (problema é ordem de montagem do host em ambiente dev local; em VPS de produção o projeto vive no disco raiz e o cenário não ocorre). Mitigação operacional documentada: após reboot da máquina dev, conferir `docker ps` e subir o compose se necessário.
+CONTEXTO: 2026-07-06; PLAN-0020 Onda 0; docker-compose.yml postgres bind mount; Linux 6.17 + Docker; disco NTFS /media automontado após o daemon.
+
 # ID: ERR-0042: CORS bloqueando fetch same-origin do próprio frontend (SEC-27) ##bug
 SINTOMA: Ao restringir o CORS da API para exigir header `Origin` em produção (exceto webhooks/health checks), um teste com Chrome real em modo headless (`fetch('/api/public/products')` a partir de página servida pela mesma origem nginx) retornou `403 acesso negado` — o próprio fetch same-origin do frontend real ficaria bloqueado em produção.
 CAUSA_RAIZ: Suposição incorreta de que "toda chamada do SPA sempre envia `Origin`". Nesta topologia, web e api são servidos pela MESMA origem via nginx (`APP_WEB_URL`/`CORS_ORIGIN` apontam para o mesmo host:porta que serve `/api/`). Browsers modernos (confirmado empiricamente com Chrome headless) não enviam o header `Origin` em um `fetch` GET same-origin. `curl` sem header simula esse caso mas não prova o comportamento real do browser — só o teste com browser revelou o problema antes de ir para produção.

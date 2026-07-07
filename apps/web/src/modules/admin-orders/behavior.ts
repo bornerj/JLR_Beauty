@@ -1007,6 +1007,256 @@ export const initAdminOrdersBehavior = ({
     })
   );
 
+  // ── Venda manual / balcão (PLAN-0020) ─────────────────────────────────────
+
+  type ManualSaleCatalogItem = {
+    key: string;
+    kind: "PRODUCT" | "SERVICE";
+    id: number;
+    name: string;
+    price: number;
+  };
+  type ManualSaleLine = ManualSaleCatalogItem & { quantity: number };
+
+  const manualSaleModal = document.querySelector("[data-manual-sale-modal]") as HTMLElement | null;
+  const manualSaleOpen = document.querySelector("[data-manual-sale-open]") as HTMLButtonElement | null;
+  const manualSaleName = document.querySelector("[data-manual-sale-name]") as HTMLInputElement | null;
+  const manualSaleEmail = document.querySelector("[data-manual-sale-email]") as HTMLInputElement | null;
+  const manualSalePhone = document.querySelector("[data-manual-sale-phone]") as HTMLInputElement | null;
+  const manualSaleUnit = document.querySelector("[data-manual-sale-unit]") as HTMLSelectElement | null;
+  const manualSalePaid = document.querySelector("[data-manual-sale-paid]") as HTMLSelectElement | null;
+  const manualSaleItemSelect = document.querySelector(
+    "[data-manual-sale-item-select]"
+  ) as HTMLSelectElement | null;
+  const manualSaleItemQty = document.querySelector(
+    "[data-manual-sale-item-qty]"
+  ) as HTMLInputElement | null;
+  const manualSaleItemAdd = document.querySelector(
+    "[data-manual-sale-item-add]"
+  ) as HTMLButtonElement | null;
+  const manualSaleItemsList = document.querySelector("[data-manual-sale-items]") as HTMLElement | null;
+  const manualSaleTotal = document.querySelector("[data-manual-sale-total]") as HTMLElement | null;
+  const manualSaleAvailability = document.querySelector(
+    "[data-manual-sale-availability]"
+  ) as HTMLElement | null;
+  const manualSaleError = document.querySelector("[data-manual-sale-error]") as HTMLElement | null;
+  const manualSaleSave = document.querySelector("[data-manual-sale-save]") as HTMLButtonElement | null;
+
+  let manualSaleCatalog: ManualSaleCatalogItem[] = [];
+  let manualSaleLines: ManualSaleLine[] = [];
+
+  const setManualSaleError = (message: string): void => {
+    if (!manualSaleError) return;
+    manualSaleError.textContent = message;
+    manualSaleError.classList.toggle("hidden", !message);
+  };
+
+  const toggleManualSaleModal = (open: boolean): void => {
+    if (!manualSaleModal) return;
+    manualSaleModal.classList.toggle("hidden", !open);
+    manualSaleModal.classList.toggle("flex", open);
+  };
+
+  const renderManualSaleLines = (): void => {
+    if (!manualSaleItemsList || !manualSaleTotal) return;
+    if (!manualSaleLines.length) {
+      manualSaleItemsList.innerHTML = `<li class="text-xs text-text-muted">Nenhum item adicionado.</li>`;
+    } else {
+      manualSaleItemsList.innerHTML = manualSaleLines
+        .map(
+          (line, index) => `<li class="flex items-center justify-between gap-2 border-b border-[#f4f0e7] py-1">
+            <span>${escapeHtml(line.name)} <span class="text-text-muted">× ${line.quantity}</span></span>
+            <span class="flex items-center gap-2">
+              <span class="font-medium">${formatCurrencyValue(line.price * line.quantity)}</span>
+              <button type="button" class="text-red-600 text-xs font-semibold hover:underline" data-manual-sale-remove="${index}">remover</button>
+            </span>
+          </li>`
+        )
+        .join("");
+    }
+    const total = manualSaleLines.reduce((acc, line) => acc + line.price * line.quantity, 0);
+    manualSaleTotal.textContent = formatCurrencyValue(total);
+  };
+
+  const updateManualSaleAvailability = async (): Promise<void> => {
+    if (!manualSaleAvailability) return;
+    const selectedKey = manualSaleItemSelect?.value || "";
+    const unitId = manualSaleUnit?.value ? Number(manualSaleUnit.value) : null;
+    const item = manualSaleCatalog.find((entry) => entry.key === selectedKey);
+    if (!item || item.kind !== "PRODUCT" || !unitId) {
+      manualSaleAvailability.textContent = "";
+      return;
+    }
+    try {
+      const rows = await apiJson<Array<{ unitId: number; available: number }>>(
+        `/inventory/cross-unit?productId=${item.id}`
+      );
+      const row = rows.find((entry) => entry.unitId === unitId);
+      manualSaleAvailability.textContent = `Disponível na unidade: ${row ? row.available : 0}`;
+    } catch {
+      manualSaleAvailability.textContent = "";
+    }
+  };
+
+  const loadManualSaleData = async (): Promise<void> => {
+    try {
+      const [products, services, unitsResponse] = await Promise.all([
+        apiJson<Array<{ id: number; name: string; price: number | string }>>("/products"),
+        apiJson<Array<{ id: number; name: string; price: number | string }>>("/services"),
+        apiJson<{ units: Array<{ id: number; name: string; isOnline: boolean }> }>(
+          "/inventory/units"
+        ),
+      ]);
+      manualSaleCatalog = [
+        ...products.map((product) => ({
+          key: `P${product.id}`,
+          kind: "PRODUCT" as const,
+          id: product.id,
+          name: `🧴 ${product.name}`,
+          price: toNumber(product.price),
+        })),
+        ...services.map((service) => ({
+          key: `S${service.id}`,
+          kind: "SERVICE" as const,
+          id: service.id,
+          name: `💆 ${service.name}`,
+          price: toNumber(service.price),
+        })),
+      ];
+      if (manualSaleItemSelect) {
+        manualSaleItemSelect.innerHTML =
+          `<option value="">Selecione produto ou serviço</option>` +
+          manualSaleCatalog
+            .map(
+              (item) =>
+                `<option value="${item.key}">${escapeHtml(item.name)} — ${formatCurrencyValue(item.price)}</option>`
+            )
+            .join("");
+      }
+      if (manualSaleUnit) {
+        const units = (unitsResponse.units || []).filter((unit) => !unit.isOnline);
+        manualSaleUnit.innerHTML =
+          `<option value="">Selecione a unidade</option>` +
+          units
+            .map((unit) => `<option value="${unit.id}">${escapeHtml(unit.name)}</option>`)
+            .join("");
+        if (units.length === 1) manualSaleUnit.value = String(units[0].id);
+      }
+    } catch {
+      setManualSaleError("Falha ao carregar catálogo/unidades.");
+    }
+  };
+
+  if (manualSaleOpen) {
+    addCleanup(
+      on(manualSaleOpen, "click", () => {
+        manualSaleLines = [];
+        renderManualSaleLines();
+        setManualSaleError("");
+        if (manualSaleName) manualSaleName.value = "";
+        if (manualSaleEmail) manualSaleEmail.value = "";
+        if (manualSalePhone) manualSalePhone.value = "";
+        if (manualSaleItemQty) manualSaleItemQty.value = "1";
+        toggleManualSaleModal(true);
+        void loadManualSaleData();
+      })
+    );
+  }
+  document.querySelectorAll("[data-manual-sale-cancel]").forEach((button) => {
+    addCleanup(on(button, "click", () => toggleManualSaleModal(false)));
+  });
+
+  if (manualSaleItemAdd) {
+    addCleanup(
+      on(manualSaleItemAdd, "click", () => {
+        const key = manualSaleItemSelect?.value || "";
+        const item = manualSaleCatalog.find((entry) => entry.key === key);
+        const quantity = Number(manualSaleItemQty?.value || "1");
+        if (!item) {
+          setManualSaleError("Selecione um produto ou serviço.");
+          return;
+        }
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          setManualSaleError("Quantidade inválida.");
+          return;
+        }
+        setManualSaleError("");
+        const existing = manualSaleLines.find((line) => line.key === key);
+        if (existing) existing.quantity += quantity;
+        else manualSaleLines.push({ ...item, quantity });
+        renderManualSaleLines();
+      })
+    );
+  }
+  if (manualSaleItemsList) {
+    addCleanup(
+      on(manualSaleItemsList, "click", (event) => {
+        const target = event.target as HTMLElement | null;
+        const removeIndex = target?.getAttribute("data-manual-sale-remove");
+        if (removeIndex === null || removeIndex === undefined) return;
+        manualSaleLines.splice(Number(removeIndex), 1);
+        renderManualSaleLines();
+      })
+    );
+  }
+  if (manualSaleItemSelect) {
+    addCleanup(on(manualSaleItemSelect, "change", () => void updateManualSaleAvailability()));
+  }
+  if (manualSaleUnit) {
+    addCleanup(on(manualSaleUnit, "change", () => void updateManualSaleAvailability()));
+  }
+
+  if (manualSaleSave) {
+    addCleanup(
+      on(manualSaleSave, "click", async () => {
+        const name = manualSaleName?.value.trim() || "";
+        const email = manualSaleEmail?.value.trim() || "";
+        const phone = manualSalePhone?.value.trim() || "";
+        const unitId = manualSaleUnit?.value ? Number(manualSaleUnit.value) : null;
+        const hasProducts = manualSaleLines.some((line) => line.kind === "PRODUCT");
+        if (!name || !email || !phone) {
+          setManualSaleError("Informe nome, email e telefone do cliente.");
+          return;
+        }
+        if (!manualSaleLines.length) {
+          setManualSaleError("Adicione ao menos um item.");
+          return;
+        }
+        if (hasProducts && !unitId) {
+          setManualSaleError("Selecione a unidade da venda (itens de produto).");
+          return;
+        }
+        setManualSaleError("");
+        manualSaleSave.disabled = true;
+        try {
+          await apiJson("/orders", {
+            method: "POST",
+            body: JSON.stringify({
+              customerName: name,
+              customerEmail: email,
+              customerPhone: phone,
+              unitId: unitId || undefined,
+              markAsPaid: manualSalePaid?.value !== "false",
+              items: manualSaleLines.map((line) => ({
+                productId: line.kind === "PRODUCT" ? line.id : undefined,
+                serviceId: line.kind === "SERVICE" ? line.id : undefined,
+                quantity: line.quantity,
+              })),
+            }),
+          });
+          toggleManualSaleModal(false);
+          await fetchOrders();
+        } catch (error) {
+          setManualSaleError(
+            error instanceof Error ? error.message : "Falha ao registrar a venda."
+          );
+        } finally {
+          manualSaleSave.disabled = false;
+        }
+      })
+    );
+  }
+
   fetchOrders().catch(() => undefined);
   syncBulkUi();
 

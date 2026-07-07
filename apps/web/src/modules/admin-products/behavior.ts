@@ -16,6 +16,8 @@ type ProductRow = {
   sku?: string | null;
   stock?: number | null;
   price: number;
+  costPrice?: number | string | null;
+  minStock?: number | null;
   imageUrl?: string | null;
   benefits?: string[] | null;
   isFeatured?: boolean | null;
@@ -23,6 +25,29 @@ type ProductRow = {
   productStatus?: { id: number; name: string; color?: string | null } | null;
   createdAt?: string;
   updatedAt?: string;
+};
+
+type UnitRow = { id: number; name: string; kind: string; isOnline: boolean };
+
+type CrossUnitRow = { unitId: number; unitName: string; isOnline: boolean; available: number };
+
+type MovementRow = {
+  id: number;
+  type: string;
+  quantity: number;
+  balanceAfter: number;
+  reason?: string | null;
+  createdAt: string;
+  createdBy?: { id: number; name: string } | null;
+};
+
+const MOVEMENT_TYPE_LABEL: Record<string, string> = {
+  ENTRADA_COMPRA: "Entrada",
+  SAIDA_VENDA: "Venda",
+  USO_SALAO: "Uso salão",
+  PERDA: "Perda",
+  AJUSTE: "Ajuste",
+  DEVOLUCAO: "Devolução",
 };
 
 type InitAdminProductsBehaviorParams = {
@@ -92,7 +117,6 @@ export const initAdminProductsBehavior = ({
   const productCategory = document.querySelector("[data-product-category]") as HTMLSelectElement | null;
   const productSku = document.querySelector("[data-product-sku]") as HTMLInputElement | null;
   const productPrice = document.querySelector("[data-product-price]") as HTMLInputElement | null;
-  const productStock = document.querySelector("[data-product-stock]") as HTMLInputElement | null;
   const productStatus = document.querySelector("[data-product-status]") as HTMLSelectElement | null;
   const productFeatured = document.querySelector("[data-product-featured]") as HTMLInputElement | null;
   const productDescription = document.querySelector(
@@ -100,6 +124,71 @@ export const initAdminProductsBehavior = ({
   ) as HTMLTextAreaElement | null;
   const productBenefits = document.querySelectorAll("[data-product-benefit]");
   const productImage = document.querySelector("[data-product-image]") as HTMLInputElement | null;
+  const productImagePreview = document.querySelector(
+    "[data-product-image-preview]"
+  ) as HTMLImageElement | null;
+  const productImagePlaceholder = document.querySelector(
+    "[data-product-image-placeholder]"
+  ) as HTMLElement | null;
+  const productCostPrice = document.querySelector(
+    "[data-product-cost-price]"
+  ) as HTMLInputElement | null;
+  const productMinStock = document.querySelector(
+    "[data-product-min-stock]"
+  ) as HTMLInputElement | null;
+  const productInitialStock = document.querySelector(
+    "[data-product-initial-stock]"
+  ) as HTMLInputElement | null;
+  const productInitialUnit = document.querySelector(
+    "[data-product-initial-unit]"
+  ) as HTMLSelectElement | null;
+  const productInitialStockWrap = document.querySelector(
+    "[data-product-initial-stock-wrap]"
+  ) as HTMLElement | null;
+  const productInitialUnitWrap = document.querySelector(
+    "[data-product-initial-unit-wrap]"
+  ) as HTMLElement | null;
+  const productStockPanel = document.querySelector(
+    "[data-product-stock-panel]"
+  ) as HTMLElement | null;
+  const productStockRows = document.querySelector(
+    "[data-product-stock-rows]"
+  ) as HTMLElement | null;
+  const stockMoveModal = document.querySelector("[data-stock-move-modal]") as HTMLElement | null;
+  const stockMoveTitle = document.querySelector("[data-stock-move-title]") as HTMLElement | null;
+  const stockMoveType = document.querySelector("[data-stock-move-type]") as HTMLSelectElement | null;
+  const stockMoveUnit = document.querySelector("[data-stock-move-unit]") as HTMLSelectElement | null;
+  const stockMoveQuantity = document.querySelector(
+    "[data-stock-move-quantity]"
+  ) as HTMLInputElement | null;
+  const stockMoveQtyLabel = document.querySelector(
+    "[data-stock-move-qty-label]"
+  ) as HTMLElement | null;
+  const stockMoveCost = document.querySelector("[data-stock-move-cost]") as HTMLInputElement | null;
+  const stockMoveCostWrap = document.querySelector(
+    "[data-stock-move-cost-wrap]"
+  ) as HTMLElement | null;
+  const stockMoveReason = document.querySelector(
+    "[data-stock-move-reason]"
+  ) as HTMLInputElement | null;
+  const stockMoveError = document.querySelector("[data-stock-move-error]") as HTMLElement | null;
+  const stockMoveSave = document.querySelector("[data-stock-move-save]") as HTMLButtonElement | null;
+  const stockMoveOpen = document.querySelector("[data-stock-move-open]") as HTMLButtonElement | null;
+  const stockHistoryModal = document.querySelector(
+    "[data-stock-history-modal]"
+  ) as HTMLElement | null;
+  const stockHistoryTitle = document.querySelector(
+    "[data-stock-history-title]"
+  ) as HTMLElement | null;
+  const stockHistoryUnit = document.querySelector(
+    "[data-stock-history-unit]"
+  ) as HTMLSelectElement | null;
+  const stockHistoryBody = document.querySelector(
+    "[data-stock-history-body]"
+  ) as HTMLElement | null;
+  const stockHistoryOpen = document.querySelector(
+    "[data-stock-history-open]"
+  ) as HTMLButtonElement | null;
   const productSave = document.querySelector("[data-product-save]") as HTMLButtonElement | null;
   const productClear = document.querySelector("[data-product-clear]") as HTMLButtonElement | null;
   const productNew = document.querySelector("[data-product-new]") as HTMLButtonElement | null;
@@ -138,8 +227,80 @@ export const initAdminProductsBehavior = ({
 
   let productsCache: ProductRow[] = [];
   let activeProductId: number | null = null;
+  let activeProductName = "";
+  let unitsCache: UnitRow[] = [];
   let productsPage = 1;
   let productsPageSize = 10;
+
+  const fillUnitSelect = (select: HTMLSelectElement | null, placeholder: string): void => {
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = "";
+    const placeholderOption = document.createElement("option");
+    placeholderOption.value = "";
+    placeholderOption.textContent = placeholder;
+    select.appendChild(placeholderOption);
+    for (const unit of unitsCache) {
+      const option = document.createElement("option");
+      option.value = String(unit.id);
+      option.textContent = unit.isOnline ? `${unit.name} (online)` : unit.name;
+      select.appendChild(option);
+    }
+    if (current && unitsCache.some((unit) => String(unit.id) === current)) {
+      select.value = current;
+    }
+  };
+
+  const loadUnits = async (): Promise<void> => {
+    try {
+      const response = await apiJson<{ scope: string; units: UnitRow[] }>("/inventory/units");
+      unitsCache = response.units || [];
+    } catch {
+      unitsCache = [];
+    }
+    fillUnitSelect(productInitialUnit, "Selecione a unidade");
+    fillUnitSelect(stockMoveUnit, "Selecione a unidade");
+    fillUnitSelect(stockHistoryUnit, "Unidade");
+  };
+
+  const updateStockPanel = async (productId: number): Promise<void> => {
+    if (!productStockPanel || !productStockRows) return;
+    productStockPanel.classList.remove("hidden");
+    productStockPanel.classList.add("flex");
+    productStockRows.innerHTML = `<p class="text-text-muted">Carregando saldos...</p>`;
+    try {
+      const rows = await apiJson<CrossUnitRow[]>(`/inventory/cross-unit?productId=${productId}`);
+      if (!rows.length) {
+        productStockRows.innerHTML = `<p class="text-text-muted">Sem saldo registrado em nenhuma unidade.</p>`;
+        return;
+      }
+      productStockRows.innerHTML = rows
+        .map((row) => {
+          const badge =
+            row.available <= 0
+              ? `<span class="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-semibold">Esgotado</span>`
+              : `<span class="font-semibold text-forest-green">${row.available}</span>`;
+          return `<div class="flex items-center justify-between gap-2 border-b border-[#f4f0e7] py-1">
+            <span class="text-text-muted">${escapeHtml(row.unitName)}${row.isOnline ? " 🌐" : ""}</span>
+            ${badge}
+          </div>`;
+        })
+        .join("");
+    } catch {
+      productStockRows.innerHTML = `<p class="text-red-600">Falha ao carregar saldos.</p>`;
+    }
+  };
+
+  const hideStockPanel = (): void => {
+    if (!productStockPanel) return;
+    productStockPanel.classList.add("hidden");
+    productStockPanel.classList.remove("flex");
+  };
+
+  const setInitialStockVisible = (visible: boolean): void => {
+    productInitialStockWrap?.classList.toggle("hidden", !visible);
+    productInitialUnitWrap?.classList.toggle("hidden", !visible);
+  };
 
   if (productsPageSizeSelect) {
     const initialSize = Number(productsPageSizeSelect.value);
@@ -148,36 +309,94 @@ export const initAdminProductsBehavior = ({
     }
   }
 
+  const updateProductImagePreview = (): void => {
+    if (!productImagePreview || !productImagePlaceholder) return;
+    const raw = (productImage?.value || "").trim();
+    if (raw) {
+      productImagePreview.src = resolveProductImageUrl(raw);
+      productImagePreview.classList.remove("hidden");
+      productImagePlaceholder.classList.add("hidden");
+    } else {
+      productImagePreview.removeAttribute("src");
+      productImagePreview.classList.add("hidden");
+      productImagePlaceholder.classList.remove("hidden");
+    }
+  };
+
+  if (productImagePreview && productImagePlaceholder) {
+    productImagePreview.addEventListener("error", () => {
+      productImagePreview.classList.add("hidden");
+      productImagePlaceholder.classList.remove("hidden");
+    });
+  }
+
   const resetProductForm = (): void => {
     if (productForm) productForm.reset();
     productBenefits.forEach((input) => {
       if (input instanceof HTMLInputElement) input.value = "";
     });
     if (productImage) productImage.value = "";
+    if (productCostPrice) productCostPrice.value = "";
+    if (productMinStock) productMinStock.value = "";
+    if (productInitialStock) productInitialStock.value = "";
+    if (productInitialUnit) productInitialUnit.value = "";
+    updateProductImagePreview();
+    hideStockPanel();
+    setInitialStockVisible(true);
     activeProductId = null;
+    activeProductName = "";
     if (productSave) productSave.textContent = "Salvar produto";
   };
+
+  const FEEDBACK_TONE_CLASSES = [
+    "text-stone-500",
+    "text-green-700",
+    "text-red-700",
+    "text-red-600",
+    "bg-red-50",
+    "bg-green-50",
+    "border",
+    "border-red-200",
+    "border-green-200",
+    "rounded-lg",
+    "px-3",
+    "py-2",
+    "text-sm",
+    "font-semibold",
+  ];
 
   const setProductFeedback = (
     message: string,
     tone: "info" | "success" | "error" = "info"
   ): void => {
     if (!productFeedback) return;
+    productFeedback.classList.remove(...FEEDBACK_TONE_CLASSES);
     if (!message) {
       productFeedback.textContent = "";
       productFeedback.classList.add("hidden");
-      productFeedback.classList.remove("text-stone-500", "text-green-700", "text-red-600");
       return;
     }
     productFeedback.textContent = message;
     productFeedback.classList.remove("hidden");
-    productFeedback.classList.remove("text-stone-500", "text-green-700", "text-red-600");
-    if (tone === "success") {
-      productFeedback.classList.add("text-green-700");
+    if (tone === "error") {
+      // Erro em destaque (banner) + rola até ele — validação do usuário 2026-07-07:
+      // "Sessão expirada" ficava invisível ao salvar.
+      productFeedback.classList.add(
+        "text-red-700",
+        "bg-red-50",
+        "border",
+        "border-red-200",
+        "rounded-lg",
+        "px-3",
+        "py-2",
+        "text-sm",
+        "font-semibold"
+      );
+      productFeedback.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    if (tone === "error") {
-      productFeedback.classList.add("text-red-600");
+    if (tone === "success") {
+      productFeedback.classList.add("text-green-700", "text-sm", "font-semibold");
       return;
     }
     productFeedback.classList.add("text-stone-500");
@@ -357,14 +576,33 @@ export const initAdminProductsBehavior = ({
           if (productPrice) productPrice.focus();
           return;
         }
-        const stockRaw = productStock?.value.trim() || "";
-        const stockParsed = stockRaw ? Number(stockRaw) : undefined;
-        if (
-          stockRaw &&
-          (stockParsed === undefined || !Number.isFinite(stockParsed) || stockParsed < 0)
-        ) {
-          setProductFeedback("Informe um estoque valido (numero maior ou igual a zero).", "error");
-          if (productStock) productStock.focus();
+        if (price <= 0) {
+          setProductFeedback("O preco de venda deve ser maior que zero.", "error");
+          if (productPrice) productPrice.focus();
+          return;
+        }
+        const costPriceRaw = productCostPrice?.value.trim() || "";
+        const costPriceParsed = costPriceRaw ? parseCurrencyValue(costPriceRaw) : null;
+        if (costPriceRaw && costPriceParsed === null) {
+          setProductFeedback("Informe um preco de custo valido.", "error");
+          if (productCostPrice) productCostPrice.focus();
+          return;
+        }
+        const minStockRaw = productMinStock?.value.trim() || "";
+        const minStockParsed = minStockRaw ? Number(minStockRaw) : undefined;
+        if (minStockRaw && (!Number.isInteger(minStockParsed) || (minStockParsed as number) < 0)) {
+          setProductFeedback("Informe um estoque minimo valido.", "error");
+          if (productMinStock) productMinStock.focus();
+          return;
+        }
+        const initialStockRaw = productInitialStock?.value.trim() || "";
+        const initialStockParsed = initialStockRaw ? Number(initialStockRaw) : undefined;
+        const initialUnitId = productInitialUnit?.value
+          ? Number(productInitialUnit.value)
+          : undefined;
+        if (!activeProductId && initialStockParsed && initialStockParsed > 0 && !initialUnitId) {
+          setProductFeedback("Selecione a unidade do estoque inicial.", "error");
+          if (productInitialUnit) productInitialUnit.focus();
           return;
         }
 
@@ -373,18 +611,23 @@ export const initAdminProductsBehavior = ({
           .filter((value) => value);
         const productCategoryId = parseOptionalSelectId(productCategory?.value);
         const productStatusId = parseOptionalSelectId(productStatus?.value);
-        const payload = {
+        const payload: Record<string, unknown> = {
           name,
           description: productDescription?.value.trim() || "",
           sku: productSku?.value.trim() || undefined,
-          stock: stockParsed,
           price,
+          costPrice: costPriceParsed ?? undefined,
+          minStock: minStockParsed,
           benefits,
           productCategoryId,
           productStatusId,
           isFeatured: Boolean(productFeatured?.checked),
           imageUrl: productImage?.value.trim() || undefined,
         };
+        if (!activeProductId && initialStockParsed && initialStockParsed > 0) {
+          payload.initialStock = initialStockParsed;
+          payload.initialStockUnitId = initialUnitId;
+        }
         const isUpdate = Boolean(activeProductId);
         productSave.disabled = true;
         productSave.classList.add("opacity-70", "cursor-not-allowed");
@@ -431,7 +674,13 @@ export const initAdminProductsBehavior = ({
   }
 
   if (productNew) {
-    addCleanup(on(productNew, "click", () => resetProductForm()));
+    addCleanup(
+      on(productNew, "click", () => {
+        resetProductForm();
+        scrollToProductEntry();
+        if (productName) productName.focus({ preventScroll: true });
+      })
+    );
   }
 
   if (productsSearch) {
@@ -509,10 +758,21 @@ export const initAdminProductsBehavior = ({
         if (!product) return;
         if (action === "edit") {
           activeProductId = product.id;
+          activeProductName = product.name || "";
           if (productName) productName.value = product.name || "";
           if (productSku) productSku.value = product.sku || "";
           if (productPrice) productPrice.value = formatCurrencyValue(product.price || 0);
-          if (productStock) productStock.value = product.stock ? String(product.stock) : "";
+          if (productCostPrice) {
+            productCostPrice.value =
+              product.costPrice !== null && product.costPrice !== undefined
+                ? formatCurrencyValue(Number(product.costPrice) || 0)
+                : "";
+          }
+          if (productMinStock) {
+            productMinStock.value = product.minStock ? String(product.minStock) : "";
+          }
+          setInitialStockVisible(false);
+          void updateStockPanel(product.id);
           if (productCategory && product.productCategory) {
             productCategory.value = String(product.productCategory.id);
           }
@@ -522,6 +782,7 @@ export const initAdminProductsBehavior = ({
           if (productFeatured) productFeatured.checked = Boolean(product.isFeatured);
           if (productDescription) productDescription.value = product.description || "";
           if (productImage) productImage.value = product.imageUrl || "";
+          updateProductImagePreview();
           productBenefits.forEach((input, index) => {
             if (input instanceof HTMLInputElement) {
               input.value = product.benefits?.[index] || "";
@@ -542,6 +803,170 @@ export const initAdminProductsBehavior = ({
     );
   }
 
+  if (productImage) {
+    addCleanup(on(productImage, "change", updateProductImagePreview));
+  }
+  updateProductImagePreview();
+
+  // ── Movimentação de estoque (PLAN-0020) ──────────────────────────────────
+
+  const setStockMoveError = (message: string): void => {
+    if (!stockMoveError) return;
+    stockMoveError.textContent = message;
+    stockMoveError.classList.toggle("hidden", !message);
+  };
+
+  const toggleModal = (modal: HTMLElement | null, open: boolean): void => {
+    if (!modal) return;
+    modal.classList.toggle("hidden", !open);
+    modal.classList.toggle("flex", open);
+  };
+
+  const syncMoveTypeUi = (): void => {
+    const type = stockMoveType?.value || "entry";
+    if (stockMoveCostWrap) stockMoveCostWrap.classList.toggle("hidden", type !== "entry");
+    if (stockMoveQtyLabel) {
+      stockMoveQtyLabel.textContent = type === "adjust" ? "Saldo alvo (contagem)" : "Quantidade";
+    }
+  };
+
+  if (stockMoveType) {
+    addCleanup(on(stockMoveType, "change", syncMoveTypeUi));
+  }
+
+  if (stockMoveOpen) {
+    addCleanup(
+      on(stockMoveOpen, "click", () => {
+        if (!activeProductId) return;
+        if (stockMoveTitle) stockMoveTitle.textContent = activeProductName || "Produto";
+        if (stockMoveQuantity) stockMoveQuantity.value = "";
+        if (stockMoveCost) stockMoveCost.value = "";
+        if (stockMoveReason) stockMoveReason.value = "";
+        setStockMoveError("");
+        syncMoveTypeUi();
+        toggleModal(stockMoveModal, true);
+      })
+    );
+  }
+
+  document.querySelectorAll("[data-stock-move-cancel]").forEach((button) => {
+    addCleanup(on(button, "click", () => toggleModal(stockMoveModal, false)));
+  });
+
+  if (stockMoveSave) {
+    addCleanup(
+      on(stockMoveSave, "click", async () => {
+        if (!activeProductId) return;
+        const type = stockMoveType?.value || "entry";
+        const unitId = stockMoveUnit?.value ? Number(stockMoveUnit.value) : null;
+        const quantityRaw = stockMoveQuantity?.value.trim() || "";
+        const quantity = quantityRaw ? Number(quantityRaw) : NaN;
+        const reason = stockMoveReason?.value.trim() || "";
+        if (!unitId) {
+          setStockMoveError("Selecione a unidade.");
+          return;
+        }
+        if (!Number.isInteger(quantity) || quantity < 0 || (type !== "adjust" && quantity < 1)) {
+          setStockMoveError("Informe uma quantidade valida.");
+          return;
+        }
+        if (type === "adjust" && reason.length < 3) {
+          setStockMoveError("Ajuste de inventario exige uma razao (minimo 3 caracteres).");
+          return;
+        }
+        const costRaw = stockMoveCost?.value.trim() || "";
+        const cost = costRaw ? parseCurrencyValue(costRaw) : null;
+        if (type === "entry" && costRaw && cost === null) {
+          setStockMoveError("Custo unitario invalido.");
+          return;
+        }
+        const endpoint =
+          type === "adjust"
+            ? `/units/${unitId}/products/${activeProductId}/stock/adjust`
+            : `/units/${unitId}/products/${activeProductId}/stock/${type}`;
+        const body =
+          type === "adjust"
+            ? { targetStock: quantity, reason }
+            : {
+                quantity,
+                unitCost: type === "entry" && cost !== null ? cost : undefined,
+                reason: reason || undefined,
+              };
+        stockMoveSave.disabled = true;
+        setStockMoveError("");
+        try {
+          await apiJson(endpoint, { method: "POST", body: JSON.stringify(body) });
+          toggleModal(stockMoveModal, false);
+          await fetchProducts();
+          await updateStockPanel(activeProductId);
+          setProductFeedback("Movimento de estoque registrado.", "success");
+        } catch (error) {
+          setStockMoveError(
+            error instanceof Error ? error.message : "Falha ao registrar movimento."
+          );
+        } finally {
+          stockMoveSave.disabled = false;
+        }
+      })
+    );
+  }
+
+  // ── Histórico de movimentação ────────────────────────────────────────────
+
+  const loadHistory = async (): Promise<void> => {
+    if (!activeProductId || !stockHistoryBody) return;
+    const unitId = stockHistoryUnit?.value ? Number(stockHistoryUnit.value) : null;
+    if (!unitId) {
+      stockHistoryBody.innerHTML = `<tr><td class="table-cell" colspan="6">Selecione uma unidade.</td></tr>`;
+      return;
+    }
+    stockHistoryBody.innerHTML = `<tr><td class="table-cell" colspan="6">Carregando...</td></tr>`;
+    try {
+      const movements = await apiJson<MovementRow[]>(
+        `/units/${unitId}/products/${activeProductId}/movements`
+      );
+      if (!movements.length) {
+        stockHistoryBody.innerHTML = `<tr><td class="table-cell" colspan="6">Sem movimentos nesta unidade.</td></tr>`;
+        return;
+      }
+      stockHistoryBody.innerHTML = movements
+        .map((movement) => {
+          const label = MOVEMENT_TYPE_LABEL[movement.type] || movement.type;
+          const inbound = movement.type === "ENTRADA_COMPRA" || movement.type === "DEVOLUCAO";
+          const sign = movement.type === "AJUSTE" ? "±" : inbound ? "+" : "−";
+          return `<tr>
+            <td class="table-cell whitespace-nowrap">${formatDate(movement.createdAt)}</td>
+            <td class="table-cell">${escapeHtml(label)}</td>
+            <td class="table-cell text-right">${sign}${movement.quantity}</td>
+            <td class="table-cell text-right font-semibold">${movement.balanceAfter}</td>
+            <td class="table-cell">${escapeHtml(movement.reason || "-")}</td>
+            <td class="table-cell">${escapeHtml(movement.createdBy?.name || "-")}</td>
+          </tr>`;
+        })
+        .join("");
+    } catch {
+      stockHistoryBody.innerHTML = `<tr><td class="table-cell text-red-600" colspan="6">Falha ao carregar historico.</td></tr>`;
+    }
+  };
+
+  if (stockHistoryOpen) {
+    addCleanup(
+      on(stockHistoryOpen, "click", () => {
+        if (!activeProductId) return;
+        if (stockHistoryTitle) stockHistoryTitle.textContent = activeProductName || "Produto";
+        toggleModal(stockHistoryModal, true);
+        void loadHistory();
+      })
+    );
+  }
+  if (stockHistoryUnit) {
+    addCleanup(on(stockHistoryUnit, "change", () => void loadHistory()));
+  }
+  document.querySelectorAll("[data-stock-history-close]").forEach((button) => {
+    addCleanup(on(button, "click", () => toggleModal(stockHistoryModal, false)));
+  });
+
+  loadUnits().catch(() => undefined);
   fetchProducts().catch(() => undefined);
 
   return { refresh: fetchProducts };

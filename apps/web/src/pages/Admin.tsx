@@ -5,6 +5,7 @@ import AdminContent from "../components/pages/AdminContent";
 import {
   AdminDashboardAgendaIsland,
   AdminDashboardCommissionsIsland,
+  AdminDashboardInsightsIsland,
   AdminDashboardKpisIsland,
   AdminDashboardSalesIsland,
 } from "../modules/admin-kpis";
@@ -100,6 +101,7 @@ export default function AdminPage() {
       <AdminDiscountCouponsViewIsland />
       <AdminDashboardKpisIsland />
       <AdminDashboardSalesIsland />
+      <AdminDashboardInsightsIsland />
       <AdminDashboardAgendaIsland />
       <AdminDashboardCommissionsIsland />
     </>

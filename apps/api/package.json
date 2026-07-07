@@ -13,7 +13,8 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "seed:build": "esbuild prisma/seed.ts --bundle --platform=node --outfile=dist/seed.js --external:@prisma/client --external:dotenv",
     "test:greeting": "tsx --test src/lib/conciergeOpening.test.ts",
-    "test": "npm run test:greeting"
+    "test:inventory": "JWT_SECRET=test-only-secret-not-used-for-anything-real-0000 tsx --test src/lib/stockLedger.test.ts src/lib/stockReservation.test.ts src/middleware/auth.test.ts",
+    "test": "npm run test:greeting && npm run test:inventory"
   },
   "keywords": [],
   "author": "",

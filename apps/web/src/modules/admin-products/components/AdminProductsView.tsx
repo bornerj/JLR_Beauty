@@ -153,8 +153,8 @@ export const AdminProductsView = (): ReactElement => {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <section className="xl:col-span-1 bg-white rounded-xl border border-[#cfe7d1] shadow-sm p-6 flex flex-col gap-5" data-product-entry-section>
+        <div className="flex flex-col gap-6">
+            <section className="bg-white rounded-xl border border-[#cfe7d1] shadow-sm p-6 flex flex-col gap-5" data-product-entry-section>
                 <div>
                     <h3 className="text-xl font-bold text-forest" data-product-entry-title>
                         Entrada de Produto <span className="text-primary align-middle">•</span>
@@ -162,6 +162,7 @@ export const AdminProductsView = (): ReactElement => {
                     <p className="text-sm text-stone-500">Preencha os dados básicos para cadastrar ou atualizar.</p>
                     <p className="mt-2 text-xs text-stone-500 hidden" data-product-feedback></p>
                 </div>
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
                 <form className="flex flex-col gap-4" data-product-form>
                     <div className="flex flex-col gap-1">
                         <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Nome do Produto</label>
@@ -192,14 +193,51 @@ export const AdminProductsView = (): ReactElement => {
                             <input className="w-full border border-[#cfe7d1] rounded-lg px-4 py-2.5 bg-[#f6f8f6] text-forest-green focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-body" placeholder="JLR-ARG-01" type="text" data-product-sku />
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="flex flex-col gap-1">
-                            <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Preco</label>
+                            <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Preco de venda</label>
                             <input className="w-full border border-[#cfe7d1] rounded-lg px-4 py-2.5 bg-[#f6f8f6] text-forest-green focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-body" placeholder="R$ 0,00" type="text" data-product-price />
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Estoque</label>
-                            <input className="w-full border border-[#cfe7d1] rounded-lg px-4 py-2.5 bg-[#f6f8f6] text-forest-green focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-body" placeholder="Quantidade" type="number" min="0" data-product-stock />
+                            <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Preco de custo</label>
+                            <input className="w-full border border-[#cfe7d1] rounded-lg px-4 py-2.5 bg-[#f6f8f6] text-forest-green focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-body" placeholder="R$ 0,00 (p/ CMV e margem)" type="text" data-product-cost-price />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Estoque minimo</label>
+                            <input className="w-full border border-[#cfe7d1] rounded-lg px-4 py-2.5 bg-[#f6f8f6] text-forest-green focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-body" placeholder="Alerta de reposicao" type="number" min="0" data-product-min-stock />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" data-product-stock-fields>
+                        <div className="flex flex-col gap-1" data-product-initial-stock-wrap>
+                            <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Estoque inicial</label>
+                            <input className="w-full border border-[#cfe7d1] rounded-lg px-4 py-2.5 bg-[#f6f8f6] text-forest-green focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-body" placeholder="Somente no cadastro" type="number" min="0" data-product-initial-stock />
+                        </div>
+                        <div className="flex flex-col gap-1" data-product-initial-unit-wrap>
+                            <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Unidade do estoque</label>
+                            <div className="relative w-full">
+                                <select className="appearance-none w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-body text-sm cursor-pointer hover:bg-white transition-colors" data-product-initial-unit>
+                                    <option value="">Selecione a unidade</option>
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-muted">
+                                    <span className="material-symbols-outlined text-lg">expand_more</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="hidden rounded-xl border border-[#cfe7d1] bg-white p-4 flex-col gap-3" data-product-stock-panel>
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-forest-green">Estoque por unidade</h4>
+                            <div className="flex items-center gap-1">
+                                <button className="px-2.5 py-1.5 rounded-lg bg-primary text-white text-[11px] font-semibold hover:bg-primary-dark" type="button" data-stock-move-open>
+                                    Movimentar
+                                </button>
+                                <button className="px-2.5 py-1.5 rounded-lg border border-[#cfe7d1] text-forest-green text-[11px] font-semibold hover:bg-[#f6f8f6]" type="button" data-stock-history-open>
+                                    Histórico
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-1 text-xs" data-product-stock-rows>
+                            <p className="text-text-muted">Carregando saldos...</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -264,9 +302,21 @@ export const AdminProductsView = (): ReactElement => {
                         </button>
                     </div>
                 </form>
+                <aside className="flex flex-col gap-2">
+                    <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">Pré-visualização</label>
+                    <div className="relative w-full aspect-square rounded-xl border border-[#cfe7d1] bg-[#f6f8f6] overflow-hidden flex items-center justify-center">
+                        <img className="hidden w-full h-full object-contain" alt="Imagem do produto" data-product-image-preview />
+                        <div className="flex flex-col items-center gap-2 text-text-muted" data-product-image-placeholder>
+                            <span className="material-symbols-outlined text-5xl">image</span>
+                            <span className="text-xs">Sem imagem</span>
+                        </div>
+                    </div>
+                    <p className="text-[11px] text-text-muted text-center">Use “Escolher” no campo Imagem do Produto para definir.</p>
+                </aside>
+                </div>
             </section>
 
-            <section className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <section className="grid grid-cols-2 xl:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl border border-[#cfe7d1] shadow-sm p-5 flex flex-col justify-between">
                     <p className="text-text-muted text-sm font-body font-medium uppercase tracking-wider">Produtos ativos</p>
                     <div className="flex items-end gap-2">
@@ -310,7 +360,89 @@ export const AdminProductsView = (): ReactElement => {
             </section>
         </div>
 
-        
+        <section className="fixed inset-0 z-[70] hidden items-center justify-center bg-black/45 p-4" data-stock-move-modal>
+            <div className="w-full max-w-md rounded-xl border border-[#cfe7d1] bg-white shadow-xl">
+                <div className="flex items-start justify-between px-5 py-4 border-b border-[#e8f1e9]">
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-text-muted font-semibold">Movimentação de estoque</p>
+                        <h3 className="text-lg font-semibold text-forest-green" data-stock-move-title>Produto</h3>
+                    </div>
+                    <button type="button" className="rounded-lg border border-[#cfe7d1] px-2 py-1 text-xs font-semibold text-forest-green hover:bg-[#f6f8f6]" data-stock-move-cancel>
+                        Fechar
+                    </button>
+                </div>
+                <div className="px-5 py-4 flex flex-col gap-3">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Tipo de movimento</label>
+                    <select className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" data-stock-move-type>
+                        <option value="entry">Entrada (compra)</option>
+                        <option value="consumption">Baixa por uso no salão</option>
+                        <option value="loss">Perda / quebra / vencimento</option>
+                        <option value="adjust">Ajuste de inventário (define saldo)</option>
+                    </select>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Unidade</label>
+                    <select className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" data-stock-move-unit>
+                        <option value="">Selecione a unidade</option>
+                    </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-text-muted" data-stock-move-qty-label>Quantidade</label>
+                            <input type="number" min="0" className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="0" data-stock-move-quantity />
+                        </div>
+                        <div className="flex flex-col gap-1" data-stock-move-cost-wrap>
+                            <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Custo unitário</label>
+                            <input type="text" className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="R$ 0,00" data-stock-move-cost />
+                        </div>
+                    </div>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Razão</label>
+                    <input type="text" className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Obrigatória em ajuste; recomendada nos demais" data-stock-move-reason />
+                    <p className="text-xs text-red-700 hidden" data-stock-move-error />
+                </div>
+                <div className="px-5 py-4 border-t border-[#e8f1e9] flex items-center justify-end gap-2">
+                    <button type="button" className="px-4 py-2 rounded-lg border border-[#cfe7d1] text-forest-green text-xs font-semibold hover:bg-[#f6f8f6]" data-stock-move-cancel>
+                        Cancelar
+                    </button>
+                    <button type="button" className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark disabled:opacity-50" data-stock-move-save>
+                        Registrar movimento
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section className="fixed inset-0 z-[70] hidden items-center justify-center bg-black/45 p-4" data-stock-history-modal>
+            <div className="w-full max-w-2xl rounded-xl border border-[#cfe7d1] bg-white shadow-xl max-h-[80vh] flex flex-col">
+                <div className="flex items-start justify-between px-5 py-4 border-b border-[#e8f1e9]">
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-text-muted font-semibold">Histórico de movimentação</p>
+                        <h3 className="text-lg font-semibold text-forest-green" data-stock-history-title>Produto</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <select className="bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-1.5 px-3 rounded-lg text-xs" data-stock-history-unit>
+                            <option value="">Unidade</option>
+                        </select>
+                        <button type="button" className="rounded-lg border border-[#cfe7d1] px-2 py-1 text-xs font-semibold text-forest-green hover:bg-[#f6f8f6]" data-stock-history-close>
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+                <div className="px-5 py-4 overflow-y-auto">
+                    <table className="min-w-full divide-y divide-[#e8f1e9] text-xs">
+                        <thead>
+                            <tr>
+                                <th className="table-head-cell text-left text-text-muted">Quando</th>
+                                <th className="table-head-cell text-left text-text-muted">Tipo</th>
+                                <th className="table-head-cell text-right text-text-muted">Qtd</th>
+                                <th className="table-head-cell text-right text-text-muted">Saldo</th>
+                                <th className="table-head-cell text-left text-text-muted">Razão</th>
+                                <th className="table-head-cell text-left text-text-muted">Por</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-[#f4f0e7]" data-stock-history-body>
+                            <tr><td className="table-cell" colSpan={6}>Selecione uma unidade.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </div>
 
     </>

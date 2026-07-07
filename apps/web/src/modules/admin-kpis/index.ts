@@ -8,3 +8,4 @@ export * from "./components/AdminDashboardAgendaPanel";
 export * from "./components/AdminDashboardAgendaIsland";
 export * from "./components/AdminDashboardCommissionsPanel";
 export * from "./components/AdminDashboardCommissionsIsland";
+export * from "./components/AdminDashboardInsightsIsland";

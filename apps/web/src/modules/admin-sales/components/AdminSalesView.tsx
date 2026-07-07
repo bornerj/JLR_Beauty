@@ -13,7 +13,7 @@ export const AdminSalesView = (): ReactElement => {
                   <button className="px-4 py-2 text-sm font-semibold rounded-lg bg-[#e7f3eb] text-forest-green hover:bg-[#d5e9db] transition-colors">
                       Exportar
                   </button>
-                  <button className="px-5 py-2 text-sm font-semibold rounded-lg bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors flex items-center gap-2">
+                  <button className="px-5 py-2 text-sm font-semibold rounded-lg bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors flex items-center gap-2" type="button" data-manual-sale-open>
                       <span className="material-symbols-outlined text-base">receipt_long</span>
                       Novo pedido manual
                   </button>
@@ -167,6 +167,74 @@ export const AdminSalesView = (): ReactElement => {
                   <article className="rounded-xl border border-[#cfe7d1] bg-white px-4 py-4 text-xs text-text-muted">
                       Carregando pedidos...
                   </article>
+              </div>
+          </section>
+
+          <section className="fixed inset-0 z-[72] hidden items-center justify-center bg-black/45 p-4" data-manual-sale-modal>
+              <div className="w-full max-w-2xl rounded-xl border border-[#cfe7d1] bg-white shadow-xl max-h-[90vh] flex flex-col">
+                  <div className="flex items-start justify-between px-5 py-4 border-b border-[#e8f1e9]">
+                      <div>
+                          <p className="text-xs uppercase tracking-wider text-text-muted font-semibold">Venda de balcão</p>
+                          <h3 className="text-lg font-semibold text-forest-green">Novo pedido manual</h3>
+                      </div>
+                      <button type="button" className="rounded-lg border border-[#cfe7d1] px-2 py-1 text-xs font-semibold text-forest-green hover:bg-[#f6f8f6]" data-manual-sale-cancel>
+                          Fechar
+                      </button>
+                  </div>
+                  <div className="px-5 py-4 flex flex-col gap-3 overflow-y-auto">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <input type="text" className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Nome do cliente" data-manual-sale-name />
+                          <input type="email" className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Email do cliente" data-manual-sale-email />
+                          <input type="text" className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Telefone/WhatsApp" data-manual-sale-phone />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                              <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Unidade da venda</label>
+                              <select className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" data-manual-sale-unit>
+                                  <option value="">Selecione a unidade</option>
+                              </select>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                              <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Pagamento</label>
+                              <select className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" data-manual-sale-paid>
+                                  <option value="true">Recebido agora (pedido nasce PAGO)</option>
+                                  <option value="false">A receber (pedido fica PENDENTE)</option>
+                              </select>
+                          </div>
+                      </div>
+                      <div className="rounded-xl border border-[#cfe7d1] p-3 flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                              <h4 className="text-sm font-semibold text-forest-green">Itens</h4>
+                              <span className="text-xs text-text-muted" data-manual-sale-availability></span>
+                          </div>
+                          <div className="grid grid-cols-[minmax(0,1fr)_90px_auto] gap-2 items-center">
+                              <select className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2 px-3 rounded-lg text-sm" data-manual-sale-item-select>
+                                  <option value="">Selecione produto ou serviço</option>
+                              </select>
+                              <input type="number" min="1" defaultValue="1" className="w-full bg-[#f6f8f6] border border-[#cfe7d1] text-forest-green py-2 px-3 rounded-lg text-sm" data-manual-sale-item-qty />
+                              <button type="button" className="px-3 py-2 rounded-lg bg-[#e7f3eb] text-forest-green text-xs font-semibold hover:bg-[#d5e9db]" data-manual-sale-item-add>
+                                  Adicionar
+                              </button>
+                          </div>
+                          <ul className="flex flex-col gap-1 text-sm" data-manual-sale-items>
+                              <li className="text-xs text-text-muted" data-manual-sale-empty>Nenhum item adicionado.</li>
+                          </ul>
+                          <div className="flex items-center justify-between border-t border-[#e8f1e9] pt-2">
+                              <span className="text-xs uppercase tracking-wider text-text-muted font-semibold">Total estimado</span>
+                              <span className="text-lg font-semibold text-forest-green" data-manual-sale-total>R$ 0,00</span>
+                          </div>
+                          <p className="text-[11px] text-text-muted">O total oficial é calculado pelo servidor com os preços do catálogo.</p>
+                      </div>
+                      <p className="text-xs text-red-700 hidden" data-manual-sale-error />
+                  </div>
+                  <div className="px-5 py-4 border-t border-[#e8f1e9] flex items-center justify-end gap-2">
+                      <button type="button" className="px-4 py-2 rounded-lg border border-[#cfe7d1] text-forest-green text-xs font-semibold hover:bg-[#f6f8f6]" data-manual-sale-cancel>
+                          Cancelar
+                      </button>
+                      <button type="button" className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark disabled:opacity-50" data-manual-sale-save>
+                          Registrar venda
+                      </button>
+                  </div>
               </div>
           </section>
 

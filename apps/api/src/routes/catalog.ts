@@ -1,8 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
-import { requireAdmin } from "../middleware/auth";
+import { requireAdmin, canAccessUnit, type AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
+import { applyStockMovement, StockError } from "../lib/stockLedger";
+import { recordAudit } from "../lib/auditLog";
 import { logger } from "../utils/logger";
 import { withDetail, formatZodDetail } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
@@ -20,19 +22,29 @@ const statusSchema = z.object({
 });
 const statusUpdateSchema = statusSchema.partial();
 
+// PLAN-0020: cadastro cria só o catálogo — estoque nunca é escrito direto.
+// "Estoque inicial" opcional gera ENTRADA_COMPRA via ledger na unidade indicada.
+// Preço estritamente > 0 (validação PRD/dry-run fluxo 4).
 const productSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   sku: z.string().optional(),
-  stock: z.coerce.number().int().min(0).optional(),
-  price: z.coerce.number().min(0),
+  price: z.coerce.number().positive(),
+  costPrice: z.coerce.number().min(0).optional(),
+  unitOfMeasure: z.string().max(20).optional(),
+  minStock: z.coerce.number().int().min(0).optional(),
+  maxStock: z.coerce.number().int().min(0).nullable().optional(),
   imageUrl: z.string().optional(),
   benefits: z.array(z.string()).optional(),
   productCategoryId: z.coerce.number().optional(),
   productStatusId: z.coerce.number().optional(),
   isFeatured: z.coerce.boolean().optional(),
+  initialStock: z.coerce.number().int().min(0).optional(),
+  initialStockUnitId: z.coerce.number().int().positive().optional(),
 });
-const productUpdateSchema = productSchema.partial();
+const productUpdateSchema = productSchema
+  .omit({ initialStock: true, initialStockUnitId: true })
+  .partial();
 
 const serviceSchema = z.object({
   name: z.string().min(1),
@@ -239,14 +251,41 @@ catalogRouter.get("/products", requireAdmin, async (_req, res) => {
   res.json(products);
 });
 
-catalogRouter.post("/products", requireAdmin, async (req, res) => {
+catalogRouter.post("/products", requireAdmin, async (req: AuthRequest, res) => {
   const parsed = productSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ message: MSG.INVALID_PRODUCT, ...withDetail(formatZodDetail(parsed.error.issues)) });
     return;
   }
 
-  const { name, description, price, imageUrl, productCategoryId, productStatusId, isFeatured, sku, stock, benefits } = parsed.data;
+  const {
+    name, description, price, imageUrl, productCategoryId, productStatusId,
+    isFeatured, sku, benefits, costPrice, unitOfMeasure, minStock, maxStock,
+    initialStock, initialStockUnitId,
+  } = parsed.data;
+
+  // Estoque inicial: exige unidade e passa pelo ledger (nunca escrita direta).
+  if (initialStock && initialStock > 0) {
+    if (!initialStockUnitId) {
+      res.status(400).json({
+        message: MSG.INVALID_PRODUCT,
+        ...withDetail("unidade obrigatoria para estoque inicial"),
+      });
+      return;
+    }
+    if (!canAccessUnit(req, initialStockUnitId)) {
+      res.status(403).json({ message: MSG.FORBIDDEN });
+      return;
+    }
+    const unitExists = await prisma.unit.findUnique({
+      where: { id: initialStockUnitId },
+      select: { id: true },
+    });
+    if (!unitExists) {
+      res.status(400).json({ message: MSG.INVALID_PRODUCT, ...withDetail("unidade invalida") });
+      return;
+    }
+  }
   const normalizedCategoryId =
     productCategoryId !== undefined && Number(productCategoryId) > 0 ? Number(productCategoryId) : null;
   const normalizedStatusId =
@@ -269,19 +308,54 @@ catalogRouter.post("/products", requireAdmin, async (req, res) => {
   }
 
   try {
-    const product = await prisma.product.create({
-      data: {
-        name, description, sku, stock: stock ?? 0,
-        price: new Prisma.Decimal(price || 0),
-        imageUrl, benefits,
-        isFeatured: Boolean(isFeatured ?? false),
-        productCategoryId: normalizedCategoryId,
-        productStatusId: normalizedStatusId,
-      },
-      include: { productCategory: true, productStatus: true },
+    const product = await prisma.$transaction(async (tx) => {
+      const created = await tx.product.create({
+        data: {
+          name, description, sku, stock: 0,
+          price: new Prisma.Decimal(price),
+          costPrice: costPrice !== undefined ? new Prisma.Decimal(costPrice) : null,
+          unitOfMeasure: unitOfMeasure ?? null,
+          minStock: minStock ?? 0,
+          maxStock: maxStock ?? null,
+          imageUrl, benefits,
+          isFeatured: Boolean(isFeatured ?? false),
+          productCategoryId: normalizedCategoryId,
+          productStatusId: normalizedStatusId,
+        },
+        select: { id: true },
+      });
+
+      if (initialStock && initialStock > 0 && initialStockUnitId) {
+        await applyStockMovement(tx, {
+          productId: created.id,
+          unitId: initialStockUnitId,
+          type: "ENTRADA_COMPRA",
+          quantity: initialStock,
+          unitCost: costPrice ?? null,
+          reason: "saldo inicial (cadastro de produto)",
+          userId: (req as AuthRequest).user?.id ?? null,
+        });
+      }
+
+      return tx.product.findUnique({
+        where: { id: created.id },
+        include: { productCategory: true, productStatus: true },
+      });
     });
+
+    if (initialStock && initialStock > 0 && initialStockUnitId) {
+      recordAudit("STOCK_ENTRY", {
+        userId: (req as AuthRequest).user?.id,
+        req,
+        meta: { productId: product?.id, unitId: initialStockUnitId, quantity: initialStock, origin: "product_create" },
+      });
+    }
     res.status(201).json(product);
   } catch (error) {
+    if (error instanceof StockError) {
+      res.status(400).json({ message: MSG.INVALID_PRODUCT, ...withDetail(error.message) });
+      return;
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
       res.status(400).json({ message: MSG.INVALID_PRODUCT, ...withDetail("categoria/status de produto invalido") });
       return;
@@ -329,11 +403,18 @@ catalogRouter.patch("/products/:id", requireAdmin, async (req, res) => {
   }
 
   try {
+    // PLAN-0020: PATCH atualiza só o catálogo — estoque muda apenas via
+    // endpoints de movimento (/units/:unitId/products/:id/stock/*).
     const updated = await prisma.product.update({
       where: { id: productId },
       data: {
-        name: payload.name, description: payload.description, sku: payload.sku, stock: payload.stock,
-        price: payload.price !== undefined ? new Prisma.Decimal(payload.price || 0) : undefined,
+        name: payload.name, description: payload.description, sku: payload.sku,
+        price: payload.price !== undefined ? new Prisma.Decimal(payload.price) : undefined,
+        costPrice:
+          payload.costPrice !== undefined ? new Prisma.Decimal(payload.costPrice) : undefined,
+        unitOfMeasure: payload.unitOfMeasure,
+        minStock: payload.minStock,
+        maxStock: payload.maxStock,
         imageUrl: payload.imageUrl, benefits: payload.benefits, isFeatured: payload.isFeatured,
         productCategoryId: normalizedCategoryId,
         productStatusId: normalizedStatusId,
@@ -443,12 +524,22 @@ catalogRouter.delete("/services/:id", requireAdmin, async (req, res) => {
 // --- Public catalog ---
 
 catalogRouter.get("/public/products", async (_req, res) => {
+  // PLAN-0020 (S8): expõe apenas flag coarse `inStock` — disponibilidade
+  // (stock - reserved) da unidade Loja Online — nunca o saldo exato.
+  const onlineUnit = await prisma.unit.findFirst({
+    where: { isOnline: true },
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
   const products = await prisma.product.findMany({
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     select: {
       id: true, name: true, description: true, sku: true, price: true,
       imageUrl: true, benefits: true, isFeatured: true,
       productStatus: { select: { name: true } },
+      productStocks: onlineUnit
+        ? { where: { unitId: onlineUnit.id }, select: { stock: true, reserved: true } }
+        : undefined,
     },
   });
   const activeStatusNames = new Set(["ACTIVE", "ATIVO", "ATIVA"]);
@@ -458,7 +549,11 @@ catalogRouter.get("/public/products", async (_req, res) => {
       if (!statusName) return true;
       return activeStatusNames.has(statusName);
     })
-    .map(({ productStatus: _productStatus, ...product }) => product);
+    .map(({ productStatus: _productStatus, productStocks, ...product }) => {
+      const onlineStock = productStocks?.[0];
+      const available = onlineStock ? onlineStock.stock - onlineStock.reserved : 0;
+      return { ...product, inStock: available > 0 };
+    });
   res.json(visibleProducts);
 });
 

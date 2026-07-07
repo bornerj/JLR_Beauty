@@ -7,6 +7,7 @@ import { scheduleRouter } from "./schedule";
 import { ordersRouter, handleStripeWebhook } from "./orders";
 import { usersRouter } from "./users";
 import { adminRouter } from "./admin";
+import { inventoryRouter } from "./inventory";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.use(scheduleRouter);
 router.use(ordersRouter);
 router.use(usersRouter);
 router.use(adminRouter);
+router.use(inventoryRouter);
 router.use(subscriptionsRouter);
 
 export { handleStripeWebhook };

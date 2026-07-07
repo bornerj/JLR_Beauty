@@ -2,6 +2,86 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-07-07 — PLAN-0020: testes automatizados das rotinas novas (ledger, reserva, RBAC de unidade)
+
+**Contexto/gatilho:** ao investigar o bug de quantidade travada no modal de venda manual (input controlado sem `onChange`), o usuário perguntou se a falta de testes automatizados também deixava passar problemas em outras rotinas novas do PLAN-0020. Decisão do usuário: implementar os testes agora, antes de fechar o plano.
+
+**Arquivos criados:**
+- `apps/api/src/lib/testHelpers/fakeStockTx.ts` — fake mínimo de `Prisma.TransactionClient` (upsert/update/create/findUnique/findMany/$queryRaw/$executeRaw só para as tabelas de estoque), criado porque o projeto ainda não tem infraestrutura de banco de testes.
+- `apps/api/src/lib/stockLedger.test.ts` — 7 casos: entrada/saída de estoque, bloqueio de saldo negativo, validação de quantidade (zero/negativa/não-inteira), sync do cache global (`Product.stock`), overselling bloqueado em `sellStockDirect`.
+- `apps/api/src/lib/stockReservation.test.ts` — 8 casos: reservar prende disponível sem tocar no REAL, disponível insuficiente, confirmar (baixa real + solta reservado), liberar idempotente, re-checagem pós-expiração (confirma quando ainda há estoque / falha tratada quando não há), reserva já finalizada não pode ser reconfirmada.
+- `apps/api/src/middleware/auth.test.ts` — 8 casos: `resolveUnitScope`/`canAccessUnit` fail-closed para MASTER/ADMIN (global), MANAGER/PROFESSIONAL (própria unidade), sem unidade vinculada (nega tudo) — cobre as travas de segurança S1-S4 do plano.
+
+**Arquivo modificado:** `apps/api/package.json` — novo script `test:inventory` (roda os 3 arquivos acima com `JWT_SECRET` dummy, necessário porque `middleware/auth.ts` importa `lib/auth.ts`, que valida o segredo no load do módulo); `test` agora roda `test:greeting && test:inventory`.
+
+**Fora do escopo automatizado (registrado no plano):** rotas Express fim-a-fim (`orders.ts`, `inventory.ts`) e concorrência real com 2 sessões simultâneas exigem infraestrutura de banco de testes/HTTP que o projeto não tem — permanecem cobertas só pelo teste manual via API real já feito na Onda 7 e pela revisão de código do lock (`SELECT ... FOR UPDATE`).
+
+**Validações:** `npx tsc --noEmit` PASS · `npm run test` (apps/api) — 23/23 PASS (5 greeting + 18 novos).
+
+**Documentação:** `memory/plans/PLAN-0020-...md` atualizado (pendência de testes automatizados removida da lista de pendências para DONE, com resumo do que foi coberto e do que ficou fora); `memory/progress.md` sincronizado.
+
+**Pendente:** confirmação final do usuário sobre a rodada 1 de validação visual, pentest manual S10, fluxo Git (commit/push).
+
+---
+
+## 2026-07-07 — Fechamento de documentação pendente do PLAN-0020 (continuidade após limite de sessão anterior)
+
+**Contexto:** a sessão anterior encerrou por limite antes de sincronizar o checklist do plano com o que já estava de fato entregue (Registro de Execução já documentava tudo, mas as caixas de marcação das Ondas 0-7, Critérios de Aceitação e Travas de Segurança seguiam `[ ]`).
+
+**O que foi feito (só documentação, nenhum código/schema alterado):**
+- `memory/plans/PLAN-0020-PRODUTOS-ESTOQUE-LEDGER-VENDAS-MULTICANAL-BI.md`: marcadas como concluídas as Ondas 0-7, os "Novos itens de execução derivados" (validação de fluxos) e os Critérios de Aceitação/Travas S1-S9, todos com evidência já presente no próprio Registro de Execução. Mantidos em aberto apenas os itens genuinamente pendentes: confirmação final do usuário sobre a rodada 1 de validação visual, testes automatizados das rotinas novas, pentest manual S10 (isolamento entre unidades/franquias) e o fluxo Git (commit/push). Status do topo do plano e seção "Pendências para DONE" atualizados para refletir esse estado.
+- `memory/progress.md`: linha do módulo "Estoque Multi-Unidade + Vendas + BI (PLAN-0020)" atualizada para citar o checklist fechado e listar as 4 pendências reais restantes.
+
+**Validações:** nenhuma (documentação apenas; sem mudança de código).
+**Próximo passo:** usuário confirma se a rodada 1 de validação visual fechou tudo; decidir sobre testes automatizados e pentest S10; só então commit/push e renomear o plano para DONE.
+
+---
+
+## 2026-07-07 — PLAN-0020: correções da validação visual do usuário (rodada 1)
+
+**Contexto:** usuário validou as telas e reportou 5 itens. 4 corrigidos; 1 é comportamento decidido no plano (explicado e provado).
+
+1. **Admin produtos — layout do form:** linha de preços agora com 3 colunas (Preço de venda | Preço de custo | Estoque mínimo); logo abaixo a linha de Estoque inicial + Unidade (criação); e o box **"Estoque por unidade"** (saldos + botões Movimentar/Histórico) movido do aside (depois da imagem) para o corpo do form, largura total, logo abaixo dos campos de estoque. Aside ficou só com o preview da imagem. `AdminProductsView.tsx`.
+2. **Modal venda de balcão — quantidade travada:** causa raiz `value="1"` no JSX (input controlado pelo React sem onChange → não aceita digitação nem setas). Corrigido para `defaultValue="1"`. `AdminSalesView.tsx`.
+3. **"+ Novo Produto" não levava ao form:** agora reseta, faz `scrollIntoView` até a seção Entrada de Produto e foca o campo Nome. `admin-products/behavior.ts`.
+4. **Feedback de erro invisível ("Sessão expirada" minúsculo):** feedback de erro virou banner destacado (fundo vermelho claro, borda, texto `text-sm font-semibold`) com `scrollIntoView` automático até a mensagem. `admin-products/behavior.ts` (`setProductFeedback`).
+5. **Carrinho não reserva estoque — NÃO é bug:** decisão registrada no PLAN-0020 (gatilho híbrido, aprovada em 2026-07-06): o site reserva **no início do checkout/pagamento**, não ao adicionar ao carrinho — para carrinho abandonado não travar estoque por 20min. Como `STRIPE_ENABLED=false` em dev impede o checkout completo, as primitivas foram provadas ao vivo: reserva ativa prendeu todo o disponível do produto 8 → vitrine mostrou `inStock=false` (Esgotado) → **sweeper expirou a reserva vencida em ≤60s** → `reserved=0`, vitrine voltou a `true`. Reserva de teste removida do banco.
+
+**Validações:** TS PASS (web), rebuild do container web. Sem mudança de backend.
+
+---
+
+## 2026-07-07 — PLAN-0020 EXECUTADO — Estoque multi-unidade (ledger+reserva), venda multicanal e BI por papel
+
+**Marco de FIM da execução do PLAN-0020** (aprovado pelo usuário em 2026-07-06, executado em sessão contínua). Detalhes completos na seção "Registro de Execução" de `memory/plans/PLAN-0020-PRODUTOS-ESTOQUE-LEDGER-VENDAS-MULTICANAL-BI.md`.
+
+**Resumo:** 2 migrations novas (core multi-unidade + RLS), motor de estoque com ledger auditável (`stockLedger.ts`) e reserva com TTL 20min + sweeper (`stockReservation.ts`), router `inventory.ts` (movimentos/saldos/reservas/cross-unit/BI), RBAC de unidade (`requireManager`, `resolveUnitScope` fail-closed), `POST /orders` reescrito (venda de balcão: staff, total server-side, canal+vendedor+unidade, nasce PAGO, baixa via ledger, auditada), checkout Stripe reserva em vez de decrementar, `markOrderAsPaid` confirma reservas (3 caminhos), catálogo com costPrice/minStock/preço>0/estoque-inicial-via-ledger, `/public/products` com `inStock` coarse, KPIs novos (sales-insights com CMV/margem/tops + inventory-overview), admin produtos com painel por unidade + modais movimento/histórico, modal de venda manual ligado, ilha de BI no dashboard, SPA com Esgotado + quantidade.
+
+**Validações:** TS PASS (api+web) · builds PASS · Docker rebuild PASS (10 migrations, sweeper ativo) · testes 5/5 PASS · fluxo end-to-end via API real (entrada→venda mista→ledger→overselling bloqueado→total forjado ignorado→BI com números reais→S8 público sem saldo exato) · dados de teste limpos.
+
+**Bug registrado:** ERR-0043 (postgres Exited 127 pós-reboot — bind mount em /media antes da montagem do disco).
+
+**Pendente:** validação visual do usuário · testes automatizados das rotinas novas · commit/push (dupla autorização) → Git Record do plano.
+
+---
+
+## 2026-07-06 — Correção de layout da tela Cadastro/Consulta de Produtos (admin-products)
+
+**Contexto/objetivo:** Usuário reportou que a área "Entrada de Produto" estava estreita (1/3 da largura) e as duas colunas à direita ocupadas por 4 indicadores estáticos num grid 2×2, sem sentido; além disso a imagem do produto não aparecia ao clicar/editar. Solicitado: formulário ocupar o container todo, incluir janela de preview da imagem, e os indicadores passarem para uma única linha (boxes com cantos arredondados), do mesmo tamanho do bloco superior. Execução point-in-time (sem plano) — não confundir com a Onda 4 do PLAN-0020 (que reformula essa tela de forma mais ampla).
+
+**Mudanças:**
+- `apps/web/src/modules/admin-products/components/AdminProductsView.tsx`: bloco inferior deixou de ser `grid xl:grid-cols-3` (form 1/3 + indicadores 2/3) e virou `flex flex-col`. Form em largura total, com layout interno `lg:grid-cols-[minmax(0,1fr)_320px]` (campos à esquerda + coluna de **preview de imagem** à direita, box `aspect-square` com placeholder "Sem imagem"). Os 4 cards de indicadores passaram para uma linha só (`grid grid-cols-2 xl:grid-cols-4`).
+- `apps/web/src/modules/admin-products/behavior.ts`: refs `data-product-image-preview`/`data-product-image-placeholder`; helper `updateProductImagePreview()` (usa `resolveProductImageUrl`, mostra placeholder quando vazio, fallback no `onerror`); chamado ao editar produto, ao limpar e no init; listener `change` no input de imagem.
+- `apps/web/src/modules/admin-core/behavior.ts`: dispara `change` (bubbles) em `[data-product-image]` após definir a imagem (upload, usar URL, limpar) para o preview atualizar em tempo real.
+
+**Nota:** os 4 indicadores continuam com valores estáticos/placeholder (128, 9, 6, 14) — os KPIs reais desses cards são escopo da Onda 5 do PLAN-0020; aqui só o layout foi corrigido.
+
+**Validações:** `apps/web` — `npx tsc --noEmit` PASS; `npm run build` (vite) PASS. Rebuild do container `jlr_beauty-web-1` concluído (exit 0) e no ar.
+
+**Próximo passo:** usuário confere visualmente; sem commit até autorização explícita.
+
+---
+
 ## 2026-07-05 — SESSION AUDIT — PASS
 
 | Item | Resultado |

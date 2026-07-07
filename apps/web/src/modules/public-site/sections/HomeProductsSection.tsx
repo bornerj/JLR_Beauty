@@ -11,6 +11,8 @@ type PublicProductRow = {
   imageUrl?: string | null;
   benefits?: string[] | null;
   isFeatured?: boolean | null;
+  /// Disponibilidade coarse da Loja Online (PLAN-0020) — false = Esgotado.
+  inStock: boolean;
 };
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -100,6 +102,7 @@ const parsePublicProducts = (payload: unknown): PublicProductRow[] => {
         imageUrl: typeof entry.imageUrl === "string" ? entry.imageUrl : null,
         benefits: parseBenefits(entry.benefits),
         isFeatured: typeof entry.isFeatured === "boolean" ? entry.isFeatured : false,
+        inStock: entry.inStock !== false,
       };
     })
     .filter((row): row is PublicProductRow => Boolean(row));
@@ -109,6 +112,7 @@ export const HomeProductsSection = (): ReactElement => {
   const branding = useBranding();
   const [products, setProducts] = useState<PublicProductRow[]>([]);
   const [spotlightId, setSpotlightId] = useState<number | null>(null);
+  const [spotlightQuantity, setSpotlightQuantity] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [brokenImages, setBrokenImages] = useState<Record<number, boolean>>({});
@@ -149,6 +153,10 @@ export const HomeProductsSection = (): ReactElement => {
     };
   }, []);
 
+  useEffect(() => {
+    setSpotlightQuantity(1);
+  }, [spotlightId]);
+
   const spotlight = useMemo(() => {
     if (!products.length) return null;
     if (spotlightId === null) return products[0];
@@ -174,11 +182,12 @@ export const HomeProductsSection = (): ReactElement => {
 
   const handleAddProductToCart = (
     product: PublicProductRow | null | undefined,
-    event: MouseEvent<HTMLButtonElement>
+    event: MouseEvent<HTMLButtonElement>,
+    quantity = 1
   ): void => {
     event.preventDefault();
     event.stopPropagation();
-    if (!product) return;
+    if (!product || !product.inStock) return;
     addCartItem({
       itemType: "PRODUCT",
       entityId: product.id,
@@ -186,7 +195,7 @@ export const HomeProductsSection = (): ReactElement => {
       subtitle: product.sku || product.description || null,
       imageUrl: resolveProductImageUrl(product.imageUrl),
       price: product.price,
-      quantity: 1,
+      quantity: Math.max(1, quantity),
     });
     openCartModal();
   };
@@ -229,7 +238,11 @@ export const HomeProductsSection = (): ReactElement => {
                   }}
                 />
                 <div className="absolute bottom-4 right-4 bg-white/80 dark:bg-black/60 backdrop-blur px-3 py-1 rounded text-xs font-medium uppercase tracking-wider">
-                  {spotlight?.isFeatured ? "Destaque" : "Novo"}
+                  {spotlight && !spotlight.inStock
+                    ? "Esgotado"
+                    : spotlight?.isFeatured
+                    ? "Destaque"
+                    : "Novo"}
                 </div>
               </div>
             </div>
@@ -275,17 +288,36 @@ export const HomeProductsSection = (): ReactElement => {
                 <div className="pt-6 flex flex-col gap-4">
                   <div className="flex gap-4">
                     <div className="w-24 border border-[#e7f3eb] dark:border-[#2a4e38] rounded-lg flex items-center justify-between px-3 bg-white dark:bg-[#152b1e]">
-                      <button className="text-gray-500 hover:text-primary" type="button">-</button>
-                      <span className="font-medium text-gray-900 dark:text-white">1</span>
-                      <button className="text-gray-500 hover:text-primary" type="button">+</button>
+                      <button
+                        className="text-gray-500 hover:text-primary disabled:opacity-40"
+                        type="button"
+                        aria-label="Diminuir quantidade"
+                        disabled={!spotlight?.inStock || spotlightQuantity <= 1}
+                        onClick={() => setSpotlightQuantity((current) => Math.max(1, current - 1))}
+                      >
+                        -
+                      </button>
+                      <span className="font-medium text-gray-900 dark:text-white">{spotlightQuantity}</span>
+                      <button
+                        className="text-gray-500 hover:text-primary disabled:opacity-40"
+                        type="button"
+                        aria-label="Aumentar quantidade"
+                        disabled={!spotlight?.inStock || spotlightQuantity >= 99}
+                        onClick={() => setSpotlightQuantity((current) => Math.min(99, current + 1))}
+                      >
+                        +
+                      </button>
                     </div>
                     <button
-                      className="flex-1 bg-primary hover:bg-[#0da640] text-white h-12 rounded-lg font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-                      onClick={(event) => handleAddProductToCart(spotlight, event)}
+                      className="flex-1 bg-primary hover:bg-[#0da640] text-white h-12 rounded-lg font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:bg-stone-400 disabled:shadow-none disabled:cursor-not-allowed"
+                      onClick={(event) => handleAddProductToCart(spotlight, event, spotlightQuantity)}
                       type="button"
+                      disabled={!spotlight?.inStock}
                     >
                       <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
-                      {`Adicionar a Sacola - ${spotlight ? formatPrice(spotlight.price) : "R$ 0,00"}`}
+                      {spotlight && !spotlight.inStock
+                        ? "Esgotado"
+                        : `Adicionar a Sacola - ${spotlight ? formatPrice(spotlight.price) : "R$ 0,00"}`}
                     </button>
                   </div>
                   <p className="text-xs text-center text-gray-400 mt-2">Frete gratis em pedidos acima de R$ 150,00. Devolucao em 30 dias.</p>
@@ -317,18 +349,25 @@ export const HomeProductsSection = (): ReactElement => {
                   role="button"
                   tabIndex={0}
                 >
-                  <img
-                    src={
-                      brokenImages[product.id]
-                        ? FALLBACK_IMAGE_URL
-                        : resolveProductImageUrl(product.imageUrl)
-                    }
-                    alt={product.name}
-                    className="h-72 sm:h-80 w-full object-cover rounded-t-2xl"
-                    onError={() => {
-                      setBrokenImages((previous) => ({ ...previous, [product.id]: true }));
-                    }}
-                  />
+                  <div className="relative">
+                    <img
+                      src={
+                        brokenImages[product.id]
+                          ? FALLBACK_IMAGE_URL
+                          : resolveProductImageUrl(product.imageUrl)
+                      }
+                      alt={product.name}
+                      className={`h-72 sm:h-80 w-full object-cover rounded-t-2xl ${product.inStock ? "" : "opacity-60 grayscale"}`}
+                      onError={() => {
+                        setBrokenImages((previous) => ({ ...previous, [product.id]: true }));
+                      }}
+                    />
+                    {!product.inStock ? (
+                      <span className="absolute top-3 right-3 bg-stone-800/85 text-white text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full">
+                        Esgotado
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="px-4 py-3 w-full">
                     <span className="text-gray-400 mr-3 uppercase text-xs">{branding.fullName}</span>
                     <p className="text-lg font-bold text-black truncate block capitalize">{product.name}</p>
@@ -336,8 +375,9 @@ export const HomeProductsSection = (): ReactElement => {
                       <p className="text-lg font-semibold text-black cursor-auto my-3">{formatPrice(product.price)}</p>
                       <button
                         type="button"
-                        className="ml-auto text-gray-700 hover:text-primary transition-colors"
-                        aria-label="Abrir carrinho"
+                        className="ml-auto text-gray-700 hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        aria-label={product.inStock ? "Adicionar ao carrinho" : "Produto esgotado"}
+                        disabled={!product.inStock}
                         onClick={(event) => handleAddProductToCart(product, event)}
                       >
                         <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>

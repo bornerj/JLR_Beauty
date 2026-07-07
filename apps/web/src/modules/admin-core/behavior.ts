@@ -171,6 +171,7 @@ export function initAdminPage(): Cleanup {
         try {
           const { url } = await uploadImageFile(file);
           produtoImagemInput.value = url;
+          produtoImagemInput.dispatchEvent(new Event("change", { bubbles: true }));
           setModalOpen("produtos-imagem", false);
         } catch (error) {
           logger.error("Falha ao enviar imagem de produto", { error });
@@ -187,6 +188,7 @@ export function initAdminPage(): Cleanup {
         const url = produtoImagemUrl ? produtoImagemUrl.value.trim() : "";
         if (!url || !produtoImagemInput) return;
         produtoImagemInput.value = url;
+        produtoImagemInput.dispatchEvent(new Event("change", { bubbles: true }));
         setModalOpen("produtos-imagem", false);
       })
     );
@@ -195,7 +197,10 @@ export function initAdminPage(): Cleanup {
   if (produtoImagemClear) {
     add(
       on(produtoImagemClear, "click", () => {
-        if (produtoImagemInput) produtoImagemInput.value = "";
+        if (produtoImagemInput) {
+          produtoImagemInput.value = "";
+          produtoImagemInput.dispatchEvent(new Event("change", { bubbles: true }));
+        }
         if (produtoImagemUrl) produtoImagemUrl.value = "";
         if (produtoImagemFile) produtoImagemFile.value = "";
       })

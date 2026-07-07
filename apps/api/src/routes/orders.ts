@@ -1,8 +1,17 @@
 import { Prisma, type FulfillmentStatus, type OrderStatus, type PaymentStatus } from "@prisma/client";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { requireAdmin, requireAuth } from "../middleware/auth";
+import {
+  requireAdmin,
+  requireAuth,
+  requireStaff,
+  canAccessUnit,
+  type AuthRequest,
+} from "../middleware/auth";
 import prisma from "../lib/prisma";
+import { sellStockDirect, StockError } from "../lib/stockLedger";
+import { reserveStock } from "../lib/stockReservation";
+import { recordAudit } from "../lib/auditLog";
 import { logger } from "../utils/logger";
 import { checkCouponValidationLimit, recordCouponValidationAttempt } from "../lib/rateLimiter";
 import { generateOrderHmac, verifyOrderHmac } from "../lib/hmacUtils";
@@ -76,16 +85,18 @@ const publicStripeCancelPendingSchema = z
     message: "orderId ou paymentRecordId deve ser informado",
   });
 
+// PLAN-0020 (S12): total e unitPrice são calculados no servidor a partir do
+// catálogo — valores enviados pelo cliente para esses campos são ignorados.
+// soldByUserId/channel NUNCA vêm do body (S3) — derivados do token.
 const orderSchema = z.object({
   items: z
     .array(
       z
         .object({
-          productId: z.coerce.number().optional(),
-          membershipId: z.coerce.number().optional(),
-          serviceId: z.coerce.number().optional(),
-          quantity: z.coerce.number().min(1),
-          unitPrice: z.coerce.number().min(0),
+          productId: z.coerce.number().int().positive().optional(),
+          membershipId: z.coerce.number().int().positive().optional(),
+          serviceId: z.coerce.number().int().positive().optional(),
+          quantity: z.coerce.number().int().min(1).max(999),
         })
         .refine(
           (item) => {
@@ -98,7 +109,11 @@ const orderSchema = z.object({
         )
     )
     .min(1),
-  total: z.coerce.number().min(0),
+  /// Unidade da venda — validada contra o escopo do usuário (S2). Staff de
+  /// unidade usa a própria; ADMIN/MASTER global deve informar.
+  unitId: z.coerce.number().int().positive().optional(),
+  /// Venda de balcão nasce PAGA por padrão (decisão PLAN-0020 Onda 3).
+  markAsPaid: z.coerce.boolean().optional().default(true),
   customerName: z.string().min(1),
   customerEmail: z.string().email(),
   customerPhone: phoneSchema,
@@ -284,7 +299,7 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
     productIds.length
       ? prisma.product.findMany({
           where: { id: { in: productIds } },
-          select: { id: true, name: true, price: true, stock: true },
+          select: { id: true, name: true, price: true, stock: true, costPrice: true },
         })
       : Promise.resolve([]),
     membershipIds.length
@@ -387,28 +402,34 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
     return;
   }
 
+  // PLAN-0020: vendas do site baixam estoque da unidade "Loja Online".
+  const onlineUnit = await prisma.unit.findFirst({
+    where: { isOnline: true },
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
+  if (productIds.length && !onlineUnit) {
+    res.status(500).json({
+      message: MSG.SERVER_ERROR,
+      ...withDetail("unidade de e-commerce (Loja Online) nao configurada"),
+    });
+    return;
+  }
+  const productCostById = new Map(
+    products.map((item) => [item.id, item.costPrice ? toDecimalNumber(item.costPrice) : null])
+  );
+
   let createdOrder: { id: number; publicCode: string | null; total: Prisma.Decimal };
   let createdPayment: { id: number };
   try {
     const created = await prisma.$transaction(async (tx) => {
-      if (productIds.length) {
-        for (const productId of productIds) {
-          const quantity = productQuantities.get(productId) || 0;
-          const updated = await tx.product.updateMany({
-            where: { id: productId, stock: { gte: quantity } },
-            data: { stock: { decrement: quantity } },
-          });
-          if (updated.count !== 1) {
-            throw new Error(`insufficient_stock_${productId}`);
-          }
-        }
-      }
-
       const order = await tx.order.create({
         data: {
           publicCode: buildOrderPublicCode(),
           status: "PENDENTE",
           fulfillmentStatus: "PENDENTE",
+          channel: "SITE",
+          unitId: onlineUnit?.id ?? null,
           total: new Prisma.Decimal(total),
           customerName: payload.customerName.trim(),
           customerEmail: payload.customerEmail.trim().toLowerCase(),
@@ -419,11 +440,36 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
               membershipId: item.itemType === "MEMBERSHIP" ? item.entityId : null,
               quantity: item.quantity,
               unitPrice: new Prisma.Decimal(item.unitPrice),
+              unitCost:
+                item.itemType === "PRODUCT" && productCostById.get(item.entityId) !== null
+                  ? new Prisma.Decimal(productCostById.get(item.entityId) as number)
+                  : null,
             })),
           },
         },
         select: { id: true, publicCode: true, total: true },
       });
+
+      // Reserva com TTL (não baixa o estoque REAL — baixa só na confirmação do pagamento).
+      if (productIds.length && onlineUnit) {
+        for (const productId of productIds) {
+          const quantity = productQuantities.get(productId) || 0;
+          try {
+            await reserveStock(tx, {
+              productId,
+              unitId: onlineUnit.id,
+              quantity,
+              channel: "SITE",
+              orderId: order.id,
+            });
+          } catch (error) {
+            if (error instanceof StockError) {
+              throw new Error(`insufficient_stock_${productId}`);
+            }
+            throw error;
+          }
+        }
+      }
 
       // Generate and save HMAC for public order tracking (SEC-21)
       if (order.publicCode) {
@@ -642,6 +688,7 @@ ordersRouter.get("/public/payments/stripe/confirm-session", async (req, res) => 
         });
       }
       if (currentPayment.orderId) {
+        // PLAN-0020: markOrderAsPaid confirma as reservas do pedido (baixa REAL).
         await markOrderAsPaid(tx, {
           orderId: currentPayment.orderId,
           source: "STRIPE_CONFIRM",
@@ -916,7 +963,10 @@ ordersRouter.get("/order-items", requireAdmin, async (_req, res) => {
   res.json(orderItems);
 });
 
-ordersRouter.post("/orders", requireAdmin, async (req, res) => {
+// Venda de balcão (PLAN-0020): staff registra a venda na sua unidade.
+// Preços e total server-side (S12); canal/vendedor derivados do token (S3);
+// baixa de estoque via ledger, com checagem de DISPONÍVEL sob lock (S5).
+ordersRouter.post("/orders", requireStaff, async (req: AuthRequest, res) => {
   const parsed = orderSchema.safeParse(req.body);
   if (!parsed.success) {
     const debugHeader = req.headers["x-debug"] === "1";
@@ -928,114 +978,238 @@ ordersRouter.post("/orders", requireAdmin, async (req, res) => {
     });
     return;
   }
+  const user = req.user;
+  if (!user) {
+    res.status(401).json({ message: MSG.UNAUTHORIZED });
+    return;
+  }
 
-  const { items = [], total, customerName, customerEmail, customerPhone } = parsed.data;
+  const { items = [], customerName, customerEmail, customerPhone, markAsPaid } = parsed.data;
+
+  // Unidade da venda: staff de unidade usa a própria (fail-closed);
+  // ADMIN/MASTER global informa no body (validado por canAccessUnit).
+  let saleUnitId: number | null = null;
+  if (user.role === "MANAGER" || user.role === "PROFESSIONAL") {
+    if (!user.unitId) {
+      res.status(403).json({
+        message: MSG.FORBIDDEN,
+        ...withDetail("usuario sem unidade vinculada"),
+      });
+      return;
+    }
+    if (parsed.data.unitId !== undefined && parsed.data.unitId !== user.unitId) {
+      res.status(403).json({
+        message: MSG.FORBIDDEN,
+        ...withDetail("venda fora da unidade do usuario"),
+      });
+      return;
+    }
+    saleUnitId = user.unitId;
+  } else {
+    saleUnitId = parsed.data.unitId ?? null;
+    if (saleUnitId !== null && !canAccessUnit(req, saleUnitId)) {
+      res.status(403).json({ message: MSG.FORBIDDEN });
+      return;
+    }
+  }
+
   const productQuantities = new Map<number, number>();
-  const serviceIds = new Set<number>();
-  const membershipIds = new Set<number>();
-  items.forEach((item: OrderItemInput) => {
+  const serviceQuantities = new Map<number, number>();
+  const membershipQuantities = new Map<number, number>();
+  for (const item of items as OrderItemInput[]) {
+    const quantity = Number(item.quantity || 1);
     if (item.productId) {
       const productId = Number(item.productId);
-      if (Number.isFinite(productId)) {
-        const current = productQuantities.get(productId) || 0;
-        productQuantities.set(productId, current + Number(item.quantity || 1));
-      }
-    }
-    if (item.serviceId) {
+      productQuantities.set(productId, (productQuantities.get(productId) || 0) + quantity);
+    } else if (item.serviceId) {
       const serviceId = Number(item.serviceId);
-      if (Number.isFinite(serviceId)) serviceIds.add(serviceId);
-    }
-    if (item.membershipId) {
+      serviceQuantities.set(serviceId, (serviceQuantities.get(serviceId) || 0) + quantity);
+    } else if (item.membershipId) {
       const membershipId = Number(item.membershipId);
-      if (Number.isFinite(membershipId)) membershipIds.add(membershipId);
-    }
-  });
-  const productIds = Array.from(productQuantities.keys());
-  const serviceIdList = Array.from(serviceIds);
-  const membershipIdList = Array.from(membershipIds);
-  if (productIds.length) {
-    const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
-    if (products.length !== productIds.length) {
-      res.status(404).json({ message: MSG.PRODUCT_NOT_FOUND });
-      return;
-    }
-    const insufficient = products.find(
-      (product) => product.stock < (productQuantities.get(product.id) || 0)
-    );
-    if (insufficient) {
-      const detail = `estoque insuficiente para ${insufficient.name}`;
-      const debugHeader = req.headers["x-debug"] === "1";
-      res.status(400).json({
-        message: MSG.INVALID_ORDER,
-        ...(debugHeader ? { detail } : withDetail(detail)),
-      });
-      return;
-    }
-  }
-  if (serviceIdList.length) {
-    const services = await prisma.service.findMany({ where: { id: { in: serviceIdList } } });
-    if (services.length !== serviceIdList.length) {
-      res.status(404).json({ message: MSG.SERVICE_NOT_FOUND });
-      return;
-    }
-  }
-  if (membershipIdList.length) {
-    const memberships = await prisma.membership.findMany({
-      where: { id: { in: membershipIdList } },
-    });
-    if (memberships.length !== membershipIdList.length) {
-      res.status(404).json({ message: MSG.MEMBERSHIP_NOT_FOUND });
-      return;
-    }
-  }
-
-  const order = await prisma.$transaction(async (tx) => {
-    if (productIds.length) {
-      await Promise.all(
-        productIds.map((productId) =>
-          tx.product.update({
-            where: { id: productId },
-            data: { stock: { decrement: productQuantities.get(productId) || 0 } },
-          })
-        )
+      membershipQuantities.set(
+        membershipId,
+        (membershipQuantities.get(membershipId) || 0) + quantity
       );
     }
+  }
+  const productIds = Array.from(productQuantities.keys());
+  const serviceIdList = Array.from(serviceQuantities.keys());
+  const membershipIdList = Array.from(membershipQuantities.keys());
 
-    const createdOrder = await tx.order.create({
-      data: {
-        publicCode: buildOrderPublicCode(),
-        total: new Prisma.Decimal(total || 0),
-        customerName,
-        customerEmail,
-        customerPhone,
-        items: {
-          create: items.map((item: OrderItemInput) => ({
-            productId: item.productId ? Number(item.productId) : null,
-            membershipId: item.membershipId ? Number(item.membershipId) : null,
-            serviceId: item.serviceId ? Number(item.serviceId) : null,
-            quantity: Number(item.quantity || 1),
-            unitPrice: new Prisma.Decimal(item.unitPrice || 0),
-          })),
+  if (productIds.length && saleUnitId === null) {
+    res.status(400).json({
+      message: MSG.INVALID_ORDER,
+      ...withDetail("unidade da venda obrigatoria para itens de produto"),
+    });
+    return;
+  }
+
+  const [products, services, memberships] = await Promise.all([
+    productIds.length
+      ? prisma.product.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, name: true, price: true, costPrice: true },
+        })
+      : Promise.resolve([]),
+    serviceIdList.length
+      ? prisma.service.findMany({
+          where: { id: { in: serviceIdList } },
+          select: { id: true, name: true, price: true, cost: true },
+        })
+      : Promise.resolve([]),
+    membershipIdList.length
+      ? prisma.membership.findMany({
+          where: { id: { in: membershipIdList } },
+          select: { id: true, price: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  if (products.length !== productIds.length) {
+    res.status(404).json({ message: MSG.PRODUCT_NOT_FOUND });
+    return;
+  }
+  if (services.length !== serviceIdList.length) {
+    res.status(404).json({ message: MSG.SERVICE_NOT_FOUND });
+    return;
+  }
+  if (memberships.length !== membershipIdList.length) {
+    res.status(404).json({ message: MSG.MEMBERSHIP_NOT_FOUND });
+    return;
+  }
+  const productById = new Map(products.map((row) => [row.id, row]));
+  const serviceById = new Map(services.map((row) => [row.id, row]));
+  const membershipById = new Map(memberships.map((row) => [row.id, row]));
+
+  // Total server-side (S12): Σ preço de catálogo × quantidade.
+  const total = roundCurrency(
+    (items as OrderItemInput[]).reduce((acc, item) => {
+      const quantity = Number(item.quantity || 1);
+      if (item.productId) {
+        return acc + toDecimalNumber(productById.get(Number(item.productId))!.price) * quantity;
+      }
+      if (item.serviceId) {
+        return acc + toDecimalNumber(serviceById.get(Number(item.serviceId))!.price) * quantity;
+      }
+      if (item.membershipId) {
+        return (
+          acc + toDecimalNumber(membershipById.get(Number(item.membershipId))!.price) * quantity
+        );
+      }
+      return acc;
+    }, 0)
+  );
+
+  try {
+    const order = await prisma.$transaction(async (tx) => {
+      const createdOrder = await tx.order.create({
+        data: {
+          publicCode: buildOrderPublicCode(),
+          status: "PENDENTE",
+          channel: "ADMIN",
+          soldByUserId: user.id,
+          unitId: saleUnitId,
+          total: new Prisma.Decimal(total),
+          customerName,
+          customerEmail,
+          customerPhone,
+          items: {
+            create: (items as OrderItemInput[]).map((item) => {
+              const quantity = Number(item.quantity || 1);
+              if (item.productId) {
+                const product = productById.get(Number(item.productId))!;
+                return {
+                  productId: product.id,
+                  quantity,
+                  unitPrice: product.price,
+                  unitCost: product.costPrice, // snapshot p/ CMV (PLAN-0020)
+                };
+              }
+              if (item.serviceId) {
+                const service = serviceById.get(Number(item.serviceId))!;
+                return {
+                  serviceId: service.id,
+                  quantity,
+                  unitPrice: service.price,
+                  unitCost: service.cost,
+                };
+              }
+              const membership = membershipById.get(Number(item.membershipId))!;
+              return {
+                membershipId: membership.id,
+                quantity,
+                unitPrice: membership.price,
+              };
+            }),
+          },
         },
-      },
-      select: { id: true, publicCode: true, items: true },
-    });
-
-    // Generate and save HMAC for public order tracking (SEC-21)
-    if (createdOrder.publicCode) {
-      const orderHmac = generateOrderHmac(createdOrder.id, createdOrder.publicCode);
-      await tx.order.update({
-        where: { id: createdOrder.id },
-        data: { orderHmac },
+        select: { id: true, publicCode: true },
       });
-    }
 
-    return tx.order.findUnique({
-      where: { id: createdOrder.id },
-      include: { items: true },
+      // Baixa imediata via ledger na unidade da venda (reserva+confirmação atômica).
+      for (const productId of productIds) {
+        const product = productById.get(productId)!;
+        await sellStockDirect(tx, {
+          productId,
+          unitId: saleUnitId as number,
+          quantity: productQuantities.get(productId) || 0,
+          refOrderId: createdOrder.id,
+          userId: user.id,
+          unitCost: product.costPrice ? toDecimalNumber(product.costPrice) : null,
+        });
+      }
+
+      // Generate and save HMAC for public order tracking (SEC-21)
+      if (createdOrder.publicCode) {
+        const orderHmac = generateOrderHmac(createdOrder.id, createdOrder.publicCode);
+        await tx.order.update({
+          where: { id: createdOrder.id },
+          data: { orderHmac },
+        });
+      }
+
+      if (markAsPaid) {
+        await tx.payment.create({
+          data: {
+            provider: "MANUAL",
+            status: "APROVADO",
+            amount: new Prisma.Decimal(total),
+            method: "BALCAO",
+            orderId: createdOrder.id,
+            paidAt: new Date(),
+            rawPayload: { origin: "admin_manual_sale", soldByUserId: user.id },
+          },
+        });
+        await markOrderAsPaid(tx, {
+          orderId: createdOrder.id,
+          source: "ADMIN_MANUAL",
+          note: "venda de balcao registrada como paga",
+        });
+      }
+
+      return tx.order.findUnique({
+        where: { id: createdOrder.id },
+        include: { items: true },
+      });
     });
-  });
-  res.status(201).json(order);
+
+    recordAudit("ORDER_MANUAL_SALE", {
+      userId: user.id,
+      req,
+      meta: { orderId: order?.id, unitId: saleUnitId, total, itemCount: items.length },
+    });
+    res.status(201).json(order);
+  } catch (error) {
+    if (error instanceof StockError) {
+      res.status(400).json({
+        message: MSG.INVALID_ORDER,
+        ...withDetail(error.message),
+      });
+      return;
+    }
+    const detail = error instanceof Error ? error.message : "order_create_failed";
+    logger.error("Falha ao criar venda de balcao", { error: detail });
+    res.status(500).json({ message: MSG.SERVER_ERROR, ...withDetail(detail) });
+  }
 });
 
 ordersRouter.patch("/orders/bulk/advance", requireAdmin, async (req, res) => {

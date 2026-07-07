@@ -45,6 +45,7 @@ export const AdminDashboardView = (): ReactElement => {
             </header>
             <div className="mt-6" data-react-admin-dashboard-kpis />
             <div className="mt-6" data-react-admin-dashboard-sales />
+            <div className="mt-6" data-react-admin-dashboard-insights />
           </div>
 
           <div

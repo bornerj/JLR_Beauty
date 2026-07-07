@@ -13,7 +13,15 @@ export type AuditAction =
   | "EMAIL_VERIFIED"
   | "ROLE_CHANGE"
   | "PASSWORD_RESET_REQUEST"
-  | "PASSWORD_RESET_SUCCESS";
+  | "PASSWORD_RESET_SUCCESS"
+  // PLAN-0020 — estoque e vendas (PRD 3.3: ações sensíveis auditadas)
+  | "STOCK_ENTRY"
+  | "STOCK_CONSUMPTION"
+  | "STOCK_LOSS"
+  | "STOCK_ADJUST"
+  | "STOCK_RESERVATION_RELEASE"
+  | "ORDER_MANUAL_SALE"
+  | "ORDER_CANCELLED";
 
 export function recordAudit(
   action: AuditAction,
