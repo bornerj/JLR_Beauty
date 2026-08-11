@@ -2,6 +2,104 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-07-29 — Diagrama de arquitetura do sistema (Archify)
+
+**Contexto/gatilho:** usuário pediu leitura completa do repositório e um diagrama detalhado de como o projeto funciona, usando a skill Archify. Tarefa classificada como SURVEY/INTEL (sem PLAN necessário) — agente aplicado: `explorer-agent`.
+
+**Ação:** mapeamento arquitetural completo (apps/api — 9 routers + 6 libs + módulos chatbot/payments/admin; apps/web — SPA híbrida com 20+ módulos admin-*; Prisma schema — 30+ modelos, RLS, multi-unidade; docker-compose + nginx; auth/RBAC/rate-limit; integrações Stripe e Z-API). Gerado diagrama `architecture` interativo (showcase quality, 9/9 checks, 0 erros/avisos) com 10 componentes, 9 relações e 4 views guiadas.
+
+**Arquivo criado:** `docs/project/ARQUITETURA-SISTEMA.html` (standalone, tema claro/escuro, pan/zoom, busca, views guiadas).
+
+**Validações:** `archify validate --quality showcase` PASS (9/9 checks); `archify deliver` PASS (specification + artifact hash conferidos).
+
+**Pendente:** nenhum — entrega concluída. Arquivo não commitado (aguardando decisão do usuário sobre versionar o diagrama).
+
+---
+
+## 2026-07-22 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | OK — nenhuma DECISION contradita, nenhuma nova exigida |
+| State Integrity | OK — PLAN-0020/0019 pré-existentes inalterados; PLAN-0021 criado e mantido aberto corretamente; desvio de processo (execução sem plano prévio) identificado e regularizado |
+| Operational Memory | OK — MODIFICATION_LOG e progress.md atualizados |
+| Debug Memory | OK — ERR-0044 registrado (template completo, ##bug) |
+| Technical Validation | OK — lint (2 erros pré-existentes, fora do escopo desta sessão), build Docker (3x) PASS, testes api 23/23 PASS, sem migration pendente, logs limpos |
+| Regression Risk | OK — nenhuma área sensível tocada; risco baixo (UI/infra) |
+| Git Governance | PENDING — nenhum commit feito (aguardando autorização); Git Record do PLAN-0021 ainda PENDING |
+
+**Checklist completo:** `memory/logs/AUDIT_CHECKLIST_2026-07-22-PASS.md`.
+**Sessão encerrada a pedido do usuário** ("salve tudo e encerramos por hoje"). Pendências para a próxima sessão: commit/push do fix ERR-0044 + PLAN-0021 (dupla autorização), validação visual do usuário, e as pendências pré-existentes do PLAN-0020/PLAN-0019.
+
+---
+
+## 2026-07-22 — PLAN-0021 (ajuste 2): Master ao final do menu + Entrega/Cupons movidos para Cadastro
+
+**Contexto:** seguindo o mesmo plano em aberto, usuário pediu mais dois ajustes no menu admin: mover o grupo Master para ser o último item do menu; mover "Entrega" e "Cupons" para dentro do grupo "Cadastro".
+
+**Arquivo alterado:** `apps/web/src/components/pages/AdminContent.tsx` — botões "Entrega" e "Cupons" removidos de suas posições avulsas e inseridos no submenu "Cadastro" (após Serviços); bloco do submenu Master (`{isMaster ? <div data-master-menu>...} : null}`) movido para depois do botão "Galeria", tornando-se o último item do menu.
+
+**Ordem final:** Painel, Agenda, WhatsApp, Vendas, Equipes-Metas, Equipes-Perform, [Cadastro: Produtos/Planos/Pessoas/Serviços/Entrega/Cupons], Assinantes, Seções Telas, Galeria, [Master: Branding/Testes/Textos].
+
+**Validações:** `npx tsc -b` (apps/web) PASS; `docker compose up -d --build web` PASS; container `web` saudável.
+
+**Documentação:** `memory/plans/PLAN-0021-...md` atualizado (seção "Ajuste 2" + critério de aceitação revisado).
+
+**Pendente:** validação visual do usuário + commit/push (dupla autorização).
+
+---
+
+## 2026-07-22 — PLAN-0021: reorganização do menu admin e da tela Seções Telas (ex-SPA)
+
+**Contexto/gatilho:** usuário pediu reagrupamento do menu lateral admin (6 itens) para melhorar navegação: Equipes-Metas/Equipes-Perform ao lado de Vendas, Textos dentro do Master, novo grupo Cadastro (Produtos/Planos/Pessoas/Serviços), Seções SPA renomeada e retirada do Master, e reordenação (grupos e seções) da tela de toggles para bater com a ordem real das páginas públicas.
+
+**Discrepância de processo identificada e corrigida nesta sessão:** a execução da tarefa (edições + validações) já havia sido concluída antes deste registro, sem plano formal prévio nem log em tempo real — violação do protocolo do kernel (classificador `DESIGN/UI` exige `PLAN-XXXX`; gatilho de anti-scope-drift de >3 arquivos principais também foi cruzado, 4 arquivos). Regularizado retroativamente via `memory/plans/PLAN-0021-REORGANIZACAO-MENU-ADMIN-SECOES-TELAS.md`, com anuência do usuário.
+
+**Arquivos alterados:**
+- `apps/web/src/components/pages/AdminContent.tsx` — reordenação dos botões do menu; novo submenu colapsável "Cadastro" (state `isCadastroMenuOpen`) com Produtos/Planos/Pessoas/Serviços; "Textos" movido para dentro do submenu Master (agora master-only); "Seções SPA" renomeada para "Seções Telas", retirada do submenu Master e virou botão avulso master-gated logo após o Master.
+- `apps/web/src/modules/admin-core/behavior.ts` — `masterOnlyViews` passou a incluir `"textos-paginas"` (consequência de Textos ter entrado no Master).
+- `apps/web/src/modules/admin-section-toggles/components/AdminSectionTogglesView.tsx` — `toSortedToggleMap` trocou de ordenação alfabética para ordem fixa: grupos `["home", "franquias", "assinaturas"]`; seções de cada grupo na mesma ordem de renderização das páginas reais (`HomeContent`/`FranquiasContent`/`AssinaturasContent`). Título da tela alterado de "Seções Públicas (SPA)" para "Seções Telas".
+- `apps/web/src/modules/admin-tests/behavior.ts` — `masterExpectedViews` passou a incluir `"textos-paginas"`, mantendo a suíte de auto-teste de views coerente com o novo gating.
+
+**Validações executadas:** `npx tsc -b` (apps/web) PASS (2 rodadas); `docker compose up -d --build web` PASS; container `web` saudável; inspeção visual da árvore JSX resultante confirmando a ordem esperada.
+
+**Documentação:** `memory/plans/PLAN-0021-REORGANIZACAO-MENU-ADMIN-SECOES-TELAS.md` criado (retroativo); `memory/progress.md` atualizado.
+
+**Pendente:** commit/push (aguardando dupla autorização explícita do usuário) → Git Record do plano ainda `PENDING`.
+
+---
+
+## 2026-07-21/22 — Fix: `npm ci` ETIMEDOUT no build Docker (api/web) — IPv6 sem rota
+
+**Contexto/gatilho:** usuário reportou falha ao rodar `docker compose up -d --build api web` para concluir os testes do PLAN-0020 — `npm ci` falhando com `ETIMEDOUT` dentro do container.
+
+**Causa raiz:** rede Docker (`bridge`) com IPv6 desabilitado (`EnableIPv6: false`), mas `registry.npmjs.org` resolvendo só para endereços IPv6 — toda tentativa de conexão ficava sem rota até estourar timeout. Confirmado empiricamente: `curl -6` dentro de `node:20-slim` = timeout total; `curl -4` = 200 OK em 0,17s. Detalhe completo em `memory/logs/DEBUG-HISTORY.md` (ERR-0044).
+
+**Arquivos alterados:** `apps/api/Dockerfile` e `apps/web/Dockerfile` — adicionado `ENV NODE_OPTIONS=--dns-result-order=ipv4first` (build e prod stages da api; build stage do web), forçando IPv4 na resolução de DNS do Node/npm/prisma. Mantidas mitigações já presentes no working tree (retry de fetch + cache mount do npm), que sozinhas não resolviam a causa raiz.
+
+**Validações executadas:** rebuild completo (`docker compose up -d --build api web`) PASS; `postgres`/`api`/`web` saudáveis; migrations aplicadas sem pendências; sweeper de reserva de estoque ativo.
+
+**Documentação:** `memory/logs/DEBUG-HISTORY.md` — novo incidente `ERR-0044` (tag `##bug`).
+
+**Pendente:** commit/push (aguardando autorização explícita do usuário).
+
+---
+
+## 2026-07-07 — PLAN-0020: commit + push da entrega (Git Record completo)
+
+**Autorização:** usuário autorizou explicitamente commit e push juntos ("commit e push para finalizar").
+
+**Pre-commit review:** 35 arquivos (11 modificados em `apps/api`, 9 em `apps/web`, 3 em `memory/`, 12 novos incl. 2 migrations + 3 arquivos de teste). `.claude/` deixado fora do commit (fora de escopo desta entrega). Validações: `tsc --noEmit` (api+web) PASS, `npm run build` (api+web) PASS, `npm run test` (api) 23/23 PASS.
+
+**Commit:** `ee6a61a` em `main` — "feat(plan-0020): estoque multi-unidade com ledger, reserva TTL, venda multicanal e BI por papel" (4088 insertions, 202 deletions).
+**Push:** `origin/main` `cf00d25..ee6a61a` — sucesso.
+
+**Atualização:** `memory/plans/PLAN-0020-...md` — Git Record of Delivery preenchido (Steps 1-4, push COMPLETED); status do plano atualizado. `memory/progress.md` sincronizado.
+
+**Pendente para o plano virar DONE:** confirmação final do usuário sobre a rodada 1 de validação visual; pentest manual S10 (isolamento entre unidades/franquias, análogo ao do PLAN-0018).
+
+---
+
 ## 2026-07-07 — PLAN-0020: testes automatizados das rotinas novas (ledger, reserva, RBAC de unidade)
 
 **Contexto/gatilho:** ao investigar o bug de quantidade travada no modal de venda manual (input controlado sem `onChange`), o usuário perguntou se a falta de testes automatizados também deixava passar problemas em outras rotinas novas do PLAN-0020. Decisão do usuário: implementar os testes agora, antes de fechar o plano.

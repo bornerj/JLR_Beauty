@@ -1,6 +1,6 @@
 # PLAN-0020 — Produtos, Estoque Multi-Unidade (Ledger), Vendas Multicanal e BI por Papel
 
-**Status:** ✅ EXECUTADO (2026-07-06/07) — núcleo produto+ledger+venda+BI operacional; checklist técnico (ondas 0-7, critérios de aceitação, travas S1-S9) fechado; rodada 1 de validação visual do usuário concluída (4 ajustes aplicados); testes automatizados das rotinas críticas implementados (23/23 PASS). Aguardando: confirmação final do usuário, pentest S10 e fluxo Git (commit/push) para virar DONE.
+**Status:** ✅ EXECUTADO e commitado/pushed (2026-07-06/07, commit `ee6a61a`) — núcleo produto+ledger+venda+BI operacional; checklist técnico (ondas 0-7, critérios de aceitação, travas S1-S9) fechado; rodada 1 de validação visual do usuário concluída (4 ajustes aplicados); testes automatizados das rotinas críticas implementados (23/23 PASS); Git Record completo. Falta só para virar DONE: confirmação final do usuário sobre a validação visual e o pentest manual S10 (isolamento entre unidades/franquias).
 **Data:** 2026-07-06
 **Escopo macro:** `apps/api` (schema Prisma, middleware auth, rotas catalog/orders, módulo admin/kpis, novos libs de estoque e escopo de unidade), `apps/web` (admin-products, admin-sales, admin-kpis/dashboard role-aware, SPA HomeProductsSection), infra Docker (restart do postgres)
 **Agentes de apoio:** `@orchestrator`, `@database-architect`, `@product-manager`, `@backend-specialist`, `@frontend-specialist`
@@ -301,12 +301,12 @@ Cruzamento com `prd_inventario_franquia.pdf`. **Coberto na PLAN-0020** (após as
 - [ ] Pentest manual S10 (staff de uma unidade/franquia não acessa dados de outra), análogo ao pentest do PLAN-0018.
 - [ ] Fluxo Git completo (commit + push autorizados) → Git Record abaixo.
 
-## Git Record of Delivery (a preencher ao final)
-- **Step 1 (Pre-commit review):** [pendente]
-- **Step 2 (Commit authorization):** [pendente]
-- **Step 3 (Commit confirmation):** [pendente]
-- **Step 4 (Push authorization e resultado):** [pendente]
-- **Push status:** PENDING
+## Git Record of Delivery
+- **Step 1 (Pre-commit review):** 35 arquivos revisados (11 modificados em `apps/api`, 9 em `apps/web`, 3 em `memory/`, 12 novos incl. migrations/testes); validações executadas: `tsc --noEmit` (api+web) PASS, `npm run build` (api+web) PASS, `npm run test` (api) 23/23 PASS. `.claude/` deixado de fora do commit (fora de escopo).
+- **Step 2 (Commit authorization):** autorizado explicitamente pelo usuário em 2026-07-07 ("commit e push para finalizar").
+- **Step 3 (Commit confirmation):** hash `ee6a61a`, branch `main`, mensagem `feat(plan-0020): estoque multi-unidade com ledger, reserva TTL, venda multicanal e BI por papel`, 35 files changed, 4088 insertions(+), 202 deletions(-).
+- **Step 4 (Push authorization e resultado):** autorizado na mesma instrução do usuário; `git push origin main` → `cf00d25..ee6a61a main -> main`.
+- **Push status:** COMPLETED
 
 ---
 

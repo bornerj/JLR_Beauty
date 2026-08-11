@@ -46,7 +46,7 @@ const baseExpectedViews = [
   "performance",
 ];
 
-const masterExpectedViews = ["branding", "site-sections", "testes"];
+const masterExpectedViews = ["branding", "site-sections", "testes", "textos-paginas"];
 
 const skippedApiPaths = [
   "/users",

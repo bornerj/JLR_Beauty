@@ -22,7 +22,7 @@ export function initAdminPage(): Cleanup {
   const { setModalOpen, setActiveView } = initAdminShellBehavior({ addCleanup: add });
   const currentUser = getUser();
   const isMaster = currentUser?.role?.trim().toUpperCase() === "MASTER";
-  const masterOnlyViews = ["branding", "site-sections", "testes"];
+  const masterOnlyViews = ["branding", "site-sections", "testes", "textos-paginas"];
 
   if (!isMaster) {
     masterOnlyViews.forEach((view) => {

@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//media/jaiel/A8FEADE5FEADABCE13/Development/GitHub/JLR_Beauty/apps/api/prisma/**)",
+      "Bash(grep -n \"Router\\\\|\\\\.get\\\\|\\\\.post\\\\|\\\\.patch\\\\|\\\\.delete\\\\|requireAuth\\\\|requireAdmin\\\\|requireMaster\\\\|requireStaff\" /media/jaiel/A8FEADE5FEADABCE13/Development/GitHub/JLR_Beauty/apps/api/src/routes/catalog.ts | head -80)",
+      "Read(//media/jaiel/A8FEADE5FEADABCE13/Development/GitHub/JLR_Beauty/apps/api/src/routes/**)",
+      "Bash(wait)",
+      "Bash(npm test *)",
+      "Bash(find . -maxdepth 3 -iname \"*playwright*\" -not -path \"*/node_modules/*\")",
+      "Bash(which chromium *)",
+      "Bash(ls apps/web/node_modules/.bin/playwright)",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(docker exec jlr_beauty-postgres-1 psql -U jlrbeauty -d jlrbeauty -c \"DELETE FROM coupon_validation_attempts;\" 2>&1 *)",
+      "Bash(google-chrome --headless=new --disable-gpu --no-sandbox --dump-dom --virtual-time-budget=5000 http://localhost/)",
+      "Bash(head -30 apps/api/prisma/data/productInventorySeed.ts)",
+      "Bash(grep -cE \"categoryName|name:\" apps/api/prisma/data/productInventorySeed.ts)",
+      "Bash(xargs cat)",
+      "Bash(DATABASE_URL=\"postgresql://x:x@localhost:5432/x\" npx prisma validate)",
+      "Bash(DATABASE_URL=\"postgresql://x:x@localhost:5432/x\" npx prisma generate)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(echo \"API_BUILD: $?\")",
+      "Bash(echo \"WEB_BUILD: $?\")",
+      "Bash(echo \"TEST_EXIT: $?\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import sys,json;o=json.load\\(sys.stdin\\);print\\('total cobrado:',o.get\\('total'\\),'\\(forjado era 0.01\\) | orderId:',o.get\\('id'\\)\\)\")",
+      "Bash(echo \"TS EXIT: $?\")"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

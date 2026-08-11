@@ -10,6 +10,7 @@ const adminShellInlineCss = ".admin-shell {\r\n            background: #f3efe0;\
 export default function AdminContent() {
   const branding = useBranding();
   const [isMasterMenuOpen, setIsMasterMenuOpen] = useState<boolean>(false);
+  const [isCadastroMenuOpen, setIsCadastroMenuOpen] = useState<boolean>(false);
   const [showDockerModal, setShowDockerModal] = useState<boolean>(true);
   const { status: dockerStatus, isLoading: dockerLoading, anyOffline } = useDockerHealth();
   const currentUser = getUser();
@@ -72,24 +73,6 @@ export default function AdminContent() {
                                 <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Vendas</span>
                             </div>
                         </button>
-                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="checkout-entrega">
-                            <span className="material-symbols-outlined text-forest-light text-xl">local_shipping</span>
-                            <div className="flex flex-col sidebar-text">
-                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Entrega</span>
-                            </div>
-                        </button>
-                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="produtos">
-                            <span className="material-symbols-outlined text-forest-light text-xl">inventory_2</span>
-                            <div className="flex flex-col sidebar-text">
-                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Produtos</span>
-                            </div>
-                        </button>
-                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="cupons-desconto">
-                            <span className="material-symbols-outlined text-forest-light text-xl">local_offer</span>
-                            <div className="flex flex-col sidebar-text">
-                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Cupons</span>
-                            </div>
-                        </button>
                         <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="metas">
                             <span className="material-symbols-outlined text-forest-light text-xl">groups</span>
                             <div className="flex flex-col sidebar-text">
@@ -102,28 +85,76 @@ export default function AdminContent() {
                                 <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Equipes-Perform</span>
                             </div>
                         </button>
-                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="servicos">
-                            <span className="material-symbols-outlined text-forest-light text-xl">content_cut</span>
-                            <div className="flex flex-col sidebar-text">
-                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Serviços</span>
+                        <div className="flex flex-col gap-1" data-cadastro-menu>
+                            <button
+                                type="button"
+                                className="sidebar-item sidebar-item--inactive group"
+                                data-cadastro-menu-toggle
+                                aria-expanded={isCadastroMenuOpen}
+                                onClick={() => setIsCadastroMenuOpen((current) => !current)}
+                            >
+                                <span className="material-symbols-outlined text-forest-light text-xl">folder_open</span>
+                                <div className="flex flex-col sidebar-text">
+                                    <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Cadastro</span>
+                                </div>
+                            </button>
+                            <div className={`flex-col gap-1 pl-4 ${isCadastroMenuOpen ? "flex" : "hidden"}`} data-cadastro-submenu>
+                                <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="produtos">
+                                    <span className="material-symbols-outlined text-forest-light text-xl">inventory_2</span>
+                                    <div className="flex flex-col sidebar-text">
+                                        <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Produtos</span>
+                                    </div>
+                                </button>
+                                <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="planos">
+                                    <span className="material-symbols-outlined text-forest-light text-xl">card_membership</span>
+                                    <div className="flex flex-col sidebar-text">
+                                        <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Planos</span>
+                                    </div>
+                                </button>
+                                <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="usuarios">
+                                    <span className="material-symbols-outlined text-forest-light text-xl">groups</span>
+                                    <div className="flex flex-col sidebar-text">
+                                        <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Pessoas</span>
+                                    </div>
+                                </button>
+                                <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="servicos">
+                                    <span className="material-symbols-outlined text-forest-light text-xl">content_cut</span>
+                                    <div className="flex flex-col sidebar-text">
+                                        <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Serviços</span>
+                                    </div>
+                                </button>
+                                <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="checkout-entrega">
+                                    <span className="material-symbols-outlined text-forest-light text-xl">local_shipping</span>
+                                    <div className="flex flex-col sidebar-text">
+                                        <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Entrega</span>
+                                    </div>
+                                </button>
+                                <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="cupons-desconto">
+                                    <span className="material-symbols-outlined text-forest-light text-xl">local_offer</span>
+                                    <div className="flex flex-col sidebar-text">
+                                        <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Cupons</span>
+                                    </div>
+                                </button>
                             </div>
-                        </button>
-                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="usuarios">
-                            <span className="material-symbols-outlined text-forest-light text-xl">groups</span>
-                            <div className="flex flex-col sidebar-text">
-                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Pessoas</span>
-                            </div>
-                        </button>
-                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="planos">
-                            <span className="material-symbols-outlined text-forest-light text-xl">card_membership</span>
-                            <div className="flex flex-col sidebar-text">
-                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Planos</span>
-                            </div>
-                        </button>
+                        </div>
                         <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="assinantes">
                             <span className="material-symbols-outlined text-forest-light text-xl">group</span>
                             <div className="flex flex-col sidebar-text">
                                 <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Assinantes</span>
+                            </div>
+                        </button>
+                        {isMaster ? (
+                            <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="site-sections">
+                                <span className="material-symbols-outlined text-forest-light text-xl">toggle_on</span>
+                                <div className="flex flex-col sidebar-text">
+                                    <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Seções Telas</span>
+                                </div>
+                            </button>
+                        ) : null}
+                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="galeria-midias">
+                            <span className="material-symbols-outlined text-forest-light text-xl">photo_library</span>
+                            <div className="flex flex-col sidebar-text">
+                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Galeria</span>
                             </div>
                         </button>
                         {isMaster ? (
@@ -147,35 +178,21 @@ export default function AdminContent() {
                                             <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Branding</span>
                                         </div>
                                     </button>
-                                    <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="site-sections">
-                                        <span className="material-symbols-outlined text-forest-light text-xl">toggle_on</span>
+                                    <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="testes">
+                                        <span className="material-symbols-outlined text-forest-light text-xl">bug_report</span>
                                         <div className="flex flex-col sidebar-text">
-                                            <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Seções SPA</span>
+                                            <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Testes</span>
                                         </div>
                                     </button>
-                                    {isMaster ? (
-                                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="testes">
-                                            <span className="material-symbols-outlined text-forest-light text-xl">bug_report</span>
-                                            <div className="flex flex-col sidebar-text">
-                                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Testes</span>
-                                            </div>
-                                        </button>
-                                    ) : null}
+                                    <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="textos-paginas">
+                                        <span className="material-symbols-outlined text-forest-light text-xl">edit_note</span>
+                                        <div className="flex flex-col sidebar-text">
+                                            <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Textos</span>
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
                         ) : null}
-                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="galeria-midias">
-                            <span className="material-symbols-outlined text-forest-light text-xl">photo_library</span>
-                            <div className="flex flex-col sidebar-text">
-                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Galeria</span>
-                            </div>
-                        </button>
-                        <button type="button" className="sidebar-item sidebar-item--inactive group" data-view-trigger="textos-paginas">
-                            <span className="material-symbols-outlined text-forest-light text-xl">edit_note</span>
-                            <div className="flex flex-col sidebar-text">
-                                <span className="text-forest-dark dark:text-gray-300 text-base font-medium leading-none">Textos</span>
-                            </div>
-                        </button>
                     </div>
                 </nav>
             </div>
@@ -302,9 +319,11 @@ export default function AdminContent() {
   <section className="view-panel hidden" data-view="galeria-midias">
     <div data-react-admin-media-gallery-view></div>
   </section>
-  <section className="view-panel hidden" data-view="textos-paginas">
-    <div data-react-admin-page-texts-view></div>
-  </section>
+  {isMaster ? (
+    <section className="view-panel hidden" data-view="textos-paginas">
+      <div data-react-admin-page-texts-view></div>
+    </section>
+  ) : null}
 
 </div></main>
     </div>

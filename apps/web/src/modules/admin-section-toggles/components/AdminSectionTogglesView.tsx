@@ -10,10 +10,51 @@ type SectionTogglesResponse = {
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+// Home primeiro, Assinaturas por último (Franquias no meio) — grupos exibidos nesta ordem fixa, não alfabética.
+const PAGE_ORDER = ["home", "franquias", "assinaturas"];
+
+// Dentro de cada grupo, seções na mesma ordem em que aparecem na tela real (ver HomeContent/FranquiasContent/AssinaturasContent).
+const SECTION_ORDER: Record<string, string[]> = {
+  home: ["hero", "services", "membership", "about", "mission", "products", "testimonials", "cta"],
+  franquias: [
+    "hero",
+    "hero_gallery",
+    "about",
+    "vision",
+    "founder",
+    "benefits",
+    "mission",
+    "models",
+    "fran03",
+    "fran02",
+    "fran01",
+    "gestao_app",
+    "fluxo_caixa",
+    "marketing_crm",
+    "expansao",
+    "perfil",
+    "suporte",
+    "etapas",
+    "contact",
+  ],
+  assinaturas: ["hero", "membership", "about", "mission", "testimonials"],
+};
+
+const sortByOrder = (order: string[]) => (left: string, right: string): number => {
+  const leftIndex = order.indexOf(left);
+  const rightIndex = order.indexOf(right);
+  if (leftIndex === -1 && rightIndex === -1) return left.localeCompare(right);
+  if (leftIndex === -1) return 1;
+  if (rightIndex === -1) return -1;
+  return leftIndex - rightIndex;
+};
+
 const toSortedToggleMap = (value: SectionToggleMap): SectionToggleMap => {
-  const pageEntries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
+  const pageEntries = Object.entries(value).sort(([left], [right]) => sortByOrder(PAGE_ORDER)(left, right));
   return pageEntries.reduce<SectionToggleMap>((acc, [page, sections]) => {
-    const sectionEntries = Object.entries(sections).sort(([left], [right]) => left.localeCompare(right));
+    const sectionEntries = Object.entries(sections).sort(([left], [right]) =>
+      sortByOrder(SECTION_ORDER[page] || [])(left, right)
+    );
     acc[page] = sectionEntries.reduce<Record<string, boolean>>((inner, [section, enabled]) => {
       inner[section] = Boolean(enabled);
       return inner;
@@ -132,7 +173,7 @@ export const AdminSectionTogglesView = (): ReactElement => {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-forest dark:text-white text-3xl display-hero text-shadow-strong italic">
-            Seções Públicas (SPA)
+            Seções Telas
           </h2>
           <p className="text-stone-500 text-lg font-normal">
             Ligue ou desligue seções da Home, Assinaturas e Franquias e grave no
