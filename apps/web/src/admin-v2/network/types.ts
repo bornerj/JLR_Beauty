@@ -49,4 +49,6 @@ export type UnitDiagnostic = {
   marginPercent: number;
   primaryWeakness: { key: HealthComponentKey; label: string; impactEstimate: HealthImpactEstimate };
   primaryStrength: { key: HealthComponentKey; label: string };
+  /** RETROFIT-017 (PLAN-0023, Onda 5) — frase determinística composta a partir dos campos acima. */
+  narrative: string;
 };

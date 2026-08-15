@@ -21,10 +21,10 @@ const ENABLED_ACTIONS = [
   { label: "Ver agenda", path: "/admin-v2/operacao/agenda" },
   { label: "Ver produtos", path: "/admin-v2/operacao/produtos" },
   { label: "Ver clientes", path: "/admin-v2/clientes" },
-];
-
-const DISABLED_ACTIONS = [
-  { label: "Comparar unidade", reason: "Comparador chega numa onda futura de Inteligência (RETROFIT-014)" },
+  // RETROFIT-014 (PLAN-0023, Onda 4) entregue — o botão "Comparar unidade" do mockup
+  // original deixou de ser um adapter-link "em breve" (só existia essa opção até aqui
+  // porque o Comparador ainda não tinha sido construído).
+  { label: "Comparar unidade", path: "/admin-v2/comparador" },
 ];
 
 export function UnitDetailView() {
@@ -89,6 +89,8 @@ export function UnitDetailView() {
         </span>
       </div>
 
+      <p className="text-base leading-relaxed text-stone-700 dark:text-stone-300">{unit.narrative}</p>
+
       <div className="flex flex-wrap gap-x-6 gap-y-1 text-base text-stone-600 dark:text-stone-400">
         <span>
           Receita <strong className="text-forest">{formatCurrencyBRL(unit.revenue)}</strong>{" "}
@@ -143,17 +145,6 @@ export function UnitDetailView() {
             className="rounded-full border border-primary/60 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
           >
             {action.label}
-          </button>
-        ))}
-        {DISABLED_ACTIONS.map((action) => (
-          <button
-            key={action.label}
-            type="button"
-            disabled
-            title={`${action.label} — em breve (${action.reason})`}
-            className="cursor-not-allowed rounded-full border border-stone-200 px-3 py-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400"
-          >
-            {action.label} · em breve
           </button>
         ))}
       </div>

@@ -2,6 +2,20 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — PLAN-0023 Onda 5 (RETROFIT-017, Health Score evolução) concluída
+
+**Contexto:** pedido do usuário para continuar com o RETROFIT-017, próximo item do roadmap do `PLAN-0023` após a Onda 4 (Comparador).
+
+**Entregue:** `apps/api/src/modules/intelligence/network/narrative.ts` — `buildUnitNarrative()` pura, monta uma frase determinística no Diagnóstico da Unidade a partir dos campos que o Health Score já decompôs (estado, score, tendência, força/fraqueza principal, impacto). `narrative.test.ts` — 5 testes. `network/service.ts` expõe `narrative: string` novo em `UnitDiagnostic`, sem rota nova (endpoint já existente da Onda 2 do PLAN-0022). Frontend: parágrafo de narrativa em `UnitDetailView.tsx`.
+
+**Correção de dívida encontrada:** o botão "Comparar unidade" do Diagnóstico da Unidade estava desabilitado ("em breve") desde a Onda 2 do PLAN-0022, referenciando o Comparador como uma onda futura — mas o Comparador foi entregue nesta mesma leva (Onda 4). Corrigido para navegação real.
+
+**Autocorreção durante a validação (registrada por transparência):** a implementação inicial também estendia a tradução de R$ da fraqueza "estoque", reusando o capital parado em produtos Armadilha do Portfólio (Onda 5 do PLAN-0022). Implementado com 9 testes unitários, **revertido antes de ir pra produção**: o componente "estoque" do Health Score mede ruptura/estoque baixo (`inventoryHealthRate`), um sinal diferente de "capital parado em produto Armadilha" — uma unidade pode ter ruptura severa com zero capital parado. Anexar esse número à fraqueza errada violaria a governança #6 (nunca um número que não explica a causa real). Revertido em `apps/api/src/modules/intelligence/network/impact.ts`, com o raciocínio da rejeição documentado inline para não ser tentado de novo sem essa memória. `test:intelligence` fechou em 121 testes (não 122 — 1 teste a menos que o pico intermediário, pela reversão).
+
+**Validações executadas (todas reais):** `tsc -b` (api+web) PASS; `npm run build` (api+web) PASS; `npm run test` (api) **149/149 PASS**; `docker compose build api web` PASS (2 rodadas — uma com a versão errada, revertida antes do redeploy; uma com a versão corrigida) + redeploy `--force-recreate` + healthcheck OK. **E2E real contra Postgres** (login MASTER): `GET /api/admin-v2/network/units/1` → `200` com `narrative` coerente e `impactEstimate: null` honesto (fraqueza é "recorrência", sem fórmula); regressão OK em `/panorama`, `/network`, `/radar`, `/gargalos`, `/money`, `/comparator`, `/portfolio/products`; `401` sem token. **Validação visual real**: narrativa renderiza corretamente na tela, botão "Comparar unidade" habilitado e navegando de verdade para `/admin-v2/comparador` (confirmado por mudança de URL).
+
+**Pendente:** nada commitado ainda desde o PR #1. Próximo passo: usuário decide entre RETROFIT-018/019 ou revisar/mergear o PR #1.
+
 ## 2026-08-15 04:23:12 — SESSION AUDIT — PASS
 
 | Item | Resultado |

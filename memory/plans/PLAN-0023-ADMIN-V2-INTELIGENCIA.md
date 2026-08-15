@@ -1,6 +1,6 @@
 # PLAN-0023 — Admin V2: Programa de Retrofit (Inteligência)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Onda 1 (RETROFIT-011, Radar Executivo) ✅ CONCLUÍDA 2026-08-15; Onda 2 (RETROFIT-012, Gargalos) ✅ CONCLUÍDA 2026-08-15; Onda 3 (RETROFIT-013, "Onde está o dinheiro?") ✅ CONCLUÍDA 2026-08-15; Onda 4 (RETROFIT-014, Comparador de Unidades) ✅ CONCLUÍDA 2026-08-15 (todas com E2E real + validação visual). Próxima: usuário decide entre seguir para RETROFIT-017/018/019 ou pausar para commit/push.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Onda 1 (RETROFIT-011, Radar Executivo) ✅ CONCLUÍDA 2026-08-15; Onda 2 (RETROFIT-012, Gargalos) ✅ CONCLUÍDA 2026-08-15; Onda 3 (RETROFIT-013, "Onde está o dinheiro?") ✅ CONCLUÍDA 2026-08-15; Onda 4 (RETROFIT-014, Comparador de Unidades) ✅ CONCLUÍDA 2026-08-15; Onda 5 (RETROFIT-017, Health Score evolução) ✅ CONCLUÍDA 2026-08-15 (todas com E2E real + validação visual). Próxima: usuário decide entre seguir para RETROFIT-018/019 ou pausar para commit/push.
 **Origem:** continuação direta do `PLAN-0022` (Fundação + Experiência Operacional, Ondas 0-9 + RETROFIT-010b, 100% entregue e validada visualmente em 2026-08-15) — a própria seção "Próximos Passos" daquele plano já previa que "planejamento detalhado de Inteligência (RETROFIT-011 a 019)... fica para um plano futuro (`PLAN-0023` em diante), quando a Fundação+Operação estiver validada em uso real". Está validada — este plano nasce agora, a pedido do usuário ("continue com o retrofit seguinte ao último concluído").
 **Decisão arquitetural herdada:** `DECISION-013` (ACTIVE) — mesmas regras fixas do `PLAN-0022` (Health Score, escopo por unidade, explicabilidade) continuam valendo aqui, não são revalidadas onda a onda.
 **Escopo macro:** só `apps/api/src/modules/intelligence/` (módulos novos) e `apps/web/src/admin-v2/` (telas novas) — nenhuma migração de schema prevista nesta leva (Inteligência é 100% derivada dos dados já existentes/já classificados pelas Ondas 1-9).
@@ -26,7 +26,7 @@ Não é opcional, não se revalida onda a onda — ver `PLAN-0022` §"Governanç
 | RETROFIT-012 | "O que está travando?" (Gargalos) | O que impede o negócio de performar melhor? | ✅ CONCLUÍDA 2026-08-15 |
 | RETROFIT-013 | "Onde está o dinheiro?" | Quem gera receita e quem gera lucro? | ✅ CONCLUÍDA 2026-08-15 |
 | RETROFIT-014 | Comparador Visual de Unidades | Por que uma unidade performa melhor que outra? | ✅ CONCLUÍDA 2026-08-15 |
-| RETROFIT-017 | Health Score (evolução) | — | não iniciada (v1 já entregue na Onda 1 do PLAN-0022; aqui só refina narrativa) |
+| RETROFIT-017 | Health Score (evolução) | — | ✅ CONCLUÍDA 2026-08-15 (v1 já entregue na Onda 1 do PLAN-0022; esta onda refinou narrativa) |
 | RETROFIT-018 | Insight Engine | O que devo saber sem perguntar? | não iniciada (depende de 011/012) |
 | RETROFIT-019 | Ações Recomendadas | O que posso fazer agora? | não iniciada (depende de 018) |
 
@@ -157,3 +157,29 @@ Consolidação (RETROFIT-020 a 022) fica fora deste plano — só entra quando o
 - [x] 4ª aba "Comparador" em `IntelligenceTabs`; rota `/admin-v2/comparador`; breadcrumb `Panorama > Inteligência > Comparador de Unidades`.
 
 **Validações executadas (todas reais, Ondas 3+4 juntas):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **136/136 PASS** (5 + 23 + 108 intelligence); `npm run lint` (web) — mesmo padrão `fetch-on-mount` tolerado, 2 instâncias novas (`MoneyView.tsx`, `ComparatorView.tsx`); `docker compose build api web` PASS + redeploy `--force-recreate` + healthcheck OK. **E2E real contra Postgres** (login MASTER): `GET /api/admin-v2/money` → `200` com cascata batendo exatamente (Receita R$ 32.292,00 = Produtos R$ 11.290,00 + Serviços R$ 19.340,00 + Assinaturas R$ 1.662,00; Custo Direto R$ 10.264,00 = R$ 108,00 + R$ 10.156,00; Margem Bruta R$ 22.028,00; `byPlan` soma R$ 1.662,00 idêntico ao MRR da origem "Assinaturas"); `GET /api/admin-v2/comparator` → `200` com 5 unidades + linha Rede, `biggestGap` em Ocupação (Loja Online 0% — coerente, é loja online sem agenda física — vs Parque da Cidade 2,3%) e `estimatedRevenueDifference: null` (nenhuma unidade tem receita/hora de referência suficiente no recorte para estimar); `401` sem token nos dois; regressão OK em `/panorama`, `/network`, `/radar`, `/gargalos`. **Validação visual real**: as duas telas renderizam corretamente (cascata com setas, cards de origem, tabela por unidade e listas na Onda 3; tabela Métrica×Unidade×Rede e card "Maior Diferença" na Onda 4), 4ª/3ª abas do `IntelligenceTabs` funcionando, breadcrumbs corretos (`Panorama > Inteligência > Onde está o dinheiro?` e `Panorama > Inteligência > Comparador de Unidades`), números na tela conferindo exatamente com o E2E.
+
+---
+
+### Onda 5 — Health Score (evolução) (RETROFIT-017)
+
+**Pergunta que a tela fecha:** já respondida pela v1 (Onda 1 do PLAN-0022) — esta onda só refina a explicação, não a fórmula (`DECISION-013` continua intocada).
+
+**Design:** o texto original do programa agrupa "Health Score" em Inteligência como uma onda de evolução da *narrativa*, não da fórmula.
+
+1. **Narrativa em prosa**: uma frase determinística no Diagnóstico da Unidade, composta só a partir de campos que o score já decompôs (unidade, estado, score, tendência de receita, força/fraqueza principal, impacto quando existe) — não é um cálculo novo, é composição de texto sobre dados já explicados.
+2. **Estimativa de impacto R$ estendida — tentada e revertida nesta mesma onda**: a ideia inicial era estender a tradução pra R$ (que na v1 só cobria "ocupação") também pra "estoque", reusando o `capitalParked` de produtos Armadilha já calculado no Portfólio (Onda 5 do PLAN-0022). Implementado, testado (9 testes) e **rejeitado na validação E2E**: o componente "estoque" do Health Score mede ruptura/estoque baixo (`inventoryHealthRate`, ver `unit-health/service.ts`) — um sinal distinto de "capital parado em produto Armadilha" (baixa margem, alto volume). Uma unidade pode ter ruptura severa com zero capital parado (efeito oposto do que a fórmula assumia). Anexar esse número à fraqueza errada violaria a governança #6 (nunca um número que não explica a causa real) — revertido antes de ir para produção; ocupação continua a única fraqueza com tradução honesta. Decisão documentada em `apps/api/src/modules/intelligence/network/impact.ts`.
+
+**Backend entregue:**
+- [x] `apps/api/src/modules/intelligence/network/impact.ts` (novo, extraído de `service.ts`) — `estimateWeaknessImpact()` pura; mesma regra da v1 (só "ocupação"), com o raciocínio de rejeição de "estoque" documentado inline para não ser tentado de novo sem essa memória.
+- [x] `apps/api/src/modules/intelligence/network/impact.test.ts` — **8 testes unitários PASS**, incluindo as 5 fraquezas sem tradução confirmando `null` mesmo com dados favoráveis (nunca fabrica).
+- [x] `apps/api/src/modules/intelligence/network/narrative.ts` (novo) — `buildUnitNarrative()` pura.
+- [x] `apps/api/src/modules/intelligence/network/narrative.test.ts` — **5 testes unitários PASS**.
+- [x] `network/service.ts` — `getUnitDiagnostic()` monta a narrativa a partir do Health Score já calculado; expõe `narrative: string` novo em `UnitDiagnostic`.
+- [x] Nenhuma rota nova — `GET /api/admin-v2/network/units/:id` (já existente, Onda 2 do PLAN-0022) passou a devolver o campo novo automaticamente.
+
+**Frontend entregue:**
+- [x] `network/types.ts` — mirror atualizado (`narrative: string` novo em `UnitDiagnostic`).
+- [x] `network/UnitDetailView.tsx` — parágrafo de narrativa logo abaixo do cabeçalho da unidade.
+- [x] **Correção de dívida encontrada nesta onda**: o botão "Comparar unidade" estava desabilitado desde a Onda 2 do PLAN-0022 ("em breve — Comparador chega numa onda futura, RETROFIT-014"). O Comparador foi entregue na Onda 4 desta leva — o botão estava desatualizado, mostrando "em breve" para uma funcionalidade que já existe. Corrigido para navegação real (`/admin-v2/comparador`).
+
+**Validações executadas (todas reais):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **149/149 PASS** (5 + 23 + 121 intelligence); `docker compose build api web` PASS + redeploy `--force-recreate` + healthcheck OK. **E2E real contra Postgres** e **validação visual real**: ver registro completo em `memory/MODIFICATION_LOG.md`.

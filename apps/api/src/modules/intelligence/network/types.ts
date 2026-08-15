@@ -26,9 +26,12 @@ export type NetworkBoard = {
 };
 
 export type HealthImpactEstimate = {
-  /** Só calculado quando a causa é "occupancy" — as demais fraquezas ainda não têm tradução
-   * financeira confiável na v1 (não fabricamos um número para não violar a regra de
-   * explicabilidade do PLAN-0022). */
+  /** Só calculado quando a causa é "occupancy" — é a única fraqueza com tradução direta e
+   * honesta para R$ (horas ociosas × receita/hora). As demais (rentabilidade, crescimento,
+   * recorrência, estoque, assinaturas) não ganham um número fabricado — considerado e
+   * descartado explicitamente para "estoque" no RETROFIT-017 (Onda 5 do PLAN-0023): o
+   * componente mede ruptura/estoque baixo, não capital parado — anexar um número de outra
+   * origem violaria a regra de explicabilidade do PLAN-0022 (ver `network/impact.ts`). */
   amount: number;
   explanation: string;
 } | null;
@@ -45,4 +48,6 @@ export type UnitDiagnostic = {
   marginPercent: number;
   primaryWeakness: { key: HealthComponentKey; label: string; impactEstimate: HealthImpactEstimate };
   primaryStrength: { key: HealthComponentKey; label: string };
+  /** RETROFIT-017 (PLAN-0023, Onda 5) — frase determinística composta a partir dos campos acima, nunca um cálculo novo. */
+  narrative: string;
 };
