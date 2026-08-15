@@ -2,6 +2,15 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — Limpeza de arquivos soltos + script de teste Z-API
+
+**Contexto:** ao revisar o `git status` antes do commit do Admin V2, três arquivos untracked, não relacionados ao trabalho da sessão, foram encontrados soltos na raiz do repo — tratados a pedido do usuário.
+
+**O que mudou:**
+- `send_message.php` (novo) — utilitário de teste manual de envio via Z-API (lê `apps/api/.env`, sem segredo hardcoded, mesmo padrão de `docs/config/STRIPE_TEST_RUNBOOK.md`); mantido e comitado por ter valor real (integração Z-API já existe em `apps/api/src/modules/chatbot/`).
+- `arvore.txt` (removido) — dump de `tree` do Windows, gerado, sem valor.
+- `.gitignore` — reintroduz entradas para `arvore.txt` e `/.codex/` (cache local de outra ferramenta de IA, destravado sem querer pela migração `kernel/` → `.sfk/kernel/` do commit anterior).
+
 ## 2026-08-15 — PLAN-0023 Ondas 3 e 4 (RETROFIT-013 Dinheiro + RETROFIT-014 Comparador) concluídas
 
 **Contexto:** pedido do usuário para continuar com o RETROFIT-013 e o RETROFIT-014 (esclarecido via pergunta — "retrofit-10b" citado pelo usuário era na verdade RETROFIT-014, já que o RETROFIT-010b real já estava concluído desde o dia anterior).

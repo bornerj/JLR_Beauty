@@ -44,10 +44,10 @@ tmp/
 *.tmp
 *.bak
 *.orig
+arvore.txt
 
-
-
-
+# AI tool caches (locais, não versionados)
+/.codex/
 
 
 # Claude Code local settings
