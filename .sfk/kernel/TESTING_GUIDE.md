@@ -1,7 +1,7 @@
 # TESTING_GUIDE.md — Universal Testing Directives
 
 Loaded when testing tasks are active. Defines the mandatory testing strategy for any project built on this template.
-Stack-specific tooling goes in `kernel/SYSTEM.md`. This file defines the **principles and structure** that apply regardless of stack.
+Stack-specific tooling goes in `SYSTEM.md`. This file defines the **principles and structure** that apply regardless of stack.
 
 ---
 
@@ -128,4 +128,4 @@ seed:error         → error/edge-case seed
 - Do not write code without a corresponding test if the code contains business logic.
 - Do not skip the `error` seed — edge cases are where bugs live.
 - When a bug is fixed, add a regression test that would have caught it.
-- When selecting the test stack, refer to `kernel/SYSTEM.md` for the project's chosen tools.
+- When selecting the test stack, refer to `SYSTEM.md` for the project's chosen tools.

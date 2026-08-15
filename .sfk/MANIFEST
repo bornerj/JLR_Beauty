@@ -1,0 +1,18 @@
+# SFK MANIFEST — files/dirs owned by the SFK engine (Category A).
+# The updater may replace anything listed here. It must NEVER touch
+# project state (memory/, docs/, sfk.toml, SYSTEM.md) or product code.
+.sfk/VERSION
+.sfk/MANIFEST
+.sfk/kernel/BOOTSTRAP.md
+.sfk/kernel/OPERATING_CARD.md
+.sfk/kernel/RULES.md
+.sfk/kernel/SOUL.md
+.sfk/kernel/index.toml
+.sfk/kernel/ARCHITECTURE.md
+.sfk/kernel/TESTING_GUIDE.md
+.sfk/kernel/SYSTEM-TEMPLATE.md
+.sfk/kernel/agents/
+.sfk/kernel/skills/
+.sfk/kernel/workflows/
+.sfk/kernel/scripts/
+.sfk/kernel/hooks/

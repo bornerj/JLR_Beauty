@@ -1,9 +1,9 @@
 # index.toml — AI Context Router
-# Read at the start of each session via kernel/BOOTSTRAP.md
+# Read at the start of each session via .sfk/kernel/BOOTSTRAP.md
 # Defines what to load and when, avoiding unnecessary token reads.
-# Complements (does not replace) kernel/BOOTSTRAP.md.
-# Before enforcing `kernel/project.toml` or `kernel/SYSTEM.md`, classify the repo as
-# NEW PROJECT vs EXISTING PROJECT using the rules in `kernel/BOOTSTRAP.md`.
+# Complements (does not replace) .sfk/kernel/BOOTSTRAP.md.
+# Before enforcing `sfk.toml` or `SYSTEM.md`, classify the repo as
+# NEW PROJECT vs EXISTING PROJECT using the rules in `.sfk/kernel/BOOTSTRAP.md`.
 # For NEW PROJECT, those two files are examples/templates only.
 
 # -------------------------------------------------------
@@ -12,14 +12,15 @@
 
 [always]
 files = [
-  "kernel/SOUL.md",       # AI behavior and restrictions
-  "kernel/RULES.md",      # governance, process, and memory (sovereign)
-  "kernel/project.toml",  # identity/stack only after EXISTING PROJECT classification
+  ".sfk/kernel/OPERATING_CARD.md",  # always-on non-negotiables digest (read first)
+  ".sfk/kernel/SOUL.md",       # AI behavior and restrictions
+  ".sfk/kernel/RULES.md",      # governance, process, and memory (sovereign)
+  "sfk.toml",  # identity/stack only after EXISTING PROJECT classification
 ]
 
 [bootstrap_project_state]
-rule = "Classify NEW PROJECT when there is no PLAN-XXXX, no decisions, and MODIFICATION_LOG still has only template/example content."
-new_project_ignore_for_validation = ["kernel/project.toml", "kernel/SYSTEM.md"]
+rule = "Classification criteria are defined in .sfk/kernel/BOOTSTRAP.md Step 0 (single source)."
+new_project_ignore_for_validation = ["sfk.toml", "SYSTEM.md"]
 new_project_mandatory_docs = [
   "docs/project/PROJECT_OVERVIEW.md",
   "docs/project/REQUIREMENTS.md",
@@ -40,8 +41,8 @@ read = [
   "memory/MODIFICATION_LOG.md",
   "memory/progress.md",
   "memory/plans/",
-  "kernel/ARCHITECTURE.md",
-  "kernel/SYSTEM.md",
+  ".sfk/kernel/ARCHITECTURE.md",
+  "SYSTEM.md",
 ]
 
 [on_planning]
@@ -52,7 +53,7 @@ read = [
   "memory/progress.md",
   "memory/decisions/",
   "memory/plans/",
-  "kernel/ARCHITECTURE.md",
+  ".sfk/kernel/ARCHITECTURE.md",
 ]
 write = [
   "memory/plans/PLAN-XXXX-SUBJECT.md",
@@ -66,8 +67,8 @@ read = [
   "memory/progress.md",
   "memory/logs/DEBUG-HISTORY.md",
   "memory/plans/",
-  "kernel/ARCHITECTURE.md",
-  "kernel/SYSTEM.md",
+  ".sfk/kernel/ARCHITECTURE.md",
+  "SYSTEM.md",
 ]
 write = [
   "memory/MODIFICATION_LOG.md",
@@ -82,7 +83,7 @@ read = [
   "memory/MODIFICATION_LOG.md",
   "memory/progress.md",
   "memory/plans/",
-  "kernel/SYSTEM.md",
+  "SYSTEM.md",
 ]
 write = [
   "memory/logs/DEBUG-HISTORY.md",
@@ -96,8 +97,8 @@ read = [
   "memory/decisions/",
   "memory/MODIFICATION_LOG.md",
   "memory/progress.md",
-  "kernel/ARCHITECTURE.md",
-  "kernel/SYSTEM.md",
+  ".sfk/kernel/ARCHITECTURE.md",
+  "SYSTEM.md",
 ]
 write = [
   "memory/decisions/DECISION-XXX.md",
@@ -110,7 +111,7 @@ read = [
   "memory/progress.md",
   "memory/MODIFICATION_LOG.md",
   "memory/logs/DEBUG-HISTORY.md",
-  "kernel/ARCHITECTURE.md",
+  ".sfk/kernel/ARCHITECTURE.md",
 ]
 write = [
   "memory/progress.md",
@@ -123,7 +124,7 @@ trigger = "security, authentication, authorization, OWASP, pentest, token, secre
 read = [
   "memory/logs/DEBUG-HISTORY.md",
   "memory/decisions/",
-  "kernel/ARCHITECTURE.md",
+  ".sfk/kernel/ARCHITECTURE.md",
 ]
 write = [
   "memory/logs/DEBUG-HISTORY.md",
@@ -135,8 +136,8 @@ trigger = "test, tests, coverage, TDD, e2e, unit test, integration test, mock, Q
 read = [
   "memory/progress.md",
   "memory/plans/",
-  "kernel/ARCHITECTURE.md",
-  "kernel/SYSTEM.md",
+  ".sfk/kernel/ARCHITECTURE.md",
+  "SYSTEM.md",
 ]
 write = [
   "memory/progress.md",
@@ -148,7 +149,7 @@ trigger = "migration, schema, query, database, alter table, new column, index, s
 read = [
   "memory/logs/DEBUG-HISTORY.md",
   "memory/decisions/",
-  "kernel/SYSTEM.md",
+  "SYSTEM.md",
 ]
 write = [
   "memory/logs/DEBUG-HISTORY.md",
@@ -161,7 +162,7 @@ trigger = "infra, deploy, docker, kubernetes, CI, pipeline, cloud, provision, te
 read = [
   "memory/decisions/",
   "memory/logs/DEBUG-HISTORY.md",
-  "kernel/ARCHITECTURE.md",
+  ".sfk/kernel/ARCHITECTURE.md",
 ]
 write = [
   "memory/decisions/DECISION-XXX.md",
@@ -174,7 +175,7 @@ trigger = "add library, new dependency, install, evaluate tool, remove dependenc
 read = [
   "memory/decisions/",
   "memory/logs/DEBUG-HISTORY.md",
-  "kernel/project.toml",
+  "sfk.toml",
 ]
 write = [
   "memory/decisions/DECISION-XXX.md",
@@ -198,8 +199,8 @@ write = [
 # Trigger: design system, component, token, color, typography, theme
 trigger = "design system, component, token, color, typography, theme, dark mode, style, UI, visual, animation, layout"
 read = [
-  "kernel/project.toml",   # design tokens
-  "kernel/ARCHITECTURE.md",
+  "sfk.toml",   # design tokens
+  ".sfk/kernel/ARCHITECTURE.md",
   "memory/decisions/",
 ]
 
@@ -216,7 +217,7 @@ write = [
 ]
 
 [project_docs_rules]
-kernel_language = "SFK kernel/template files must be maintained in English; project-generated documents may use the language declared in kernel/project.toml"
+kernel_language = "SFK .sfk/kernel/template files must be maintained in English; project-generated documents may use the language declared in sfk.toml"
 project_overview = "docs/project/PROJECT_OVERVIEW.md must preserve its # and ## heading structure across sessions — do not add, remove, or rename top-level sections"
 requirements = "docs/project/REQUIREMENTS.md must preserve its # and ## heading structure. Use FR-XXX for functional requirements, NFR-XXX for non-functional requirements, AC-XXX for acceptance criteria"
 scope = "docs/project/SCOPE.md is mandatory — must exist and maintain its ## section structure across sessions"

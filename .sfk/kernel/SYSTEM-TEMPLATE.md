@@ -4,19 +4,19 @@
 # This is the BASE TEMPLATE. When creating a new project from this template:
 # 1. Fill in the sections marked with [FILL IN]
 # 2. Remove sections that do not apply to your stack
-# 3. Rename to kernel/SYSTEM.md (or keep both, with SYSTEM.md being the active instance)
-# 4. kernel/SYSTEM.md is the file read by the AI — this is only the fill-in guide.
+# 3. Rename to SYSTEM.md (or keep both, with SYSTEM.md being the active instance)
+# 4. SYSTEM.md is the file read by the AI — this is only the fill-in guide.
 #
 # SCOPE OF THIS FILE:
 # SYSTEM.md defines HOW code is written: standards, patterns, error handling, security rules.
 # It does NOT define WHERE the project is hosted, WHAT versions are used, or WHICH integrations
-# are active — all of that belongs in kernel/project.toml (the technical dictionary).
-# Before filling this file, fill in kernel/project.toml first.
+# are active — all of that belongs in sfk.toml (the technical dictionary).
+# Before filling this file, fill in sfk.toml first.
 
 ---
 
 ## Language and Stack
-[FILL IN — Use kernel/project.toml as reference]
+[FILL IN — Use sfk.toml as reference]
 
 Example (TypeScript/Node):
 - TypeScript with strict mode

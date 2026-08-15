@@ -17,7 +17,7 @@ SFK is a modular system consisting of:
 ## 🏗️ Directory Structure
 
 ```plaintext
-kernel/
+.sfk/kernel/
 ├── ARCHITECTURE.md          # This file
 ├── agents/                  # 20 Specialist Agents
 ├── skills/                  # 46 Skills
@@ -233,16 +233,16 @@ Top-level SFK scripts. Two are validation masters and two support preview/sessio
 
 ```bash
 # Quick validation during development
-python kernel/scripts/checklist.py .
+python .sfk/kernel/scripts/checklist.py .
 
 # Full verification before deployment
-python kernel/scripts/verify_all.py . --url http://localhost:3000
+python .sfk/kernel/scripts/verify_all.py . --url http://localhost:3000
 
 # Start local preview server (default port 3000)
-python kernel/scripts/auto_preview.py start
+python .sfk/kernel/scripts/auto_preview.py start
 
 # Show project/session status summary
-python kernel/scripts/session_manager.py status .
+python .sfk/kernel/scripts/session_manager.py status .
 ```
 
 ### What They Check
@@ -265,7 +265,7 @@ python kernel/scripts/session_manager.py status .
 - Mobile Audit
 - i18n Check
 
-For details, see [kernel/scripts/README.md](scripts/README.md)
+For details, see [.sfk/kernel/scripts/README.md](scripts/README.md)
 
 ---
 

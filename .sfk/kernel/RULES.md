@@ -46,7 +46,12 @@ MITIGATED RISK: Execution without context, unauthorized commit/push, incorrect s
 6. No session can be closed without an audit.
 7. Every functional change must generate persistence in the appropriate memory.
 8. Writing templates in `memory/WORKFLOW_MEMORY_PLAYBOOK.md` under section `## 6) Reusable Templates`
-9. At bootstrap, the repository must first be classified as NEW PROJECT or EXISTING PROJECT before `project.toml` or `SYSTEM.md` are enforced.
+9. At bootstrap, the repository must first be classified as NEW PROJECT or EXISTING PROJECT before `sfk.toml` or `SYSTEM.md` are enforced.
+10. **File Boundary Law.** SFK files fall into three categories with distinct lifecycles and must never be mixed:
+    - **Engine** — the SFK kernel (`RULES.md`, `SOUL.md`, `BOOTSTRAP.md`, `index.toml`, `ARCHITECTURE.md`, `agents/`, `skills/`, `workflows/`, `scripts/`): framework code, **read-only** for the project. The AI must never treat engine files as product, and must never edit them except when explicitly maintaining SFK itself.
+    - **Project state** — `memory/`, `docs/`, project config (`sfk.toml` / `sfk.toml`) and `SYSTEM.md`: the project's own data, owned and evolved per project.
+    - **Maintainer tooling** — scaffolder / updater / CLI: operates *on* projects and never ships inside them.
+    The AI must never place project state inside the engine directory, nor engine files among product code. (Engine consolidation under `.sfk/` is tracked in `memory/plans/PLAN-0001`.)
 
 ---
 
@@ -276,14 +281,15 @@ MITIGATED RISK: Context loss over time.
 | Detailed execution | `memory/plans/PLAN-XXXX-DONE-SUBJECT.md`          |
 | Resolved bug       | `memory/logs/DEBUG-HISTORY.md`                    |
 | Decision           | `memory/decisions/`                               |
-| Technical evolution| `docs/evolutive_changes/EVOLUTION_MEMORY.md`      |
+| Technical evolution| `memory/MODIFICATION_LOG.md` (tag `##evolution`)  |
+| DB schema/data      | `memory/logs/BUILD-HISTORY.md` + `db/migrations/` |
 
 ## 9.2 MODIFICATION_LOG Rule
 
 - With active plan: record only the START and END milestone of the plan.
 - Without active plan: record each change in real time.
 - If a change occurs outside the plan: record it in the MODIFICATION_LOG.
-- A repository may be treated as NEW PROJECT only if there are no plans, no decisions, and `memory/MODIFICATION_LOG.md` still contains only examples/template content.
+- NEW PROJECT vs EXISTING PROJECT is classified by `.sfk/kernel/BOOTSTRAP.md` Step 0 (single source) — do not restate the criteria elsewhere.
 
 ## 9.3 Bug Record (Mandatory)
 
@@ -364,6 +370,21 @@ No delivery considered ready for publication may be closed without:
 2. commit prepared or completed
 3. `memory/PR-XXXX-DESCRIPTION.md` created or updated
 
+## 9.6 Deterministic Enforcement (Operating Card + pre-commit hook)
+
+The memory discipline in §9 is not left to the agent's memory alone — it is enforced
+by two mechanisms so it cannot silently drift (D4):
+
+- **Operating Card** — `.sfk/kernel/OPERATING_CARD.md` is loaded first, every session
+  (Layer 0), as the always-on digest of these non-negotiables. Treat it as a checklist
+  in working memory, not a document to be read once and forgotten.
+- **pre-commit hook** — `.sfk/kernel/hooks/pre-commit` BLOCKS any commit that includes a
+  significant change (source code, product docs, or a DB migration) unless
+  `memory/MODIFICATION_LOG.md` is updated in the same commit; DB migrations/seeds also
+  require `memory/logs/BUILD-HISTORY.md`. Install once with `.sfk/kernel/hooks/install.sh`.
+  Intentional bypass: `git commit --no-verify` (use only when the change is genuinely
+  not significant — never to skip real memory recording).
+
 ---
 
 # 10. GIT KERNEL (2-STEP APPROVAL)
@@ -428,27 +449,45 @@ MITIGATED RISK: Implicit architecture/requirements.
 
 When changing scope/architecture:
 - `docs/project/PROJECT_OVERVIEW.md`
-- `docs/evolutive_changes/EVOLUTION_MEMORY.md`
+- `memory/MODIFICATION_LOG.md` (record the evolution with tag `##evolution`)
 
 New requirements/gaps:
 - `docs/project/REQUIREMENTS.md`
 
 Bootstrap and project-definition documents must obey these rules:
-- First classify the repository as NEW PROJECT or EXISTING PROJECT.
-- NEW PROJECT = no `PLAN-XXXX`, no decisions, and no real entries in `memory/MODIFICATION_LOG.md` beyond the examples/template area.
-- For NEW PROJECT, `kernel/project.toml` and `kernel/SYSTEM.md` are references/examples only and must not be used to validate the repository state.
-- SFK kernel/template files must be written in English.
-- Project-generated deliverables may be written in the language declared in `kernel/project.toml -> [project] language`.
+- Classification (NEW vs EXISTING PROJECT) and its effect on `sfk.toml`/`SYSTEM.md`
+  is owned by `.sfk/kernel/BOOTSTRAP.md` Step 0 — the single source. Do not restate it.
+- SFK .sfk/kernel/template files must be written in English.
+- Project-generated deliverables may be written in the language declared in `sfk.toml -> [project] language`.
 - `docs/project/PROJECT_OVERVIEW.md` must preserve its `#` and `##` heading structure across sessions — do not add, remove, or rename top-level sections.
 - `docs/project/REQUIREMENTS.md` must preserve its `#` and `##` heading structure. Requirements use `FR-XXX`, non-functional requirements use `NFR-XXX`, acceptance criteria use `AC-XXX`.
 - `docs/project/SCOPE.md` and `docs/project/SETUP.md` are mandatory project documents — they must exist and maintain their `##` section structure across sessions.
 
 Technical evolution (recurring errors/refactors/lessons):
-- `docs/evolutive_changes/EVOLUTION_MEMORY.md`
+- `memory/MODIFICATION_LOG.md` — record with tag `##evolution`. There is no separate
+  evolution file; the modification log is the single chronological source.
 
-Integrations and deploy:
-- `docs/config/INTEGRATIONS.md`
-- `docs/config/DEPLOY_ENV_REFERENCE.md`
+External interfaces (single fixed location — D2):
+- `sfk.toml -> [[integrations]]` — one indexed block per third-party service
+  (WhatsApp, Stripe, PayPal, SendGrid, internal APIs, etc.). Names/identifiers only.
+- `docs/integrations/<service>.md` — one human runbook file per service (auth model,
+  endpoints, webhooks, sandbox vs prod, gotchas). Never store secret values.
+
+Database schema and data lifecycle (single fixed location — D3):
+- `db/migrations/NNNN_<verb>_<subject>.sql` — sequential, append-only, never renumber.
+- `db/seeds/` — seed/fixture scripts (test data, reference data).
+- `memory/logs/BUILD-HISTORY.md` — the application ledger: what migration/seed ran,
+  when, and why (e.g. MySQL→PostgreSQL migration, data copy, test seeds).
+- `sfk.toml -> [db]` declares engine, migrations path and seeds path.
+
+Deploy and environments:
+- `sfk.toml -> [hosting.*]` / `[environments.*]` — structured source of truth
+  (platform and variable **names** only, never values).
+- `docs/deploy/` — human deploy runbook (steps, provider specifics).
+- Provider changes are recorded as a `DECISION-XXX` (timeline of hosting moves).
+
+**Names, not values:** `sfk.toml` and `docs/` may name platforms, variables and
+services, but must NEVER contain secrets, tokens, keys or connection strings.
 
 ---
 
@@ -469,7 +508,7 @@ When the user says "Close Session":
 
 2. State → AUDIT_MODE (no code writing)
 
-3. Evaluate per `kernel/AUDIT_CHECKLIST.md` and return PASS or FAIL
+3. Evaluate per `memory/logs/SESSION-AUDIT-CHECKLIST.md` and return PASS or FAIL
 
 4. Copy checklist to:
    `memory/logs/AUDIT_CHECKLIST_date_time.md`
@@ -477,7 +516,15 @@ When the user says "Close Session":
 5. Mark checks and rename file with:
    `-PASS` or `-FAIL`
 
-Session only closes after audit.
+6. Add a summary entry in `memory/MODIFICATION_LOG.md`:
+   ```
+   ## YYYY-MM-DD — SESSION AUDIT — PASS
+   | Item | Resultado |
+   ...
+   ```
+
+Both records (file + MODIFICATION_LOG) are mandatory.
+Session only closes after both are written.
 
 ---
 
@@ -557,8 +604,8 @@ Trigger: When the user says "final checks", "run all tests", "validate everythin
 
 | Stage         | Command                                              | Purpose                            |
 |---------------|------------------------------------------------------|------------------------------------|
-| Manual Audit  | python kernel/scripts/checklist.py .                 | Priority-based audit               |
-| Pre-Deploy    | python kernel/scripts/verify_all.py . --url URL      | Full suite + Performance + E2E     |
+| Manual Audit  | python .sfk/kernel/scripts/checklist.py .                 | Priority-based audit               |
+| Pre-Deploy    | python .sfk/kernel/scripts/verify_all.py . --url URL      | Full suite + Performance + E2E     |
 
 Execution order by priority:
 1. Security → 2. Lint → 3. Schema → 4. Tests → 5. UX → 6. SEO → 7. Lighthouse/E2E
