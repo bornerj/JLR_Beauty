@@ -114,5 +114,7 @@ Screenshots salvos em `/tmp/.../scratchpad/consolidacao-01-cadastros-hub.png` e 
 - Step 3 (Commit confirmation): commitado em 3 commits separados, branch `feature/admin-v2`:
   `260ce97` (fix typecheck scoring.test.ts), `f0c165e` (docs: fechamento Ondas 6-7 do
   PLAN-0023), `d52c49d` (feat: PLAN-0024 Consolidação — este plano).
-- Step 4 (Push authorization and result): pendente — aguardando segunda autorização explícita.
-- Push status: PENDING
+- Step 4 (Push authorization and result): usuário autorizou explicitamente ("pode fazer o push"),
+  em pedido separado da autorização de commit. `git push origin feature/admin-v2` →
+  `be5dcc2..c7ed771`, mesmo PR #1.
+- Push status: COMPLETED

@@ -34,10 +34,11 @@ This log tracks changes applied to the project from 2026-01-27 onward.
   regressão do clique manual no legado (confirmado via `dispatchEvent` — o clique real do
   Playwright esbarrou numa peculiaridade pré-existente do CSS do sidebar legado, hover-to-reveal,
   não um bug desta leva). Scripts de validação temporários removidos ao final.
-- **Status**: `PLAN-0024` **concluído e validado de verdade**. Commitado nesta sessão (commit
-  separado por leva, a pedido do usuário); falta push (aguardando autorização). RETROFIT-022
-  (migração/aposentadoria do legado) segue sem entrar, precisa de nova decisão de produto
-  explícita.
+- **Status**: `PLAN-0024` **concluído, validado de verdade, commitado e pushado**. Commit
+  separado por leva (a pedido do usuário) e push autorizado em pedido explícito à parte:
+  `260ce97` (fix typecheck), `f0c165e` (docs fechamento Ondas 6-7), `c7ed771` (PLAN-0024) →
+  `feature/admin-v2`, mesmo PR #1. RETROFIT-022 (migração/aposentadoria do legado) segue sem
+  entrar, precisa de nova decisão de produto explícita.
 
 ## 2026-08-15 — PLAN-0023: fechamento da validação pendente das Ondas 6-7 (Insight Engine + Ações Recomendadas)
 
