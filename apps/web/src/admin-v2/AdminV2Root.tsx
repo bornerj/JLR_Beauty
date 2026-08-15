@@ -16,6 +16,7 @@ import { RadarView } from "./radar/RadarView";
 import { GargalosView } from "./gargalos/GargalosView";
 import { MoneyView } from "./money/MoneyView";
 import { ComparatorView } from "./comparator/ComparatorView";
+import { InsightsView } from "./insights/InsightsView";
 
 /**
  * Admin V2 (PLAN-0022) — raiz da árvore nova, isolada do shell legado (AdminContent.tsx).
@@ -91,13 +92,13 @@ function CustomersTabs({ active }: { active: CustomersTabKey }) {
   );
 }
 
-type IntelligenceTabKey = "radar" | "gargalos" | "dinheiro" | "comparador";
+type IntelligenceTabKey = "radar" | "gargalos" | "dinheiro" | "comparador" | "insights";
 
 /**
  * Sub-abas da leva de Inteligência (PLAN-0023): Radar Executivo (Onda 1), Gargalos
- * (Onda 2), Dinheiro (Onda 3) e Comparador (Onda 4). Nenhum tem "mundo" próprio nos 7
- * fixos da sidebar (Onda 1 do PLAN-0022) — nascem dentro de Panorama, mesmo padrão já
- * usado para Agenda/Produtos/Serviços dentro de Operação.
+ * (Onda 2), Dinheiro (Onda 3), Comparador (Onda 4) e Insights (Onda 6). Nenhum tem
+ * "mundo" próprio nos 7 fixos da sidebar (Onda 1 do PLAN-0022) — nascem dentro de
+ * Panorama, mesmo padrão já usado para Agenda/Produtos/Serviços dentro de Operação.
  */
 function IntelligenceTabs({ active }: { active: IntelligenceTabKey }) {
   const navigate = useNavigate();
@@ -106,6 +107,7 @@ function IntelligenceTabs({ active }: { active: IntelligenceTabKey }) {
     { key: "gargalos", label: "Gargalos", path: "/admin-v2/gargalos" },
     { key: "dinheiro", label: "Dinheiro", path: "/admin-v2/dinheiro" },
     { key: "comparador", label: "Comparador", path: "/admin-v2/comparador" },
+    { key: "insights", label: "Insights", path: "/admin-v2/insights" },
   ];
   return (
     <div className="mb-4 flex w-fit rounded-full border border-gold/50 bg-white p-0.5 dark:bg-forest">
@@ -130,6 +132,7 @@ const INTELLIGENCE_TAB_LABELS: Record<IntelligenceTabKey, string> = {
   gargalos: "Gargalos",
   dinheiro: "Onde está o dinheiro?",
   comparador: "Comparador de Unidades",
+  insights: "Insights",
 };
 
 function AdminV2Shell() {
@@ -149,14 +152,17 @@ function AdminV2Shell() {
   const isGargalosArea = location.pathname.includes("/gargalos");
   const isMoneyArea = location.pathname.includes("/dinheiro");
   const isComparatorArea = location.pathname.includes("/comparador");
-  const isIntelligenceArea = isRadarArea || isGargalosArea || isMoneyArea || isComparatorArea;
+  const isInsightsArea = location.pathname.includes("/insights");
+  const isIntelligenceArea = isRadarArea || isGargalosArea || isMoneyArea || isComparatorArea || isInsightsArea;
   const intelligenceTab: IntelligenceTabKey = isGargalosArea
     ? "gargalos"
     : isMoneyArea
       ? "dinheiro"
       : isComparatorArea
         ? "comparador"
-        : "radar";
+        : isInsightsArea
+          ? "insights"
+          : "radar";
   const customersTab: CustomersTabKey = isSubscriptionsArea ? "assinaturas" : "fluxo";
   const activeTab: OperationsTabKey = isAgendaArea
     ? "agenda"
@@ -231,6 +237,7 @@ function AdminV2Shell() {
         <Route path="gargalos" element={<GargalosView />} />
         <Route path="dinheiro" element={<MoneyView />} />
         <Route path="comparador" element={<ComparatorView />} />
+        <Route path="insights" element={<InsightsView />} />
       </Routes>
     </AdminShell>
   );

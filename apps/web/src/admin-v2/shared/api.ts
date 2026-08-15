@@ -11,6 +11,7 @@ import type { RadarBriefing } from "../radar/types";
 import type { BottlenecksRanking } from "../gargalos/types";
 import type { MoneyOverview } from "../money/types";
 import type { UnitComparator } from "../comparator/types";
+import type { InsightFeed } from "../insights/types";
 
 /** Admin V2 (PLAN-0022) — cliente HTTP para /api/admin-v2/*, mesmo padrão de apps/web/src/modules/admin-kpis/api/client.ts. */
 
@@ -255,6 +256,22 @@ export const fetchUnitComparator = async (args: { token: string; days?: number }
     throw new Error(await parseApiError(response));
   }
   return (await response.json()) as UnitComparator;
+};
+
+/** Sem `unitIds`: consolida Radar+Gargalos+Comparador, todos já de rede inteira. */
+export const fetchInsightFeed = async (args: { token: string; days?: number }): Promise<InsightFeed> => {
+  const params = new URLSearchParams();
+  if (args.days !== undefined) params.set("days", String(args.days));
+  const suffix = params.toString();
+  const path = suffix ? `/api/admin-v2/insights?${suffix}` : "/api/admin-v2/insights";
+
+  const response = await fetch(`${getApiUrl()}${path}`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as InsightFeed;
 };
 
 /** Sem `unitIds`: é um briefing de rede inteira, mesmo escopo do Panorama. */

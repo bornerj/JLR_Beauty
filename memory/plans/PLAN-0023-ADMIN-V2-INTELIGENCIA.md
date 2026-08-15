@@ -1,6 +1,6 @@
 # PLAN-0023 — Admin V2: Programa de Retrofit (Inteligência)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Onda 1 (RETROFIT-011, Radar Executivo) ✅ CONCLUÍDA 2026-08-15; Onda 2 (RETROFIT-012, Gargalos) ✅ CONCLUÍDA 2026-08-15; Onda 3 (RETROFIT-013, "Onde está o dinheiro?") ✅ CONCLUÍDA 2026-08-15; Onda 4 (RETROFIT-014, Comparador de Unidades) ✅ CONCLUÍDA 2026-08-15; Onda 5 (RETROFIT-017, Health Score evolução) ✅ CONCLUÍDA 2026-08-15 (todas com E2E real + validação visual). Próxima: usuário decide entre seguir para RETROFIT-018/019 ou pausar para commit/push.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-5 (RETROFIT-011/012/013/014/017) ✅ CONCLUÍDAS 2026-08-15, todas com E2E real + validação visual. Ondas 6-7 (RETROFIT-018 Insight Engine, RETROFIT-019 Ações Recomendadas) ✅ código completo, **149+13=162/162 testes automatizados PASS**, `tsc`/build limpos — **E2E real e validação visual ainda PENDENTES** (rebuild Docker em andamento no fechamento desta sessão, ver `MODIFICATION_LOG.md`). **Roadmap de Inteligência do PLAN-0023 código-completo** (RETROFIT-011 a 019) — falta fechar a validação das Ondas 6-7. Próxima sessão: completar E2E+visual das Ondas 6-7, depois decidir entre Consolidação (RETROFIT-020/021/022, fora deste plano) ou revisão/merge do PR #1.
 **Origem:** continuação direta do `PLAN-0022` (Fundação + Experiência Operacional, Ondas 0-9 + RETROFIT-010b, 100% entregue e validada visualmente em 2026-08-15) — a própria seção "Próximos Passos" daquele plano já previa que "planejamento detalhado de Inteligência (RETROFIT-011 a 019)... fica para um plano futuro (`PLAN-0023` em diante), quando a Fundação+Operação estiver validada em uso real". Está validada — este plano nasce agora, a pedido do usuário ("continue com o retrofit seguinte ao último concluído").
 **Decisão arquitetural herdada:** `DECISION-013` (ACTIVE) — mesmas regras fixas do `PLAN-0022` (Health Score, escopo por unidade, explicabilidade) continuam valendo aqui, não são revalidadas onda a onda.
 **Escopo macro:** só `apps/api/src/modules/intelligence/` (módulos novos) e `apps/web/src/admin-v2/` (telas novas) — nenhuma migração de schema prevista nesta leva (Inteligência é 100% derivada dos dados já existentes/já classificados pelas Ondas 1-9).
@@ -27,8 +27,8 @@ Não é opcional, não se revalida onda a onda — ver `PLAN-0022` §"Governanç
 | RETROFIT-013 | "Onde está o dinheiro?" | Quem gera receita e quem gera lucro? | ✅ CONCLUÍDA 2026-08-15 |
 | RETROFIT-014 | Comparador Visual de Unidades | Por que uma unidade performa melhor que outra? | ✅ CONCLUÍDA 2026-08-15 |
 | RETROFIT-017 | Health Score (evolução) | — | ✅ CONCLUÍDA 2026-08-15 (v1 já entregue na Onda 1 do PLAN-0022; esta onda refinou narrativa) |
-| RETROFIT-018 | Insight Engine | O que devo saber sem perguntar? | não iniciada (depende de 011/012) |
-| RETROFIT-019 | Ações Recomendadas | O que posso fazer agora? | não iniciada (depende de 018) |
+| RETROFIT-018 | Insight Engine | O que devo saber sem perguntar? | código completo 2026-08-15, E2E/visual pendentes (escopo ajustado — ver Onda 6 abaixo) |
+| RETROFIT-019 | Ações Recomendadas | O que posso fazer agora? | código completo 2026-08-15, E2E/visual pendentes (escopo ajustado — ver Onda 7 abaixo) |
 
 Consolidação (RETROFIT-020 a 022) fica fora deste plano — só entra quando o usuário decidir sobre a migração/aposentadoria do Admin legado (sem critério fixado ainda, `PLAN-0022` §RETROFIT-022).
 
@@ -183,3 +183,50 @@ Consolidação (RETROFIT-020 a 022) fica fora deste plano — só entra quando o
 - [x] **Correção de dívida encontrada nesta onda**: o botão "Comparar unidade" estava desabilitado desde a Onda 2 do PLAN-0022 ("em breve — Comparador chega numa onda futura, RETROFIT-014"). O Comparador foi entregue na Onda 4 desta leva — o botão estava desatualizado, mostrando "em breve" para uma funcionalidade que já existe. Corrigido para navegação real (`/admin-v2/comparador`).
 
 **Validações executadas (todas reais):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **149/149 PASS** (5 + 23 + 121 intelligence); `docker compose build api web` PASS + redeploy `--force-recreate` + healthcheck OK. **E2E real contra Postgres** e **validação visual real**: ver registro completo em `memory/MODIFICATION_LOG.md`.
+
+---
+
+### Onda 6 — Insight Engine (RETROFIT-018)
+
+**Pergunta que a tela fecha:** *o que devo saber sem perguntar?*
+
+**Escopo ajustado, decidido com o usuário antes de implementar:** o roadmap original descreve o Insight Engine como "a camada que gera os achados do Radar/Gargalos a partir de regras determinísticas" — mas Radar (Onda 1) e Gargalos (Onda 2) **já são** exatamente isso, cada um já entregue com seu próprio motor de regras testado. Construir um "motor" novo por trás dos dois seria refazer trabalho já validado sem ganho real (contra a governança de reuso). Perguntado ao usuário, decisão: RETROFIT-018 vira uma **camada de consolidação** — um único feed que junta Radar + Gargalos + o maior achado do Comparador (Onda 4), ranqueado, servindo de base natural para o RETROFIT-019 (Ações Recomendadas).
+
+**Regra de deduplicação (fixa, documentada em `rules.ts`):** Radar e Gargalos descrevem o mesmo fato em 4 das 5 categorias do Gargalos (Operação, Portfólio, Assinaturas, Franquias) — um do jeito narrativo, o outro com R$. Mostrar os dois seria o oposto de "um único feed". Regra: quando a categoria existe nos dois, só a versão do Gargalos entra (carrega o R$, o Radar não); achados do Radar em categorias que o Gargalos não cobre (Rede, Serviços, Clientes, Financeiro) entram normalmente. Ordenação final: prioridade (Crítico > Atenção > Oportunidade), depois por R$ conhecido decrescente (nulls por último).
+
+**Backend entregue:**
+- [x] `apps/api/src/modules/intelligence/insights/types.ts` — contrato (`Insight`, `InsightPriority`, `InsightSource`, `InsightFeed`).
+- [x] `apps/api/src/modules/intelligence/insights/rules.ts` — `buildInsightFeed()` pura: dedup por categoria, conversão do maior achado do Comparador em insight, ordenação final. `sumKnownImpact()` ignora nulls.
+- [x] `apps/api/src/modules/intelligence/insights/rules.test.ts` — **8 testes unitários PASS**, incluindo a dedup Radar×Gargalos, prioridade Crítico sempre primeiro mesmo sem R$, ordenação por impacto dentro da mesma prioridade, e o Comparador só virando insight quando `biggestGap` não é `null`.
+- [x] `apps/api/src/modules/intelligence/insights/service.ts` — busca Radar + Gargalos + Comparador em `Promise.all` (nunca cascata), delega para `rules.ts`.
+- [x] `GET /api/admin-v2/insights?days=` em `adminV2.ts`.
+
+**Frontend entregue:**
+- [x] `insights/types.ts` (mirror) + `insights/state.ts` (rótulos/cor por prioridade, reuso do vocabulário do Radar) + `insights/InsightsView.tsx` — card "Impacto total conhecido" condicional + feed agrupado por prioridade, cada item com categoria, origem (Radar/Gargalos/Comparador), mensagem, valor + explicação quando existe, e botão de ação real.
+- [x] 5ª aba "Insights" em `IntelligenceTabs`; rota `/admin-v2/insights`; breadcrumb `Panorama > Inteligência > Insights`.
+- [x] Botão de entrada "Ver insights →" em `panorama/PanoramaView.tsx`, ao lado dos botões de Radar e Gargalos já existentes.
+
+**Validações executadas:** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **157/157 PASS** (5 + 23 + 129 intelligence); `npm run lint` (web) — mesmo padrão `fetch-on-mount` tolerado, 2 instâncias novas (`InsightsView.tsx`, mais a edição em `PanoramaView.tsx`). **Pendente no fechamento desta sessão**: `docker compose build`, redeploy, E2E real contra Postgres e validação visual real — o rebuild Docker ainda estava em andamento quando a sessão foi encerrada a pedido do usuário. Ver `memory/MODIFICATION_LOG.md` (fechamento de sessão) — próxima sessão deve completar essa validação antes de considerar a Onda 6 realmente pronta pra uso.
+
+---
+
+### Onda 7 — Ações Recomendadas (RETROFIT-019)
+
+**Pergunta que a tela fecha:** *o que posso fazer agora?*
+
+**Escopo ajustado, decidido com o usuário antes de implementar:** o mockup original ("[Criar campanha] [Ajustar preço] [Falar com franqueado]") pressupõe várias ações específicas por insight, cada uma levando a uma tela dedicada. Duas restrições reais impediam isso: (1) o Admin legado não suporta deep-link confiável pra sub-telas (já documentado na Onda 2 do PLAN-0022 — um link assim aterrissaria no painel padrão, não na tela certa); (2) dentro do próprio Admin V2, só existe UMA tela de escrita real (mover etapa do Pipeline de Franquias, RETROFIT-010b) — todo o resto da leva de Inteligência é só leitura. Decisão: catálogo de sugestões em **texto** (conselho de negócio determinístico por categoria), com botão de navegação só quando existe uma rota real pra ir junto — nunca um botão que não leva a lugar nenhum.
+
+**Catálogo entregue (fixo, por categoria, documentado em `recommendations.ts`):** Rede, Operação, Agenda, Portfólio, Serviços, Clientes, Assinaturas e Comparador ganham 1 sugestão em texto puro (`actionPath: null`). Franquias aponta para `/admin-v2/crescimento` (mover a etapa do lead, tela real da Onda 9 do PLAN-0022). Financeiro aponta para `/admin-v2/dinheiro` (decomposição por unidade/produto/canal, tela real da Onda 3 desta leva). Categoria sem entrada no catálogo devolve lista vazia — nunca uma sugestão genérica fabricada.
+
+**Backend entregue:**
+- [x] `apps/api/src/modules/intelligence/insights/types.ts` — `RecommendedAction` novo (`label`, `actionPath: string | null`); `Insight.recommendedActions: RecommendedAction[]` adicionado.
+- [x] `apps/api/src/modules/intelligence/insights/recommendations.ts` (novo) — `getRecommendedActions(category)` pura (catálogo fixo) + `attachRecommendedActions()` (decora a lista de insights).
+- [x] `apps/api/src/modules/intelligence/insights/recommendations.test.ts` — **5 testes unitários PASS**, incluindo categoria desconhecida devolvendo lista vazia e a checagem de que só Franquias/Financeiro têm `actionPath` real.
+- [x] `insights/rules.ts` (Onda 6) — `buildInsightFeed()` passou a chamar `attachRecommendedActions()` no fim, sem alterar a lógica de dedup/ordenação já validada.
+- [x] Nenhuma rota nova — `GET /api/admin-v2/insights` (já existente, Onda 6) passou a devolver `recommendedActions` em cada insight automaticamente.
+
+**Frontend entregue:**
+- [x] `insights/types.ts` — mirror atualizado (`RecommendedAction`, `Insight.recommendedActions`).
+- [x] `insights/InsightsView.tsx` — cada card de insight ganhou uma lista de sugestões abaixo da mensagem/impacto: texto simples quando `actionPath` é `null`, link sublinhado (navegação real) quando existe.
+
+**Validações executadas:** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **162/162 PASS** (5 + 23 + 134 intelligence). **Pendente no fechamento desta sessão** (mesma rodada de build que a Onda 6 — ver nota acima): `docker compose build`, redeploy, E2E real contra Postgres e validação visual real ainda não concluídos quando a sessão foi encerrada a pedido do usuário.

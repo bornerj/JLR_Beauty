@@ -18,6 +18,7 @@ import { getRadarBriefing } from "../modules/intelligence/radar/service";
 import { getBottlenecksRanking } from "../modules/intelligence/gargalos/service";
 import { getMoneyOverview } from "../modules/intelligence/money/service";
 import { getUnitComparator } from "../modules/intelligence/comparator/service";
+import { getInsightFeed } from "../modules/intelligence/insights/service";
 
 /**
  * Admin V2 (PLAN-0022) — rotas novas sob /api/admin-v2/*, paralelas ao Admin legado.
@@ -386,6 +387,23 @@ adminV2Router.get("/admin-v2/comparator", requireAdmin, async (req: AuthRequest,
       return;
     }
     logger.error("Falha ao carregar comparador de unidades (admin v2)", { error: message });
+    res.status(500).json({ message: MSG.SERVER_ERROR });
+  }
+});
+
+// PLAN-0023 (Onda 6 / RETROFIT-018) — Insight Engine. Sem `unitIds`: consolida Radar +
+// Gargalos + Comparador, todos já de rede inteira.
+adminV2Router.get("/admin-v2/insights", requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const feed = await getInsightFeed(parsePeriodQuery(req));
+    res.json(feed);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "erro inesperado";
+    if (message.startsWith("invalid_")) {
+      res.status(400).json({ message: MSG.INVALID_PAYLOAD });
+      return;
+    }
+    logger.error("Falha ao carregar feed de insights (admin v2)", { error: message });
     res.status(500).json({ message: MSG.SERVER_ERROR });
   }
 });

@@ -2,6 +2,37 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 05:35:29 — SESSION AUDIT — PASS (fechamento de sessão)
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | OK — `DECISION-013` continua válida; nenhuma mudança estrutural |
+| State Integrity | OK, com pendência não-bloqueante — `PLAN-0023` roadmap de Inteligência (RETROFIT-011 a 019) está código-completo; Ondas 6-7 (RETROFIT-018 Insight Engine, RETROFIT-019 Ações Recomendadas) ainda sem E2E real/validação visual |
+| Operational Memory | OK — `MODIFICATION_LOG.md` e `PLAN-0023` atualizados, inclusive corrigindo a alegação de "E2E real" das Ondas 6-7 antes de fechar (não estava validado de verdade) |
+| Debug Memory | N/A — nenhum bug corrigido nesta metade da sessão |
+| Technical Validation | OK — lint/build/`tsc` limpos, testes **162/162 PASS**; **não confirmado em runtime** — container ainda não redeployado com o código das Ondas 6-7 |
+| Regression Risk | OK — Ondas 6-7 são 100% leitura, 21 testes novos; regressão E2E real e validação visual ficam pendentes pra próxima sessão |
+| Git Governance | OK — commit e push explicitamente autorizados pelo usuário |
+
+**Checklist completo:** `memory/logs/AUDIT_CHECKLIST_20260815_053529-PASS.md`.
+
+**RETROFIT-018 (Insight Engine) e RETROFIT-019 (Ações Recomendadas) — entregues nesta sessão, escopo ajustado com o usuário antes de implementar em ambos os casos:**
+- **RETROFIT-018**: o roadmap original descrevia como "o motor que gera os achados do Radar/Gargalos" — mas Radar (Onda 1) e Gargalos (Onda 2) já são exatamente isso. Reescopado para uma camada de **consolidação**: `apps/api/src/modules/intelligence/insights/` junta Radar + Gargalos + o maior achado do Comparador num único feed ranqueado, com deduplicação por categoria (quando Radar e Gargalos descrevem o mesmo fato — 4 das 5 categorias do Gargalos —, só a versão com R$ do Gargalos entra). `rules.ts` puro, 13 testes. Rota `GET /api/admin-v2/insights`. Frontend: `insights/InsightsView.tsx`, 5ª aba em `IntelligenceTabs`, botão "Ver insights →" no Panorama.
+- **RETROFIT-019**: o mockup original pressupunha ações executáveis ("[Criar campanha] [Ajustar preço]") — mas o Admin legado não suporta deep-link confiável (já documentado na Onda 2 do PLAN-0022) e o Admin V2 só tem uma tela de escrita real (Pipeline de Franquias). Reescopado para um **catálogo de sugestões em texto** por categoria (`recommendations.ts`, 5 testes) — só ganha botão de navegação quando existe uma tela real (Franquias → `/admin-v2/crescimento`; Financeiro → `/admin-v2/dinheiro`); as demais categorias são conselho de negócio em texto puro, sem botão morto.
+
+**Validações executadas:** `tsc -b` (api+web) PASS; `npm run build` (api+web) PASS; `npm run test` (api) **162/162 PASS** (5 + 23 + 134 intelligence). **Docker rebuild iniciado mas ainda em andamento no momento do fechamento** — redeploy, E2E real contra Postgres e validação visual real **não foram concluídos nesta sessão**, diferente de toda onda anterior (que sempre fechou com essa validação completa antes de ser marcada pronta). Registrado explicitamente para não passar a falsa impressão de que já foi verificado em produção/no navegador.
+
+**Pendente para a próxima sessão (nesta ordem):**
+1. Confirmar que o `docker compose build api web` em andamento terminou; se não, rodar de novo.
+2. `docker compose up -d --force-recreate api web` + esperar healthcheck.
+3. E2E real: login MASTER, `GET /api/admin-v2/insights`, conferir dedup Radar×Gargalos e `recommendedActions` nos dados reais; checar `401` sem token; regressão nos endpoints vizinhos.
+4. Validação visual real da tela `/admin-v2/insights` no navegador (card de impacto total, agrupamento por prioridade, sugestões com/sem botão).
+5. Só depois disso, marcar RETROFIT-018/019 como validados de verdade no `PLAN-0023` (hoje estão como "código completo", não "concluída").
+6. Commit e push já foram feitos nesta sessão para o código das Ondas 6-7 — não há nada de código pendente de versionamento, só a validação em runtime.
+7. Depois disso: decidir entre Consolidação (RETROFIT-020/021/022) ou revisão/merge do PR #1.
+
+**Sessão encerrada a pedido do usuário** ("execute o procedimento de encerramento conforme regra do SFK, por hoje está suficiente").
+
 ## 2026-08-15 — PLAN-0023 Onda 5 (RETROFIT-017, Health Score evolução) concluída
 
 **Contexto:** pedido do usuário para continuar com o RETROFIT-017, próximo item do roadmap do `PLAN-0023` após a Onda 4 (Comparador).

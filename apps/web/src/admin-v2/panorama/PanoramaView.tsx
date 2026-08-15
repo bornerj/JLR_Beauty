@@ -105,6 +105,13 @@ export function PanoramaView() {
           >
             Ver gargalos →
           </button>
+          <button
+            type="button"
+            onClick={() => navigate("/admin-v2/insights")}
+            className="rounded-full border border-gold px-3 py-1.5 text-xs font-semibold text-forest hover:bg-gold/10"
+          >
+            Ver insights →
+          </button>
         </div>
       </div>
 
