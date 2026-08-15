@@ -1,6 +1,6 @@
 # PLAN-0023 — Admin V2: Programa de Retrofit (Inteligência)
 
-**Status:** ✅ Ondas 1-7 (RETROFIT-011/012/013/014/017/018/019) CONCLUÍDAS 2026-08-15, todas com E2E real + validação visual (Ondas 6-7 fechadas depois das demais — ver `## Ondas 6-7 — Fechamento da validação pendente`). **Roadmap de Inteligência do PLAN-0023 100% entregue e validado.** Consolidação (RETROFIT-020/021, fora deste plano) segue em `PLAN-0024`.
+**Status:** ✅ DONE — Ondas 1-7 (RETROFIT-011/012/013/014/017/018/019) concluídas 2026-08-15, todas com E2E real + validação visual (Ondas 6-7 fechadas depois das demais — ver `## Ondas 6-7 — Fechamento da validação pendente`). Commitado, pushado e **mergeado em `main`** (PR #1, `1479cce`, 2026-08-15). Consolidação (RETROFIT-020/021) seguiu em `PLAN-0024`, também DONE e mergeado.
 **Origem:** continuação direta do `PLAN-0022` (Fundação + Experiência Operacional, Ondas 0-9 + RETROFIT-010b, 100% entregue e validada visualmente em 2026-08-15) — a própria seção "Próximos Passos" daquele plano já previa que "planejamento detalhado de Inteligência (RETROFIT-011 a 019)... fica para um plano futuro (`PLAN-0023` em diante), quando a Fundação+Operação estiver validada em uso real". Está validada — este plano nasce agora, a pedido do usuário ("continue com o retrofit seguinte ao último concluído").
 **Decisão arquitetural herdada:** `DECISION-013` (ACTIVE) — mesmas regras fixas do `PLAN-0022` (Health Score, escopo por unidade, explicabilidade) continuam valendo aqui, não são revalidadas onda a onda.
 **Escopo macro:** só `apps/api/src/modules/intelligence/` (módulos novos) e `apps/web/src/admin-v2/` (telas novas) — nenhuma migração de schema prevista nesta leva (Inteligência é 100% derivada dos dados já existentes/já classificados pelas Ondas 1-9).
@@ -249,4 +249,20 @@ Consolidação (RETROFIT-020 a 022) fica fora deste plano — só entra quando o
 - Clique real "Ver insights →" (Panorama → Insights) e clique real no link de ação de Franquias (Insights → `/admin-v2/crescimento`) — navegação funcionando ponta a ponta, Pipeline carrega os 5 leads parados citados no insight.
 - Nenhum erro de console/rede específico das Ondas 6-7; os únicos console errors observados são de bootstrap do Admin legado (branding/cupons/seções/etc.), pré-existentes e fora do escopo desta leva — não investigados aqui (anti-scope-drift).
 
-**Conclusão:** Ondas 6-7 (RETROFIT-018 Insight Engine + RETROFIT-019 Ações Recomendadas) agora **realmente validadas** (E2E real + visual real), não só código-completo. PLAN-0023 pode avançar para a decisão de Consolidação (RETROFIT-020/021/022) ou revisão/merge do PR #1.
+**Conclusão:** Ondas 6-7 (RETROFIT-018 Insight Engine + RETROFIT-019 Ações Recomendadas) agora **realmente validadas** (E2E real + visual real), não só código-completo.
+
+---
+
+## Git Record of Delivery (Ondas 1-7, RETROFIT-011/012/013/014/017/018/019)
+
+- **Step 1 (Pre-commit review):** feito onda a onda — arquivos e validações (E2E real + visual)
+  revisados antes de cada commit, ver seções acima.
+- **Step 2 (Commit authorization):** usuário autorizou explicitamente em cada rodada.
+- **Step 3 (Commit confirmation):** `c00a21d` (Ondas 1-4, commit combinado com o PLAN-0022),
+  `24a5d7a` (Onda 5, RETROFIT-017), `be5dcc2` (Ondas 6-7, RETROFIT-018+019 código-completo),
+  `260ce97` (fix typecheck `scoring.test.ts`), `f0c165e` (docs: fechamento da validação E2E
+  real + visual pendente das Ondas 6-7), todos em `feature/admin-v2`.
+- **Step 4 (Push authorization e resultado):** push autorizado e feito em cada rodada pra
+  `feature/admin-v2`; PR #1 mergeado em `main` via `1479cce` (2026-08-15, sem conflitos) e
+  pushado (`4f71b35`) — autorização explícita do usuário nesta sessão.
+- **Push status:** COMPLETED

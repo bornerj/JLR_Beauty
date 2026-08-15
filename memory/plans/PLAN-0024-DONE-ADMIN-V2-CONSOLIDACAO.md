@@ -116,5 +116,9 @@ Screenshots salvos em `/tmp/.../scratchpad/consolidacao-01-cadastros-hub.png` e 
   PLAN-0023), `d52c49d` (feat: PLAN-0024 Consolidação — este plano).
 - Step 4 (Push authorization and result): usuário autorizou explicitamente ("pode fazer o push"),
   em pedido separado da autorização de commit. `git push origin feature/admin-v2` →
-  `be5dcc2..c7ed771`, mesmo PR #1.
+  `be5dcc2..c7ed771`, mesmo PR #1. Depois, revisão pré-merge (`/code-review high`) rendeu mais
+  1 commit (`5244eba`, 7 achados corrigidos — ver `memory/MODIFICATION_LOG.md`), commitado e
+  pushado sob nova autorização explícita. PR #1 mergeado em `main` via `1479cce` (2026-08-15,
+  sem conflitos) e pushado (`4f71b35`) — autorização explícita do usuário ("revisar e mergear
+  o PR #1" → "pode fazer os dois").
 - Push status: COMPLETED

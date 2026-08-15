@@ -1,6 +1,6 @@
 # PLAN-0022 — Admin V2: Programa de Retrofit (Fundação + Experiência Operacional)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 0 a 9 + RETROFIT-010b concluídas, validadas por E2E real **e agora também por validação visual real do usuário** (2026-08-15, ver `MODIFICATION_LOG.md` — 1 bug real encontrado e corrigido: item "Rede" da sidebar nunca tinha sido marcado disponível desde a Onda 2). **Fundação + Experiência Operacional 100% entregue e visualmente conferida.** Branch `feature/admin-v2`, nada commitado ainda. Próxima ação: usuário decide entre commit/push das Ondas 0-9 + RETROFIT-010b, ou seguir para o planejamento de Inteligência/Consolidação (`PLAN-0023` em diante).
+**Status:** ✅ DONE — Ondas 0 a 9 + RETROFIT-010b concluídas, validadas por E2E real e visual real. Commitado, pushado e **mergeado em `main`** (PR #1, `1479cce`, 2026-08-15). Continuação: `PLAN-0023` (Inteligência) e `PLAN-0024` (Consolidação), ambos também DONE e mergeados.
 **Origem:** brainstorm do usuário com apoio de IA, documentado em `retrofit/ADMIN-V2-RETROFIT-OVERVIEW.md`, `retrofit/Retrofit_Concepts.docx` e `retrofit/RETROFIT-000.md` a `RETROFIT-014.md`.
 **Decisão arquitetural associada:** `memory/decisions/DECISION-013.md` (ACTIVE).
 **Escopo macro:** `apps/api/src/modules/intelligence/` (novo), `apps/api/src/routes/adminV2.ts` (novo), `apps/web/src/admin-v2/` (novo), `apps/web/src/app/App.tsx` (1 rota nova), `tailwind.config.js` (tokens semânticos novos, aditivos), `apps/api/prisma/schema.prisma` (1 migração aditiva, só na Onda 9 — Franquias).
@@ -462,13 +462,20 @@ NÃO É PERMITIDO em nenhuma onda:
 - aceitar total financeiro ou score vindo do frontend;
 - expor em qualquer board/card dado de unidade fora do escopo do usuário logado.
 
-## Git Record of Delivery (a preencher ao final da leva completa — Ondas 0 a 9)
+## Git Record of Delivery (Ondas 0 a 9 + RETROFIT-010b)
 
-- **Step 1 (Pre-commit review):** [pendente]
-- **Step 2 (Commit authorization):** [pendente]
-- **Step 3 (Commit confirmation):** [pendente]
-- **Step 4 (Push authorization e resultado):** [pendente]
-- **Push status:** PENDING
+- **Step 1 (Pre-commit review):** feito em sessões anteriores — arquivos e validações (E2E real
+  + visual) revisados onda a onda antes de cada commit.
+- **Step 2 (Commit authorization):** usuário autorizou explicitamente em sessões anteriores.
+- **Step 3 (Commit confirmation):** `28e11c1` (chore: migração do kernel SFK pra `.sfk/kernel/`),
+  `c00a21d` (feat: Fundação + Operação + Inteligência, PLAN-0022/0023 Ondas 0-14 — commit
+  combinado, cobre também as Ondas 1-4 do PLAN-0023), `63e28bf` (chore: script de teste Z-API +
+  limpeza), todos em `feature/admin-v2`.
+- **Step 4 (Push authorization e resultado):** push autorizado e feito em sessão anterior pra
+  `feature/admin-v2`; PR #1 (`main` ← `feature/admin-v2`) mergeado em `main` via `1479cce`
+  (2026-08-15, sem conflitos) e pushado (`4f71b35`) — autorização explícita do usuário nesta
+  sessão ("revisar e mergear o PR #1" → "pode fazer os dois").
+- **Push status:** COMPLETED
 
 ---
 

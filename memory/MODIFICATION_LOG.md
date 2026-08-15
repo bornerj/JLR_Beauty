@@ -2,6 +2,39 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 14:49 — SESSION AUDIT — PASS (fechamento de sessão)
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | OK — `DECISION-013` continua válida; nenhuma mudança estrutural nova (Zod nas rotas e fix de `columnFor` são correções de robustez, não decisão de arquitetura) |
+| State Integrity | OK — `PLAN-0022`, `PLAN-0023` e `PLAN-0024` fechados formalmente nesta auditoria: status → DONE, `Git Record of Delivery` preenchido com hashes reais (0022/0023 estavam pendentes apesar de já commitados há sessões), arquivos renomeados pra `PLAN-XXXX-DONE-...md` |
+| Operational Memory | OK — 6 entradas no `MODIFICATION_LOG.md` nesta sessão; os 3 planos atualizados e fechados |
+| Debug Memory | OK — 2 bugs reais (`ERR-0045` drill-down perdendo filtro de unidade, `ERR-0046` `columnFor` escondendo pedido `BLOCKED`), ambos documentados no formato padrão |
+| Technical Validation | OK — lint/build/`tsc` limpos em todas as rodadas; `npm run test` (api) **134/134 PASS**, sem regressão; nenhum `console.log` não autorizado (conferido em todos os arquivos tocados) |
+| Regression Risk | OK — nenhuma área sensível (auth/pagamento/agendamento) alterada; `send_message.php` removido é hardening, não regressão; validado via E2E real + visual real (mesmo padrão do projeto pra código sem teste unitário dedicado) |
+| Git Governance | OK — pre-commit review apresentado antes de cada um dos 6 commits; commits convencionais; Git Record preenchido nos 3 planos; cada um dos 6 pushes autorizado separadamente pelo usuário |
+
+**Checklist completo:** `memory/logs/AUDIT_CHECKLIST_20260815_144919-PASS.md`.
+
+**Resumo da sessão (do início ao fechamento):**
+1. Fix de typecheck (`revenue` faltando em `scoring.test.ts`).
+2. Fechamento da validação E2E real + visual pendente das Ondas 6-7 do `PLAN-0023`.
+3. `PLAN-0024` (Consolidação) — RETROFIT-020 (Cadastros) + RETROFIT-021 (Sistema), gate socrático
+   aplicado antes de planejar, deep-link por hash no Admin legado, validado E2E real + visual.
+4. Revisão pré-merge do PR #1 (`/code-review high`, 431 arquivos) — 7 dos 10 achados corrigidos
+   (2 bugs reais documentados, 1 script inseguro removido, hardening de Zod, 2 CTAs mortas
+   habilitadas, 1 falso positivo confirmado já documentado), validados de verdade antes do merge.
+5. **PR #1 mergeado em `main`** (`1479cce`, sem conflitos) — Admin V2 agora oficial na branch
+   principal, em paralelo ao Admin legado, conforme `DECISION-013`.
+6. Fechamento formal dos 3 planos (`PLAN-0022`/`0023`/`0024` → DONE) e desta auditoria.
+
+**Pendências não-bloqueantes pra sessões futuras** (decisões do usuário, não falha de sessão):
+- RETROFIT-022 (migração/aposentadoria do Admin legado) — sem critério fixado.
+- Achados #8/#9 do review (panorama ignorando período; `revenueTrendPercent` zerando com receita
+  anterior zero) — não confirmados de verdade (timeout do agente revisor), deixados de fora.
+
+**Sessão encerrada a pedido do usuário** ("feche a sessão conforme protocolo do SFK").
+
 ## 2026-08-15 — Merge do PR #1: Admin V2 (PLAN-0022/0023/0024) entra em `main`
 
 - **Contexto/objetivo**: usuário pediu explicitamente pra revisar e mergear o PR #1. Sem `gh`
