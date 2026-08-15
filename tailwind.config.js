@@ -21,7 +21,15 @@ module.exports = {
         'gold-light': '#e8dcc4',
         'cream-sidebar': '#faf9f6',
         champagne: '#f3efe0',
-        'champagne-dark': '#e8e0c5'
+        'champagne-dark': '#e8e0c5',
+        // Admin V2 (PLAN-0022) — tokens semânticos de estado, aditivos à paleta acima.
+        // "state-healthy" reaproveita o teal da marca (já lê como positivo); os demais
+        // são os únicos tons genuinamente novos, usados só para carregar significado
+        // (nunca decorativamente). Ver DECISION-013.
+        'state-healthy': '#00967f',
+        'state-attention': '#d97706',
+        'state-critical': '#dc2626',
+        'state-info': '#2563eb'
       },
       fontFamily: {
         display: ['Montserrat', 'sans-serif'],

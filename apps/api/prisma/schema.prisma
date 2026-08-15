@@ -80,6 +80,19 @@ enum SubscriptionStatus {
   INADIMPLENTE
 }
 
+/// Admin V2 (PLAN-0022, Onda 9) — etapas do funil comercial de franquias
+/// (RETROFIT-010). Distinto de "franquia em operação" (`Unit`, já coberto pelas
+/// Ondas 1-8) — este é o pipeline de VENDA da franquia, antes de virar unidade.
+enum FranchiseStage {
+  INTERESSADO
+  QUALIFICADO
+  REUNIAO
+  PROPOSTA
+  NEGOCIACAO
+  CONTRATO
+  IMPLANTACAO
+}
+
 enum ConciergeOrigin {
   WEB
   WHATSAPP
@@ -675,9 +688,30 @@ model FranchiseLead {
   email     String?
   phone     String?
   city      String?
+  /// Legado (PRESERVAR — tela admin-leads existente continua lendo/gravando aqui).
   status    String?  @default("Novo")
+  /// Admin V2 (PLAN-0022, Onda 9) — etapa do pipeline comercial. Aditivo: `status`
+  /// acima não é substituído, os dois convivem (governança #10 do plano — nunca
+  /// duplicar/quebrar domínio existente).
+  stage           FranchiseStage             @default(INTERESSADO)
+  estimatedValue  Decimal?                   @db.Decimal(10, 2)
+  stageChangedAt  DateTime?                  @default(now())
+  stageHistory    FranchiseLeadStageHistory[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Admin V2 (PLAN-0022, Onda 9) — histórico de mudança de etapa do pipeline comercial,
+/// usado para calcular tempo médio por etapa sem depender só do último `stageChangedAt`.
+model FranchiseLeadStageHistory {
+  id        Int             @id @default(autoincrement())
+  leadId    Int
+  fromStage FranchiseStage?
+  toStage   FranchiseStage
+  lead      FranchiseLead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  changedAt DateTime        @default(now())
+
+  @@index([leadId, changedAt])
 }
 
 model LoginAttempt {

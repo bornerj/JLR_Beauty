@@ -16,6 +16,7 @@ export const MSG = {
   PAYMENT_NOT_FOUND: "pagamento nao encontrado",
   APPOINTMENT_NOT_FOUND: "agendamento nao encontrado",
   FRANCHISE_LEAD_NOT_FOUND: "lead de franquia nao encontrado",
+  UNIT_NOT_FOUND: "unidade nao encontrada",
   INVALID_PAYLOAD: "dados invalidos",
   INVALID_CREDENTIALS: "credenciais invalidas",
   USER_NOT_REGISTERED: "usuario nao cadastrado",

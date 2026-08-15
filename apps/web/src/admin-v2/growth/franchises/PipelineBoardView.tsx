@@ -1,0 +1,151 @@
+import { useCallback, useEffect, useState } from "react";
+import { getToken } from "../../../lib/auth";
+import { logger } from "../../../utils/logger";
+import { fetchFranchisePipeline, moveFranchiseLeadStage } from "../../shared/api";
+import { formatCurrencyBRL } from "../../shared/format";
+import { STAGE_LABELS } from "./state";
+import { LeadCard } from "./components/LeadCard";
+import { FRANCHISE_STAGES } from "./types";
+import type { FranchisePipeline, FranchiseStage } from "./types";
+
+/**
+ * Admin V2 (PLAN-0022, Onda 9 + RETROFIT-010b) — Pipeline de Franquias (RETROFIT-010).
+ * Pergunta que a tela fecha: "onde estão as oportunidades comerciais de franquia?"
+ * Kanban comercial clássico, com alerta visual quando uma etapa está mais lenta que o
+ * tempo médio histórico esperado. Movimentação de etapa via seletor explícito no cartão
+ * (RETROFIT-010b) — nunca drag-and-drop, mesmo padrão do Mapa da Rede da Onda 2.
+ * Distinto de "franquia em operação" (`Unit`, Ondas 1-8) — este é o funil de VENDA,
+ * antes de virar unidade.
+ */
+
+type PipelineState = { loading: boolean; data: FranchisePipeline | null; error: string | null };
+type MoveState = { leadId: number; error: string | null } | null;
+
+export function PipelineBoardView() {
+  const [state, setState] = useState<PipelineState>({ loading: true, data: null, error: null });
+  const [moveState, setMoveState] = useState<MoveState>(null);
+
+  const load = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      setState({ loading: false, data: null, error: "Sessão expirada. Faça login novamente." });
+      return;
+    }
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const data = await fetchFranchisePipeline({ token });
+      setState({ loading: false, data, error: null });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao carregar o pipeline de franquias.";
+      logger.warn("Falha ao carregar Pipeline de Franquias (Admin V2)", { error: message });
+      setState((prev) => ({ loading: false, data: prev.data, error: message }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const moveStage = useCallback(async (leadId: number, stage: FranchiseStage) => {
+    const token = getToken();
+    if (!token) {
+      setMoveState({ leadId, error: "Sessão expirada. Faça login novamente." });
+      return;
+    }
+    setMoveState({ leadId, error: null });
+    try {
+      const data = await moveFranchiseLeadStage({ token, leadId, stage });
+      setState({ loading: false, data, error: null });
+      setMoveState(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao mover o lead de etapa.";
+      logger.warn("Falha ao mover etapa de lead de franquia (Admin V2)", { error: message, leadId, stage });
+      setMoveState({ leadId, error: message });
+    }
+  }, []);
+
+  if (state.loading && !state.data) {
+    return <p className="text-base text-stone-600 dark:text-stone-400">Carregando pipeline de franquias…</p>;
+  }
+
+  if (state.error && !state.data) {
+    return (
+      <div className="flex flex-col gap-3 rounded-xl border border-red-100 bg-white p-5">
+        <p className="text-sm font-semibold text-red-600">Falha ao carregar o pipeline de franquias.</p>
+        <p className="text-sm text-stone-600 dark:text-stone-400">{state.error}</p>
+        <div>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!state.data) return null;
+  const pipeline = state.data;
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div>
+        <h1 className="text-3xl font-bold text-forest">Crescimento — Franquias</h1>
+        <p className="text-base text-stone-600 dark:text-stone-400">onde estão as oportunidades comerciais de franquia</p>
+      </div>
+
+      <div className="overflow-x-auto">
+        <div className="flex gap-3" style={{ minWidth: `${FRANCHISE_STAGES.length * 260}px` }}>
+          {pipeline.stages.map((stageSummary) => {
+            const leads = pipeline.leads.filter((lead) => lead.stage === stageSummary.stage);
+            return (
+              <div key={stageSummary.stage} className="flex w-64 flex-shrink-0 flex-col gap-3">
+                <div
+                  className={`rounded-lg border p-3 ${
+                    stageSummary.isBottleneck ? "border-state-critical/40 bg-state-critical/5" : "border-[#cfe7d1] bg-white dark:border-forest-green dark:bg-forest"
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-forest">{STAGE_LABELS[stageSummary.stage]}</p>
+                    <p className="text-sm font-bold text-forest">{stageSummary.count}</p>
+                  </div>
+                  {stageSummary.estimatedValueTotal > 0 && (
+                    <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">{formatCurrencyBRL(stageSummary.estimatedValueTotal)} potencial</p>
+                  )}
+                  {stageSummary.avgDaysToComplete !== null && (
+                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">tempo médio esperado: {Math.round(stageSummary.avgDaysToComplete)}d</p>
+                  )}
+                  {stageSummary.isBottleneck && (
+                    <p className="mt-1.5 text-[11px] font-bold text-state-critical">
+                      ⚠ mais lento que o normal ({Math.round(stageSummary.avgDaysInStageNow ?? 0)}d parado em média)
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {leads.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-stone-200 p-3 text-center text-xs text-stone-500 dark:text-stone-400">
+                      nenhum lead nesta etapa
+                    </p>
+                  ) : (
+                    leads.map((lead) => (
+                      <LeadCard
+                        key={lead.leadId}
+                        lead={lead}
+                        moving={moveState?.leadId === lead.leadId && moveState.error === null}
+                        moveError={moveState?.leadId === lead.leadId ? moveState.error : null}
+                        onMoveStage={(stage) => void moveStage(lead.leadId, stage)}
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
