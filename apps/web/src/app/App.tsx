@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import RequireAdmin from "./RequireAdmin";
 import AdminPage from "../pages/Admin";
+import AdminV2Page from "../pages/AdminV2";
 import AssinaturasPage from "../pages/Assinaturas";
 import DbConsolePage from "../pages/DbConsole";
 import FranquiasPage from "../pages/Franquias";
@@ -28,6 +29,14 @@ export default function App() {
           element={
             <RequireAdmin>
               <AdminPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="admin-v2/*"
+          element={
+            <RequireAdmin>
+              <AdminV2Page />
             </RequireAdmin>
           }
         />

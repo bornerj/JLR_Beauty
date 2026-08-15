@@ -2,6 +2,590 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — Revisão pré-merge do PR #1 (`/code-review high`): 7 achados corrigidos
+
+- **Contexto/objetivo**: usuário pediu pra revisar e mergear o PR #1 (`main` ← `feature/admin-v2`,
+  431 arquivos, ~17 mil linhas — PLAN-0022/0023/0024). Rodado `/code-review high` contra
+  `main...feature/admin-v2`; 10 achados. Usuário pediu pra corrigir os 7 primeiros (3 que
+  bloqueavam merge + 4 de débito técnico) antes de mergear; os 2 últimos (⚪, não confirmados de
+  verdade por timeout do agente revisor) ficaram de fora por decisão explícita.
+- **Correções aplicadas**:
+  1. **`send_message.php`** (raiz do repo) — removido. Script de teste Z-API com modo de
+     invocação HTTP sem autenticação (`GET ?phone=X&message=Y` enviava WhatsApp real com
+     credenciais de produção); violava a regra do `SYSTEM.md` que restringe PHP a `cms/`. Doc
+     `docs/config/WHATSAPP_API_ZAPI.md` atualizada com alternativa via `curl` (sem modo HTTP).
+  2. **`UnitDetailView.tsx`** — drill-down perdia o filtro de unidade (dois `navigate()` em
+     sequência, o segundo sobrescrevia o `?unit=` do primeiro). Ver `ERR-0045`.
+  3. **`PanoramaCards.tsx` / `PanoramaSignals.tsx`** — "Explorar clientes" e "Ver clientes"
+     (oportunidade) ficaram presos em "em breve" mesmo com `/admin-v2/clientes` já pronto nesta
+     mesma leva; ambos agora navegam de verdade.
+  4. **`adminV2.ts`** — as 17 rotas (query params + PATCH body) passaram a usar schemas Zod
+     explícitos (`unitIdsListSchema`, `periodQuerySchema`, `singleUnitIdQuerySchema`,
+     `slotQuerySchema`, `stageBodySchema`) em vez de checagens manuais de `typeof`/`Number`,
+     conforme regra do `SYSTEM.md`. Filtros opcionais continuam tolerantes (`.catch()` preserva
+     o comportamento de antes — query mal formada = filtro ignorado, nunca `400`); campos
+     obrigatórios devolvem `400` com `formatZodDetail`, mesmo padrão de `routes/schedule.ts`.
+  5. **`operational-orders/service.ts`** — `columnFor` podia esconder um pedido `BLOCKED` atrás
+     do status `PENDENTE`. Ver `ERR-0046`.
+  6. **Migration `20260814214126_add_franchise_pipeline`** — o `DROP INDEX` "não documentado"
+     apontado pelo review já estava documentado em `memory/logs/BUILD-HISTORY.md` desde a sessão
+     que criou a migration (2026-08-14) — falso positivo do revisor (não tinha acesso a esse
+     arquivo). Nenhuma ação necessária, só confirmado.
+  7. **`seedAdminV2TestData.ts`** — `pickOrderItems` indexava um array de produtos vazio (`NaN`
+     → crash confuso). Adicionado guard logo após buscar `productRows`, com mensagem clara
+     ("rode o seed base antes deste script").
+- **Validações executadas**: `npx tsc -b --noEmit` (api+web) limpo; `npm run build` (api+web)
+  PASS; `npm run test` (api) **134/134 PASS** (sem regressão); `npm run lint` (web) — mesmos 17
+  erros pré-existentes/tolerados, nenhum novo. `docker compose build api web` + `up -d
+  --force-recreate api web nginx` — todos saudáveis. **E2E real** (login MASTER): `400` com
+  Zod em capacity sem `unitId`/`unitId` inválido/`hour` inválido/`stage` inválido; `200` com
+  dados válidos; `200` em panorama com `unitIds` bagunçado (tolerante, filtro ignorado); board
+  de pedidos com 43 pedidos, mesma contagem de antes (sem regressão do fix `columnFor`). **Visual
+  real via Playwright**: "Explorar clientes" e clique real confirmando navegação pra
+  `/admin-v2/clientes`; drill-down "Ver agenda" confirmando `?unit=1` preservado na URL e
+  `CapacityView` já filtrada em "Parque da Cidade" (não mais o estado vazio).
+- **Arquivos alterados**: `send_message.php` (removido), `docs/config/WHATSAPP_API_ZAPI.md`,
+  `apps/web/src/admin-v2/network/UnitDetailView.tsx`,
+  `apps/web/src/admin-v2/panorama/PanoramaView.tsx`,
+  `apps/web/src/admin-v2/panorama/components/PanoramaCards.tsx`,
+  `apps/web/src/admin-v2/panorama/components/PanoramaSignals.tsx`,
+  `apps/api/src/routes/adminV2.ts`,
+  `apps/api/src/modules/intelligence/operational-orders/service.ts`,
+  `apps/api/scripts/seedAdminV2TestData.ts`, `memory/logs/DEBUG-HISTORY.md` (ERR-0045, ERR-0046).
+- **Status**: concluído, validado de verdade. Achados #8 e #9 do review (panorama ignorando
+  período no `ordersNeedingAttention`; `revenueTrendPercent` caindo pra 0 com receita anterior
+  zero) **não foram corrigidos** — não confirmados de verdade (timeout do agente revisor) e o
+  usuário decidiu deixá-los de fora desta rodada; registrar como débito técnico pra revisão
+  futura se o usuário quiser investigar.
+
+## 2026-08-15 — PLAN-0024: Consolidação (RETROFIT-020 Cadastros + RETROFIT-021 Sistema)
+
+- **Contexto/objetivo**: usuário pediu para seguir pra Consolidação depois do fechamento do
+  `PLAN-0023`. Gate socrático aplicado antes de planejar (RAG achou que o Admin legado não tem
+  nenhum deep-link hoje — `data-view` trocado só por clique em memória, sem hash/URL — o que
+  tornaria um link ingênuo do V2 sempre cair no dashboard padrão). Usuário confirmou 2 decisões:
+  (1) escopo = RETROFIT-020+021 apenas, RETROFIT-022 (aposentar o legado) fica fora, sem
+  critério fixado (`DECISION-013`); (2) adicionar deep-link por hash no legado, em vez de linkar
+  sempre pro dashboard genérico. `PLAN-0024-ADMIN-V2-CONSOLIDACAO.md` escrito, aprovado pelo
+  usuário, executado na mesma sessão.
+- **Arquivos alterados**:
+  - `apps/web/src/modules/admin-shell/behavior.ts` — deep-link por hash na inicialização do
+    Admin legado (`initAdminShellBehavior`), com whitelist contra os `data-view` reais do DOM.
+  - `apps/web/src/admin-v2/shell/HubCard.tsx` (novo) — card compartilhado dos 2 hubs (link real
+    ou desabilitado com motivo — nunca link morto).
+  - `apps/web/src/admin-v2/cadastros/CadastrosHubView.tsx` (novo) — hub de Cadastros, 6 cards.
+  - `apps/web/src/admin-v2/sistema/SistemaHubView.tsx` (novo) — hub de Sistema, 6 cards ativos +
+    2 desabilitados (`Segurança`/`Infra`, sem tela dedicada no legado hoje).
+  - `apps/web/src/admin-v2/AdminV2Root.tsx` — rotas `cadastros`/`sistema`, `activeKey`,
+    breadcrumb.
+  - `apps/web/src/admin-v2/shell/AdminSidebar.tsx` — `cadastros`/`sistema` de `available: false`
+    pra `true`, comentário de topo atualizado.
+- **Validações executadas**: `npx tsc -b --noEmit` (web) PASS; `npm run build` (web) PASS;
+  `npm run lint` (web) — os mesmos 17 erros pré-existentes/tolerados, nenhum novo nos arquivos
+  desta leva; `docker compose build web` + `up -d --force-recreate web nginx` (cascata recriou
+  `api` também, esperado) — todos saudáveis; **validação visual real** via Playwright headless
+  (extensão `claude-in-chrome` indisponível nesta máquina, mesmo método usado no fechamento do
+  `PLAN-0023`) — 30 checks automatizados: os 12 deep-links (6 Cadastros + 6 Sistema) abrindo a
+  tela certa do legado (não mais o dashboard padrão), os 2 itens desabilitados sem link morto, e
+  regressão do clique manual no legado (confirmado via `dispatchEvent` — o clique real do
+  Playwright esbarrou numa peculiaridade pré-existente do CSS do sidebar legado, hover-to-reveal,
+  não um bug desta leva). Scripts de validação temporários removidos ao final.
+- **Status**: `PLAN-0024` **concluído, validado de verdade, commitado e pushado**. Commit
+  separado por leva (a pedido do usuário) e push autorizado em pedido explícito à parte:
+  `260ce97` (fix typecheck), `f0c165e` (docs fechamento Ondas 6-7), `c7ed771` (PLAN-0024) →
+  `feature/admin-v2`, mesmo PR #1. RETROFIT-022 (migração/aposentadoria do legado) segue sem
+  entrar, precisa de nova decisão de produto explícita.
+
+## 2026-08-15 — PLAN-0023: fechamento da validação pendente das Ondas 6-7 (Insight Engine + Ações Recomendadas)
+
+- **Contexto/objetivo**: `PLAN-0023` (plano ativo, sem `DONE`) tinha as Ondas 6-7 marcadas como
+  "código-completo, testes unitários PASS" mas com E2E real e validação visual pendentes desde
+  o fechamento da sessão anterior (rebuild Docker em andamento). Usuário pediu para continuar o
+  plano, rebuildar o Docker e validar.
+- **Ações executadas**:
+  - `docker compose build api web` — cache hit em todas as camadas (código já estava na imagem
+    do rebuild anterior); containers `api`/`web`/`nginx`/`postgres` saudáveis.
+  - Login real (`POST /api/auth/login`, usuário MASTER) + E2E real contra Postgres em todos os
+    endpoints de inteligência: `panorama` (index `/admin-v2`), `network`, `radar`, `gargalos`,
+    `comparator`, `money`, `insights` — todos `200` (3 rodadas); `401` sem token confirmado.
+    Conferido manualmente: dedup Radar×Gargalos por categoria, ordenação por impacto R$
+    decrescente, `totalKnownImpact` batendo com a soma manual, catálogo de `recommendedActions`
+    (só Franquias com `actionPath` real nesta massa de dados).
+  - Validação visual real via **Playwright headless** (extensão `claude-in-chrome` indisponível
+    nesta máquina — usada como alternativa, `@playwright/test` já é devDependency de `apps/web`;
+    `chromium` instalado via `playwright install`): login real pela UI, screenshots de
+    `/admin-v2` (Panorama, botão "Ver insights →") e `/admin-v2/insights` (5ª aba, breadcrumb,
+    8 cards batendo com o E2E), clique real "Ver insights →" e clique real no link de ação de
+    Franquias (`/admin-v2/insights` → `/admin-v2/crescimento`, Pipeline carregando os 5 leads
+    parados citados no insight). Scripts de debug temporários (`apps/web/*.tmp.mjs`,
+    `debug-*.mjs`) removidos ao final — nada deixado solto no working tree.
+  - **Nota lateral (não investigada, fora de escopo)**: bootstrap do Admin legado emite vários
+    `console.error`/`warn` (branding, cupons, seções, assinantes, etc.) em toda navegação —
+    pré-existente, não relacionado às Ondas 6-7; registrado aqui para não ser confundido com
+    regressão numa sessão futura.
+- **Arquivos alterados**: `memory/plans/PLAN-0023-ADMIN-V2-INTELIGENCIA.md` (seção nova
+  "Ondas 6-7 — Fechamento da validação pendente"), `memory/progress.md` (linha do módulo
+  atualizada), `memory/MODIFICATION_LOG.md` (este registro).
+- **Validações executadas**: ver acima (E2E real + visual real, 100% das rotas de inteligência).
+- **Status**: Ondas 6-7 agora **realmente validadas** — PLAN-0023 sem pendências de validação
+  nesta leva. Sem commit/push (aguardando autorização do usuário). Próxima decisão do usuário:
+  Consolidação (RETROFIT-020/021/022) ou revisão/merge do PR #1.
+
+## 2026-08-15 — fix: typecheck errors em scoring.test.ts (point-in-time)
+
+- **Contexto/objetivo**: usuário pediu "fix typecheck errors". `tsc -b --noEmit` (apps/api,
+  inclui testes; `tsc -p tsconfig.build.json` exclui testes e por isso não pegava o erro)
+  apontou 6 erros TS2741/TS2345 em `unit-health/scoring.test.ts`: os 5 objetos de métricas do
+  teste não tinham o campo `revenue`, adicionado ao tipo `UnitHealthRawMetrics` durante a
+  RETROFIT-017 (Health Score evolução, PLAN-0023 Onda 5) mas nunca propagado ao teste.
+- **Arquivos alterados**: `apps/api/src/modules/intelligence/unit-health/scoring.test.ts` —
+  adicionado `revenue: <valor>` em cada um dos 5 objetos `UnitHealthRawMetrics` literais
+  (valor é só exibição, não entra na normalização — não afeta as asserções).
+- **Validações executadas**: `npx tsc -b --noEmit` limpo em `apps/api` e `apps/web`;
+  `npm run test` (api) — **134/134 PASS**.
+- **Status**: concluído. Sem commit/push (aguardando autorização do usuário).
+
+## 2026-08-15 05:35:29 — SESSION AUDIT — PASS (fechamento de sessão)
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | OK — `DECISION-013` continua válida; nenhuma mudança estrutural |
+| State Integrity | OK, com pendência não-bloqueante — `PLAN-0023` roadmap de Inteligência (RETROFIT-011 a 019) está código-completo; Ondas 6-7 (RETROFIT-018 Insight Engine, RETROFIT-019 Ações Recomendadas) ainda sem E2E real/validação visual |
+| Operational Memory | OK — `MODIFICATION_LOG.md` e `PLAN-0023` atualizados, inclusive corrigindo a alegação de "E2E real" das Ondas 6-7 antes de fechar (não estava validado de verdade) |
+| Debug Memory | N/A — nenhum bug corrigido nesta metade da sessão |
+| Technical Validation | OK — lint/build/`tsc` limpos, testes **162/162 PASS**; **não confirmado em runtime** — container ainda não redeployado com o código das Ondas 6-7 |
+| Regression Risk | OK — Ondas 6-7 são 100% leitura, 21 testes novos; regressão E2E real e validação visual ficam pendentes pra próxima sessão |
+| Git Governance | OK — commit e push explicitamente autorizados pelo usuário |
+
+**Checklist completo:** `memory/logs/AUDIT_CHECKLIST_20260815_053529-PASS.md`.
+
+**RETROFIT-018 (Insight Engine) e RETROFIT-019 (Ações Recomendadas) — entregues nesta sessão, escopo ajustado com o usuário antes de implementar em ambos os casos:**
+- **RETROFIT-018**: o roadmap original descrevia como "o motor que gera os achados do Radar/Gargalos" — mas Radar (Onda 1) e Gargalos (Onda 2) já são exatamente isso. Reescopado para uma camada de **consolidação**: `apps/api/src/modules/intelligence/insights/` junta Radar + Gargalos + o maior achado do Comparador num único feed ranqueado, com deduplicação por categoria (quando Radar e Gargalos descrevem o mesmo fato — 4 das 5 categorias do Gargalos —, só a versão com R$ do Gargalos entra). `rules.ts` puro, 13 testes. Rota `GET /api/admin-v2/insights`. Frontend: `insights/InsightsView.tsx`, 5ª aba em `IntelligenceTabs`, botão "Ver insights →" no Panorama.
+- **RETROFIT-019**: o mockup original pressupunha ações executáveis ("[Criar campanha] [Ajustar preço]") — mas o Admin legado não suporta deep-link confiável (já documentado na Onda 2 do PLAN-0022) e o Admin V2 só tem uma tela de escrita real (Pipeline de Franquias). Reescopado para um **catálogo de sugestões em texto** por categoria (`recommendations.ts`, 5 testes) — só ganha botão de navegação quando existe uma tela real (Franquias → `/admin-v2/crescimento`; Financeiro → `/admin-v2/dinheiro`); as demais categorias são conselho de negócio em texto puro, sem botão morto.
+
+**Validações executadas:** `tsc -b` (api+web) PASS; `npm run build` (api+web) PASS; `npm run test` (api) **162/162 PASS** (5 + 23 + 134 intelligence). **Docker rebuild iniciado mas ainda em andamento no momento do fechamento** — redeploy, E2E real contra Postgres e validação visual real **não foram concluídos nesta sessão**, diferente de toda onda anterior (que sempre fechou com essa validação completa antes de ser marcada pronta). Registrado explicitamente para não passar a falsa impressão de que já foi verificado em produção/no navegador.
+
+**Pendente para a próxima sessão (nesta ordem):**
+1. Confirmar que o `docker compose build api web` em andamento terminou; se não, rodar de novo.
+2. `docker compose up -d --force-recreate api web` + esperar healthcheck.
+3. E2E real: login MASTER, `GET /api/admin-v2/insights`, conferir dedup Radar×Gargalos e `recommendedActions` nos dados reais; checar `401` sem token; regressão nos endpoints vizinhos.
+4. Validação visual real da tela `/admin-v2/insights` no navegador (card de impacto total, agrupamento por prioridade, sugestões com/sem botão).
+5. Só depois disso, marcar RETROFIT-018/019 como validados de verdade no `PLAN-0023` (hoje estão como "código completo", não "concluída").
+6. Commit e push já foram feitos nesta sessão para o código das Ondas 6-7 — não há nada de código pendente de versionamento, só a validação em runtime.
+7. Depois disso: decidir entre Consolidação (RETROFIT-020/021/022) ou revisão/merge do PR #1.
+
+**Sessão encerrada a pedido do usuário** ("execute o procedimento de encerramento conforme regra do SFK, por hoje está suficiente").
+
+## 2026-08-15 — PLAN-0023 Onda 5 (RETROFIT-017, Health Score evolução) concluída
+
+**Contexto:** pedido do usuário para continuar com o RETROFIT-017, próximo item do roadmap do `PLAN-0023` após a Onda 4 (Comparador).
+
+**Entregue:** `apps/api/src/modules/intelligence/network/narrative.ts` — `buildUnitNarrative()` pura, monta uma frase determinística no Diagnóstico da Unidade a partir dos campos que o Health Score já decompôs (estado, score, tendência, força/fraqueza principal, impacto). `narrative.test.ts` — 5 testes. `network/service.ts` expõe `narrative: string` novo em `UnitDiagnostic`, sem rota nova (endpoint já existente da Onda 2 do PLAN-0022). Frontend: parágrafo de narrativa em `UnitDetailView.tsx`.
+
+**Correção de dívida encontrada:** o botão "Comparar unidade" do Diagnóstico da Unidade estava desabilitado ("em breve") desde a Onda 2 do PLAN-0022, referenciando o Comparador como uma onda futura — mas o Comparador foi entregue nesta mesma leva (Onda 4). Corrigido para navegação real.
+
+**Autocorreção durante a validação (registrada por transparência):** a implementação inicial também estendia a tradução de R$ da fraqueza "estoque", reusando o capital parado em produtos Armadilha do Portfólio (Onda 5 do PLAN-0022). Implementado com 9 testes unitários, **revertido antes de ir pra produção**: o componente "estoque" do Health Score mede ruptura/estoque baixo (`inventoryHealthRate`), um sinal diferente de "capital parado em produto Armadilha" — uma unidade pode ter ruptura severa com zero capital parado. Anexar esse número à fraqueza errada violaria a governança #6 (nunca um número que não explica a causa real). Revertido em `apps/api/src/modules/intelligence/network/impact.ts`, com o raciocínio da rejeição documentado inline para não ser tentado de novo sem essa memória. `test:intelligence` fechou em 121 testes (não 122 — 1 teste a menos que o pico intermediário, pela reversão).
+
+**Validações executadas (todas reais):** `tsc -b` (api+web) PASS; `npm run build` (api+web) PASS; `npm run test` (api) **149/149 PASS**; `docker compose build api web` PASS (2 rodadas — uma com a versão errada, revertida antes do redeploy; uma com a versão corrigida) + redeploy `--force-recreate` + healthcheck OK. **E2E real contra Postgres** (login MASTER): `GET /api/admin-v2/network/units/1` → `200` com `narrative` coerente e `impactEstimate: null` honesto (fraqueza é "recorrência", sem fórmula); regressão OK em `/panorama`, `/network`, `/radar`, `/gargalos`, `/money`, `/comparator`, `/portfolio/products`; `401` sem token. **Validação visual real**: narrativa renderiza corretamente na tela, botão "Comparar unidade" habilitado e navegando de verdade para `/admin-v2/comparador` (confirmado por mudança de URL).
+
+**Pendente:** nada commitado ainda desde o PR #1. Próximo passo: usuário decide entre RETROFIT-018/019 ou revisar/mergear o PR #1.
+
+## 2026-08-15 04:23:12 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | OK — `DECISION-013` continua válida; nenhuma decisão ativa contrariada; sem mudança estrutural nova (RETROFIT-013/014 são 100% derivados, sem migration) |
+| State Integrity | OK — `PLAN-0022` fechado (Ondas 0-9 + RETROFIT-010b); `PLAN-0023` aberto corretamente (Ondas 1-4 concluídas, RETROFIT-017/018/019 pendentes no roadmap) |
+| Operational Memory | OK — `MODIFICATION_LOG.md` e `PLAN-0023` atualizados a cada onda concluída |
+| Debug Memory | N/A — nenhum bug corrigido nesta metade da sessão; comportamento de "Loja Online" 0% de ocupação no Comparador investigado e confirmado consistente com a convenção da Onda 1, não é bug |
+| Technical Validation | OK — lint (web, mesmo padrão tolerado), build (api+web+Docker) PASS, testes **136/136 PASS**, sem migration pendente, logs limpos |
+| Regression Risk | OK — nenhuma área sensível alterada (só leitura, reuso de módulos já validados); 16 testes novos cobrindo casos de borda; regressão E2E manual OK em 7 endpoints |
+| Git Governance | OK — `git status` revisado antes do commit (migração kernel + 3 arquivos soltos identificados e tratados separadamente, consulta ao usuário via `AskUserQuestion`); 4 commits com mensagem estruturada; push autorizado explicitamente (duas vezes); **PR #1 aberto** em `https://github.com/bornerj/JLR_Beauty/pull/1` |
+
+**Checklist completo:** `memory/logs/AUDIT_CHECKLIST_20260815_042312-PASS.md`.
+**Sessão encerrada a pedido do usuário** ("salve tudo logo"). Branch `feature/admin-v2` com 4 commits pushados, PR #1 aberto contra `main`, working tree limpo. Retomar do roadmap `PLAN-0023` (RETROFIT-017/018/019) ou da revisão/merge do PR #1.
+
+## 2026-08-15 — Limpeza de arquivos soltos + script de teste Z-API
+
+**Contexto:** ao revisar o `git status` antes do commit do Admin V2, três arquivos untracked, não relacionados ao trabalho da sessão, foram encontrados soltos na raiz do repo — tratados a pedido do usuário.
+
+**O que mudou:**
+- `send_message.php` (novo) — utilitário de teste manual de envio via Z-API (lê `apps/api/.env`, sem segredo hardcoded, mesmo padrão de `docs/config/STRIPE_TEST_RUNBOOK.md`); mantido e comitado por ter valor real (integração Z-API já existe em `apps/api/src/modules/chatbot/`).
+- `arvore.txt` (removido) — dump de `tree` do Windows, gerado, sem valor.
+- `.gitignore` — reintroduz entradas para `arvore.txt` e `/.codex/` (cache local de outra ferramenta de IA, destravado sem querer pela migração `kernel/` → `.sfk/kernel/` do commit anterior).
+
+## 2026-08-15 — PLAN-0023 Ondas 3 e 4 (RETROFIT-013 Dinheiro + RETROFIT-014 Comparador) concluídas
+
+**Contexto:** pedido do usuário para continuar com o RETROFIT-013 e o RETROFIT-014 (esclarecido via pergunta — "retrofit-10b" citado pelo usuário era na verdade RETROFIT-014, já que o RETROFIT-010b real já estava concluído desde o dia anterior).
+
+**Onda 3 (RETROFIT-013 — "Onde está o dinheiro?"):** novo módulo `apps/api/src/modules/intelligence/money/` com `types.ts`, `rules.ts` (função pura `buildMoneyOverview()` — cascata Receita→Custo Direto→Margem Bruta, sem inventar o degrau de descontos do mockup original por falta de dado no schema) e `service.ts` (busca Produtos/Serviços/Assinaturas — reuso direto das Ondas 5/6/8 — + agregação nova por profissional, em `Promise.all`). `rules.test.ts` — 8 testes novos. Rota `GET /api/admin-v2/money`. Frontend: `money/MoneyView.tsx` (cascata visual + 3 origens + 6 decomposições).
+
+**Onda 4 (RETROFIT-014 — Comparador Visual de Unidades):** novo módulo `apps/api/src/modules/intelligence/comparator/` com `types.ts`, `rules.ts` (função pura `buildUnitComparator()` — 5 dimensões por unidade + linha Rede + achado da maior diferença relativa, com tradução para R$ só quando a métrica é Ocupação, única com fórmula honesta reusada do drill-down da Onda 4 do PLAN-0022) e `service.ts` (reuso quase total de `getUnitsHealth` da Onda 1, só complementado com `avgTicket` e `unitRevenuePerBookedHour`). `rules.test.ts` — 8 testes novos. Rota `GET /api/admin-v2/comparator`. Frontend: `comparator/ComparatorView.tsx` (tabela Métrica×Unidades×Rede + card "Maior Diferença").
+
+**Frontend comum:** `IntelligenceTabs` estendida de 2 para 4 abas (Radar/Gargalos/Dinheiro/Comparador) em `AdminV2Root.tsx`. `test:intelligence` agora com 108 testes; `npm run test` (api) **136/136 PASS**.
+
+**Validações executadas (todas reais):** `tsc -b` (api+web) PASS; `npm run build` (api+web) PASS; `npm run lint` sem regressão nova de categoria; `docker compose build api web` PASS + redeploy `--force-recreate` + healthcheck OK. **E2E real contra Postgres** (login MASTER): `/admin-v2/money` → cascata batendo exatamente (Receita R$ 32.292,00 = R$ 11.290,00 + R$ 19.340,00 + R$ 1.662,00; Margem Bruta R$ 22.028,00); `/admin-v2/comparator` → 5 unidades + Rede, maior gap em Ocupação (Loja Online 0% vs Parque da Cidade 2,3%, coerente — loja online não tem agenda física); `401` sem token nos dois; regressão OK em `/panorama`, `/network`, `/radar`, `/gargalos`. **Validação visual real**: as duas telas renderizam corretamente, abas alternam, breadcrumbs corretos, números batendo com o E2E.
+
+**Pendente:** nada commitado ainda até este ponto. Próximo passo: usuário decide entre RETROFIT-017/018/019 ou pausar para commit/push de tudo (Ondas 0-9 + RETROFIT-010b do `PLAN-0022` + Ondas 1-4 do `PLAN-0023`).
+
+---
+
+## 2026-08-15 — PLAN-0023 Onda 2 (RETROFIT-012, Gargalos) concluída
+
+**Contexto:** pedido do usuário para continuar com o RETROFIT-012, próximo item do roadmap do `PLAN-0023` após a Onda 1 (Radar Executivo).
+
+**Onda 2 (RETROFIT-012 — Gargalos, "o que está travando?"):** novo módulo `apps/api/src/modules/intelligence/gargalos/` com `types.ts` (`Bottleneck`/`BottleneckImpact` honesto `{amount, explanation} | null`/`BottlenecksRanking`), `rules.ts` (função pura `rankBottlenecks()` — 5 regras determinísticas cruzando Operação, Agenda, Portfólio, Assinaturas e Franquias, cada uma contribuindo no máximo 1 gargalo agregado, ordenadas por impacto com `null` sempre por último) e `service.ts` (busca os 5 módulos em `Promise.all`, capacidade agregada por unidade). `rules.test.ts` — 10 testes novos. Campo aditivo `SubscriptionHealthEntry.membershipPrice` (backend+frontend) para calcular MRR em risco sem inventar valor. Rota nova `GET /api/admin-v2/gargalos`. Frontend: `gargalos/GargalosView.tsx` (card de impacto total condicional + lista ranqueada, cada item com valor+explicação ou aviso de "não estimável"), `IntelligenceTabs` (Radar/Gargalos) em `AdminV2Root.tsx`, botão "Ver gargalos →" no Panorama. `test:intelligence` agora com 92 testes; `npm run test` (api) **120/120 PASS**.
+
+**Validações executadas (todas reais):** `tsc -b` (api+web) PASS; `npm run build` (api+web) PASS; `npm run lint` sem regressão nova de categoria; `docker compose build api web` PASS + redeploy `--force-recreate` + healthcheck OK. **E2E real contra Postgres** (login MASTER): `GET /api/admin-v2/gargalos` → `200` com 5 gargalos reais (Agenda R$ 1.078.346,41, Franquias R$ 1.040.000,00, Operação R$ 7.292,30, Portfólio R$ 2.064,00, Assinaturas R$ 776,00), `totalImpact` R$ 2.128.478,71 conferindo exatamente com a soma manual; `?days=7` retorna período/números diferentes corretamente; `401` sem token; regressão OK em `/panorama`, `/network`, `/operations/orders`, `/portfolio/products`, `/subscriptions/health`. **Validação visual real**: tela renderiza corretamente, tipografia legível; abas Radar/Gargalos alternam; navegação de "Ver agenda" e "Ver gargalos →" (Panorama) confirmadas via mudança de URL (cliques simulados por coordenada voltaram a errar o alvo — confirmado via `.click()` direto no DOM que o código está correto, mesmo padrão já documentado na Onda 1).
+
+**Pendente:** nada commitado ainda. Próximo passo: usuário decide entre seguir para RETROFIT-013 ("Onde está o dinheiro?") ou pausar para commit/push de tudo (Ondas 0-9 + RETROFIT-010b do `PLAN-0022` + Ondas 1-2 do `PLAN-0023`).
+
+---
+
+## 2026-08-15 — PLAN-0023 iniciado + Onda 1 (RETROFIT-011, Radar Executivo) concluída
+
+**Contexto:** pedido do usuário para continuar com o retrofit seguinte ao último concluído. Com Fundação+Operação (`PLAN-0022`, Ondas 0-9 + RETROFIT-010b) validada tecnicamente e visualmente, entra a leva de Inteligência prevista na própria seção "Próximos Passos" do `PLAN-0022` — nasce `PLAN-0023`, herdando a governança do programa.
+
+**Novo plano:** `memory/plans/PLAN-0023-ADMIN-V2-INTELIGENCIA.md` — roadmap de RETROFIT-011 a 019 (Consolidação, 020-022, fica de fora até decisão sobre o Admin legado).
+
+**Onda 1 (RETROFIT-011 — Radar Executivo):** novo módulo `apps/api/src/modules/intelligence/radar/` com `types.ts`, `rules.ts` (função pura `buildRadarFindings()` — 9 regras determinísticas, sem ML, cruzando os 8 módulos já entregues nas Ondas 1-9 do `PLAN-0022`: Rede, Operação, Portfólio de Produtos/Serviços, Clientes, Assinaturas, Franquias, tendência financeira) e `service.ts` (busca os 8 endpoints em `Promise.all`, nunca em cascata). `rules.test.ts` — 11 testes novos, incluindo verificação de que nenhum achado sai sem ação navegável (governança #7). Rota nova `GET /api/admin-v2/radar`. Frontend: `radar/RadarView.tsx` (achados agrupados por severidade, cada um com botão de ação real) + rota `/admin-v2/radar` + botão de entrada no Panorama. `test:intelligence` agora com 82 testes.
+
+**Validações executadas (todas reais):** `tsc -b` (api+web) PASS; `npm run build` (api+web) PASS; `npm run test` (api) **110/110 PASS**; `npm run lint` sem regressão; `docker compose build api web` PASS. **E2E real contra Postgres**: 9 achados reais retornados, cruzando corretamente todos os 8 domínios, com números batendo exatamente com o que já estava validado nas Ondas 5-9 (28 pedidos em atenção, churn 11.1%, 1 produto e 3 serviços Armadilha, 1 cliente em risco, 3 assinaturas em atenção, 2 gargalos + leads parados de franquia); regressão OK. **Validação visual real**: tela renderiza corretamente; confirmado (via clique programático direto no DOM) que a navegação dos botões de ação funciona — um clique simulado da ferramenta de automação errou o alvo por coordenada, não é bug de código.
+
+**Pendente:** nada commitado ainda. Próximo passo: usuário decide entre seguir para RETROFIT-012 (Gargalos) ou pausar para commit/push de tudo (Ondas 0-9 + RETROFIT-010b do PLAN-0022 + Onda 1 do PLAN-0023).
+
+---
+
+## 2026-08-15 — Validação visual real do Admin V2 (Ondas 0-9 + RETROFIT-010b), primeira desta leva
+
+**Contexto:** pedido explícito do usuário ("valida visualmente o Admin V2 antes de commitar") — primeira vez nesta leva do `PLAN-0022` que a extensão Claude in Chrome esteve disponível para uma varredura completa, em vez de só validação por API.
+
+**Telas percorridas de verdade (login real, navegação real, interações reais):** Panorama; Rede (Kanban) + Diagnóstico da Unidade (Loja Online, todos os botões "Ver agenda/produtos/clientes" clicáveis); Operação → Pedidos, Agenda (seleção de unidade real, clique num horário do heatmap, detalhamento com profissionais escalados), Produtos (expandir "ver por unidade" com dado real), Serviços (badge "Analisar preço"); Clientes → Fluxo (achado cruzado: assinatura inadimplente de um cliente aparece corretamente como sinal de risco no fluxo de clientes), Assinaturas (as 4 causas de Atenção todas visíveis); Crescimento → Franquias (Kanban com os 15 leads na distribuição exata pedida, badges "parado" nos 5 leads certos, alertas de gargalo em Qualificados/Reunião) — **testei de verdade o seletor de etapa novo (RETROFIT-010b)**: movi um lead de Interessados para Qualificados e vi o board recalcular ao vivo (contagens, potencial, tempo médio esperado, o alerta de gargalo sumindo), depois devolvi pra etapa original.
+
+**🐛 Bug real encontrado e corrigido:** `shell/AdminSidebar.tsx` — o item "Rede" da sidebar (7 mundos fixos, Onda 1) nunca foi marcado `available: true` apesar da tela (`NetworkView`/`UnitDetailView`) existir e funcionar desde a Onda 2 — ficou "Em breve" por 7 ondas seguidas só por causa de uma linha esquecida. Só era alcançável clicando em "Explorar rede" no Panorama, nunca direto pela sidebar. Corrigido (`available: true`, `path: "/admin-v2/rede"`), comentário do arquivo atualizado.
+
+**Não-bugs descartados durante a varredura (registrados para não reinvestigar):** (1) um clique meu por coordenada de pixel abriu o detalhamento do horário errado no Mapa de Capacidade — confirmado como mira imprecisa minha, não bug, ao repetir com referência de elemento exata; (2) navegação direta para `/admin-v2/clientes/assinaturas` redirecionou pra home pública com modal de login — confirmado como `RequireAdmin.tsx` (código anterior a este plano inteiro) reagindo ao JWT de 15min ter expirado no meio da varredura longa, comportamento correto e existente, não uma regressão.
+
+**Validação pós-fix:** `tsc -b` PASS; `npm run build` PASS; `npm run lint` sem regressão (mesmos 12 erros pré-existentes/tolerados); `docker compose build web` + redeploy.
+
+**Resultado:** todas as telas passaram na validação visual real, com 1 bug real encontrado e corrigido. Admin V2 (Ondas 0-9 + RETROFIT-010b) pronto para decisão de commit/push do usuário.
+
+---
+
+## 2026-08-14 — Gap encontrado: Pipeline de Franquias não tem como mover etapa (registrado, não implementado)
+
+**Contexto:** usuário, validando o Pipeline de Franquias (Onda 9) com a massa de teste recém-criada, percebeu que a tela legada `admin-leads` tem formulário de cadastro + edição de status, mas o Admin V2 só mostra a distribuição no Kanban — não existe nenhuma forma de registrar que um lead avançou de etapa (`stage`). Diagnóstico correto: a Onda 9 foi entregue deliberadamente só-leitura (mesmo padrão do Mapa da Rede, Onda 2), e o escopo de backend original da onda só pedia o `GET`. Usuário pediu para registrar isso como um sub-plano futuro, não implementar agora.
+
+**O que foi feito:** nenhuma mudança de código. Registrado formalmente em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md`: nova entrada `RETROFIT-010b` na tabela "Próximas ondas" (com o desenho de solução já esboçado — endpoint de escrita + `FranchiseLeadStageHistory` + ação no frontend, sem drag-and-drop) e nota de continuidade adicionada dentro da própria Onda 9.
+
+**Pendente:** nada — item fica na fila de "Próximas ondas" até o usuário decidir priorizá-lo.
+
+---
+
+## 2026-08-14 — Massa de teste para Assinaturas (apoio à Onda 8, PLAN-0022)
+
+**Contexto:** pedido explícito do usuário: clientes com assinaturas dos planos existentes (Silver/Gold/Platinum), 3 assinaturas por plano (9 no total).
+
+**O que foi criado:** `apps/api/scripts/seedSubscriptionHealthTestData.ts` (novo, idempotente via `customerEmail` `@teste.jlr.local`) + script `seed:subscription-health-test-data`. Distribuição desenhada para cobrir as 4 causas que a Onda 8 promete listar em "Atenção" e todos os 4 estados: 3 Saudáveis, 2 Entrando (uma `PENDENTE` aguardando ativação, uma `ATIVA` recém-iniciada), 3 em Atenção (uma por causa — cobrança recusada, uso caiu, inadimplente) e 1 Saindo (cancelada dentro do período, conta no churn).
+
+**Como rodou:** mesmo método de bundle+`docker cp`+`node` das massas de teste anteriores (imagem prod sem `tsx`/`src`).
+
+**Validação pós-execução:** `GET /api/admin-v2/subscriptions/health?days=30` → `200`; `counts` bate exatamente (`ENTRANDO:2, SAUDAVEL:3, ATENCAO:3, SAINDO:1`); `churn.count=1` (a única cancelada); todo `reason` bate com a causa desenhada para cada assinatura. Regressão: `GET /api/subscriptions` (rota legada) e `/api/admin-v2/panorama` → `200`.
+
+---
+
+## 2026-08-14 — Massa de teste para o Pipeline de Franquias (apoio à Onda 9, PLAN-0022)
+
+**Contexto:** pedido explícito do usuário para validar visualmente o Kanban comercial (Onda 9) com dados reais: 5 Interessados, 2 Qualificados, 1 em Reunião, 3 em Proposta, 4 em Negociação (15 leads).
+
+**O que foi criado:** `apps/api/scripts/seedFranchisePipelineTestData.ts` (novo, idempotente via `email` `@teste.jlr.local`, mesma convenção de `seedAdminV2TestData.ts`) + script `seed:franchise-pipeline-test-data`. Cada lead além de "Interessado" carrega o caminho completo de transições em `FranchiseLeadStageHistory` (não só a etapa final) com datas escalonadas, para que "tempo médio esperado" e `isBottleneck` tenham dado histórico real para calcular — 5 leads foram propositalmente deixados parados além da média (um por etapa-alvo) para exercitar `isStalled` de verdade.
+
+**Como rodou:** mesmo obstáculo estrutural de sempre (`postgres` só na rede Docker Compose; imagem prod do `api` não tem `src/`/`tsx`) — `npx esbuild --bundle --platform=node --external:@prisma/client --external:dotenv` local → `docker cp` do bundle para dentro do container → `node seedFranchisePipelineTestData.bundle.js`. Bundle e fonte `.ts` temporários removidos do container depois de rodar; o script-fonte fica versionado em `apps/api/scripts/`.
+
+**Validação pós-execução:** `GET /api/admin-v2/growth/franchises/pipeline` → `200` com as contagens exatas pedidas por etapa; médias históricas reais calculadas (`avgDaysToComplete` não-nulo em Interessado/Qualificado/Reunião/Proposta); `isBottleneck=true` corretamente em Qualificado e Reunião (ocupação atual acima da média histórica); 5 leads com `isStalled=true`, um por etapa-alvo, como planejado. Regressão: `GET /api/franchise-leads` (rota legada) e `/api/admin-v2/panorama` → `200`.
+
+---
+
+## 2026-08-14 — Correção de contraste/tamanho de tipografia no Admin V2 (todas as Ondas 0-9)
+
+**Contexto:** primeira validação visual real do usuário nas telas novas (via `http://localhost/admin-v2/operacao/produtos`) — reportou títulos legíveis mas subtítulos e legendas "muito claros e pequenos", quase ilegíveis contra o fundo (exemplos citados: subtítulo da página, texto de mediana, e a descrição do quadrante "vende bem e dá lucro" ao lado de "Estrela · 7").
+
+**O que mudou:** ajuste sistemático de tipografia em todo `apps/web/src/admin-v2/` (29 arquivos): títulos `text-2xl`→`text-3xl`, labels em negrito `text-lg`→`text-xl`; texto secundário (subtítulos/legendas/descrições) subiu um degrau de tamanho (`text-xs`→`text-sm`, `text-sm`→`text-base`) e a cor ficou mais escura em modo claro (`text-stone-400`→`text-stone-500`, `text-stone-500`→`text-stone-600`), preservando um tom claro equivalente em modo escuro via par `dark:text-stone-400` explícito (o app antes usava a mesma cor fixa nos dois temas). Excluído de propósito: o item "em breve" desabilitado da sidebar (`AdminSidebar.tsx`, contraste baixo é intencional ali) e os separadores decorativos (`›`/`→` do breadcrumb e do fluxo de pedidos).
+
+**Incidente durante a execução (registrado por transparência):** o primeiro script de automação (`str.replace` sequencial) tinha um bug de cascata — a saída de uma regra virava a entrada de match de outra regra posterior, e a limpeza de tokens "soltos" rodava depois sem lookbehind, duplicando sufixos `dark:text-stone-*` (até 3x na mesma classe) e, num subconjunto de linhas, trocando o tamanho/cor errado. Diagnosticado por rastreamento completo do mecanismo de cada regra; corrigido com um segundo script cirúrgico (colapsa duplicatas de `dark:`, restaura o único caso `dark:` pré-existente do projeto — `operations/agenda/state.ts`, e conserta as poucas linhas com cascata dupla) — validado depois linha a linha contra o conteúdo original de cada arquivo (autoria própria desta sessão, Ondas 1-9). Nenhum commit foi afetado (nada estava commitado ainda).
+
+**Validação:** `npx tsc -b` PASS; `npm run build` PASS; `npm run lint` sem novos erros (mesmo baseline já tolerado); varredura final confirma zero classes `text-stone-400/500` sem par `dark:` (fora das 2 exceções intencionais); rebuild + redeploy do container `web`; conferência visual real via Claude in Chrome (extensão conectou nesta sessão) na tela `/admin-v2/operacao/produtos` confirmando subtítulos e legendas legíveis.
+
+**Pendente:** nada commitado ainda (aguardando aprovação do usuário, junto com o restante das Ondas 0-9).
+
+---
+
+## 2026-08-14 — PLAN-0022 Onda 9: Pipeline de Franquias (migração de schema + backend + frontend) — Fundação+Operação 100% concluída
+
+**Contexto:** continuação da sessão anterior, aprovação do usuário para seguir direto para a Onda 9 ("segue para a Onda 9") — última onda desta leva do plano, única com migração de schema.
+
+**Migração de schema (`20260814214126_add_franchise_pipeline`):** novo enum `FranchiseStage`; `FranchiseLead.stage` (default `INTERESSADO`), `.estimatedValue Decimal?`, `.stageChangedAt DateTime?`; tabela nova `FranchiseLeadStageHistory`. Aditivo puro no domínio do Admin V2 — campo legado `status String?` preservado. Aplicada de dentro do container `api` (`postgres` só é alcançável pela rede Docker Compose), usando a role dona do banco via `DATABASE_MIGRATION_URL` (não a role de runtime `jlr_api_rw`, sem permissão pro shadow database do `migrate dev`). **Achado registrado:** a mesma geração de migration reconciliou 2 itens de drift pré-existente e não relacionado (índice duplicado em `Order.orderHmac`; `DEFAULT` de banco redundante em 2 tabelas de rate-limit) — inofensivos, detalhados com o motivo técnico completo em `memory/logs/BUILD-HISTORY.md`. Base local tinha 0 `FranchiseLead` — sem risco de perda de dado.
+
+**Backend:** novo módulo `apps/api/src/modules/intelligence/franchise-pipeline/` com `types.ts`, `metrics.ts` (puro — "tempo médio esperado" é sempre a média histórica real de `FranchiseLeadStageHistory`, nunca um número inventado; cai para um limiar de segurança fixo só quando a etapa não tem histórico ainda) e `service.ts` (Prisma, só leitura — sem endpoint de escrita para mover etapa nesta onda, não estava no escopo original). `metrics.test.ts` — 8 testes novos. Rota nova `GET /api/admin-v2/growth/franchises/pipeline`. `test:intelligence` agora com 71 testes.
+
+**Frontend:** `apps/web/src/admin-v2/growth/franchises/` (`types.ts`, `state.ts`, `PipelineBoardView.tsx` — Kanban comercial de 7 colunas, só leitura, alerta visual quando uma etapa está mais lenta que o histórico, `components/LeadCard.tsx`); `shared/api.ts` estendido (`fetchFranchisePipeline`); `shell/AdminSidebar.tsx` — "Crescimento" ativado (3º mundo de topo, depois de Panorama/Operação e Clientes); `AdminV2Root.tsx` — rota `crescimento` no nível raiz.
+
+**Validações executadas (todas reais):** `npx prisma generate` (host + container) após a migração; `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **99/99 PASS**; `npm run lint` (web) — mesmo padrão `fetch-on-mount` tolerado, 1 instância nova; `docker compose build api web` PASS. **E2E real contra Postgres**: `GET /api/franchise-leads` (rota legada) → `200`, `[]`; `GET /api/admin-v2/growth/franchises/pipeline` → `200` com as 7 etapas honestamente zeradas; `401` sem token; regressão checada em todos os 8 endpoints das Ondas 1-8 → `200`.
+
+**Ressalva:** extensão Claude in Chrome não conectada nesta sessão — a tela nova não foi conferida visualmente clique-a-clique. Mesma situação já registrada nas Ondas 1-8.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Onda 9) e `memory/logs/BUILD-HISTORY.md` (detalhes da migração).
+
+**Marco:** com a Onda 9 concluída, a leva **Fundação + Experiência Operacional (Ondas 0-9) do `PLAN-0022` está 100% entregue**. Nada commitado ainda (aguardando aprovação — dupla autorização de Git). Próximo passo: usuário decide entre validar visualmente + commit/push de todas as Ondas 0-9, ou seguir para o planejamento de Inteligência/Consolidação (`PLAN-0023` em diante, conforme já previsto na seção "Próximos Passos" do próprio `PLAN-0022`).
+
+---
+
+## 2026-08-14 — PLAN-0022 Onda 8: Assinaturas como Saúde da Base (backend + frontend)
+
+**Contexto:** continuação da sessão anterior, aprovação do usuário para seguir direto para a Onda 8 ("segue para a Onda 8").
+
+**Backend:** novo módulo `apps/api/src/modules/intelligence/subscriptions/` com `types.ts` (`Subscription` não tem `unitId` — módulo sempre de rede inteira, sem parâmetro `unitIds` na rota), `classifier.ts` (4 estados — Entrando/Saudável/Atenção/Saindo — `status=CANCELADA` sempre vira Saindo, sem heurística por cima; dentro de Atenção: inadimplência > cobrança recusada > queda de cobranças aprovadas vs. período anterior) e `service.ts` (agrega `Subscription`+`Payment` reais; churn "no período" só conta cancelamentos com `cancelledAt` dentro da janela pedida). **Achado do RAG registrado:** `Order`/`Appointment` não têm `subscriptionId` — só `Payment` tem — então "uso" é medido pela cadência de cobrança aprovada, não por agendamentos/pedidos como o texto original da onda sugeria. `classifier.test.ts` — 10 testes novos. Rota nova `GET /api/admin-v2/subscriptions/health`. `test:intelligence` agora com 63 testes.
+
+**Frontend:** `apps/web/src/admin-v2/customers/subscriptions/` (`types.ts`, `state.ts`, `SubscriptionHealthView.tsx` — card de churn em destaque + 4 blocos clicáveis por estado, `components/SubscriptionRow.tsx`); `shared/api.ts` estendido (`fetchSubscriptionHealth`); `AdminV2Root.tsx` — "Assinaturas" vira a 2ª sub-aba do mundo "Clientes" (`Fluxo | Assinaturas`), rota `clientes/assinaturas`.
+
+**Validações executadas (todas reais):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **91/91 PASS**; `npm run lint` (web) — mesmo padrão `fetch-on-mount` tolerado, 1 instância nova; `docker compose build api web` PASS. **E2E real contra Postgres**: rota nova validada com login MASTER real (`200`, assinaturas classificadas com dados reais) e `401` sem token; regressão checada em `/panorama`, `/network`, `/operations/orders`, `/operations/agenda/capacity`, `/portfolio/products`, `/portfolio/services` e `/customers` → `200`.
+
+**Ressalva:** extensão Claude in Chrome não conectada nesta sessão — a tela nova não foi conferida visualmente clique-a-clique. Mesma situação já registrada nas Ondas 1-7.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Onda 8).
+
+**Pendente:** nada commitado ainda (aguardando aprovação — dupla autorização de Git). Onda 8 do `PLAN-0022` concluída (backend + frontend), falta só a conferência visual do usuário antes do commit. Próximo passo: usuário decide entre validar visualmente + commit/push das Ondas 0-8, ou seguir direto para a Onda 9 (Pipeline de Franquias — única onda com migração de schema).
+
+---
+
+## 2026-08-14 — PLAN-0022 Onda 7: Clientes como Fluxo de Relacionamento (backend + frontend)
+
+**Contexto:** continuação da sessão anterior, aprovação do usuário para seguir direto para a Onda 7 ("segue para a Onda 7").
+
+**Backend:** novo módulo `apps/api/src/modules/intelligence/customers/` com `types.ts` (identidade de cliente é proxy `email > telefone > nome`, mesma convenção de `unit-health/service.ts`/`dashboardSalesInsights.ts` — documentado explicitamente, não é CRM real), `classifier.ts` (5 estados — Novo/Ativo/Recorrente/Em risco/Inativo — em ordem de prioridade fixa; cancelamento recente e assinatura inadimplente vencem "sumiu" genérico) e `service.ts` (agrega `Order` PAGO/CANCELADO + `Appointment` não-cancelado/cancelado + `Subscription` INADIMPLENTE). **Bug corrigido durante a implementação:** clientes que só apareciam via cancelamento/inadimplência (sem atividade real) recebiam um `firstActivityAt` fabricado que os classificava erroneamente como "Novo" — corrigido com um marcador de data fora dos dois períodos, que não dispara nenhum estado por engano. `classifier.test.ts` — 10 testes novos. Rota nova `GET /api/admin-v2/customers`, mesmo padrão `resolveRequestedUnitIds`, devolve todos os clientes com `reason` em cada um. `test:intelligence` agora com 53 testes.
+
+**Frontend:** `apps/web/src/admin-v2/customers/` (`types.ts`, `state.ts`, `CustomersFlowView.tsx` — 5 blocos clicáveis por estado, "Em risco" selecionado por padrão, `components/CustomerRow.tsx`); `shared/api.ts` estendido (`fetchCustomerFlow`); `shell/AdminSidebar.tsx` — "Clientes" ativado (primeiro mundo de topo da sidebar além de Panorama/Operação, `available: false` → `true`); `AdminV2Root.tsx` — rota `clientes` no nível raiz; `network/UnitDetailView.tsx` — "Ver clientes" deixou de ser ação desabilitada e virou navegação real.
+
+**Validações executadas (todas reais):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **81/81 PASS**; `npm run lint` (web) — mesmo padrão `fetch-on-mount` tolerado, 1 instância nova; `docker compose build api web` PASS. **E2E real contra Postgres**: rota nova validada com login MASTER real (`200`, clientes classificados nos 5 estados com `reason`) e `401` sem token; regressão checada em `/panorama`, `/network`, `/operations/orders`, `/operations/agenda/capacity`, `/portfolio/products` e `/portfolio/services` → `200`.
+
+**Ressalva:** extensão Claude in Chrome não conectada nesta sessão — a tela nova não foi conferida visualmente clique-a-clique. Mesma situação já registrada nas Ondas 1-6.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Onda 7).
+
+**Pendente:** nada commitado ainda (aguardando aprovação — dupla autorização de Git). Onda 7 do `PLAN-0022` concluída (backend + frontend), falta só a conferência visual do usuário antes do commit. Próximo passo: usuário decide entre validar visualmente + commit/push das Ondas 0-7, ou seguir direto para a Onda 8 (Assinaturas como Saúde da Base).
+
+---
+
+## 2026-08-14 — PLAN-0022 Onda 6: Performance de Serviços (backend + frontend)
+
+**Contexto:** continuação da sessão anterior, aprovação do usuário para seguir direto para a Onda 6 ("segue para a Onda 6").
+
+**Backend:** novo módulo `apps/api/src/modules/intelligence/service-performance/` com `types.ts` (contrato único, com o 5º estado `SEM_DEMANDA` — mesmo raciocínio honesto do `SEM_VENDA` da Onda 5), `classifier.ts` (matriz demanda×margem/hora pura, relativa à mediana do recorte, mesmo framework do Portfólio) e `service.ts` (agrega `Appointment` real do período + reusa `calculateUnitOccupancy` da Onda 4 para o denominador de ocupação — não recalculado do zero). `classifier.test.ts` — 7 testes novos, incluindo teste dedicado de consistência (occupancyPercent/margem batem com os totais agregados, atendendo ao critério de aceitação da onda). Rota nova `GET /api/admin-v2/portfolio/services`, mesmo padrão `resolveRequestedUnitIds`. `test:intelligence` agora com 43 testes.
+
+**Frontend:** `apps/web/src/admin-v2/portfolio/services/` (`types.ts`, `state.ts`, `ServiceMatrixView.tsx`, `components/ServiceCard.tsx` — badge `⚠ Analisar preço` só para Armadilha, governança #7); `shared/api.ts` estendido (`fetchServicePerformance`); `AdminV2Root.tsx` — "Serviços" vira a 4ª sub-aba de "Operação" (`Pedidos | Agenda | Produtos | Serviços`), rota `operacao/servicos`.
+
+**Validações executadas (todas reais):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **71/71 PASS**; `npm run lint` (web) 9 erros — 2 pré-existentes + 6 já aceitos das Ondas 1-5 + 1 novo no mesmo padrão `fetch-on-mount` tolerado; `docker compose build api web` PASS. **E2E real contra Postgres**: rota nova validada com login MASTER real (`200`, serviços classificados com dados reais) e `401` sem token; regressão checada em `/panorama`, `/network`, `/operations/orders`, `/operations/agenda/capacity` e `/portfolio/products` → `200`.
+
+**Ressalva:** extensão Claude in Chrome não conectada nesta sessão — a tela nova não foi conferida visualmente clique-a-clique, só a infraestrutura. Mesma situação já registrada nas Ondas 1-5.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Onda 6).
+
+**Pendente:** nada commitado ainda (aguardando aprovação — dupla autorização de Git). Onda 6 do `PLAN-0022` concluída (backend + frontend), falta só a conferência visual do usuário antes do commit. Próximo passo: usuário decide entre validar visualmente + commit/push das Ondas 0-6, ou seguir direto para a Onda 7 (Clientes como Fluxo de Relacionamento).
+
+---
+
+## 2026-08-14 — PLAN-0022 Onda 5: Portfólio Vivo de Produtos (backend + frontend)
+
+**Contexto:** continuação da sessão anterior, aprovação do usuário para seguir direto para a Onda 5 ("segue para a Onda 5").
+
+**Backend:** novo módulo `apps/api/src/modules/intelligence/portfolio/` com `types.ts` (contrato único, incluindo o 5º estado `SEM_VENDA` — ajuste consciente vs. o texto original, que só previa Joias/Estrelas/Fracos/Armadilhas: um produto sem venda no período não tem margem para classificar contra a mediana, forçá-lo em "Fraco" fabricaria dado), `classifier.ts` (matriz margem×volume pura, relativa à mediana do próprio recorte pedido — não existe uma "boa margem %" universal — com `median()` exportada e testável) e `service.ts` (agrega `OrderItem`/`Order` PAGO do período + `ProductStock.stock × Product.costPrice` para capital parado; **correção registrada**: o texto original da onda citava `ProductStock.quantity`, campo que não existe — o campo real é `stock`). `classifier.test.ts` — 9 testes novos, incluindo o critério de aceitação explícito (alto volume + baixa margem → Armadilha) e margem negativa não-clampada. Rota nova `GET /api/admin-v2/portfolio/products` em `adminV2.ts`, mesmo padrão `resolveRequestedUnitIds` de Panorama/Rede/Operação — drill-down por unidade embutido na própria resposta (`byUnit`), sem endpoint separado. `test:intelligence` agora com 36 testes.
+
+**Frontend:** `apps/web/src/admin-v2/portfolio/products/` (`types.ts`, `state.ts`, `ProductMatrixView.tsx`, `components/ProductCard.tsx`); `shared/api.ts` estendido (`fetchPortfolioProducts`); `AdminV2Root.tsx` — "Portfólio" não tem slot próprio nos 7 mundos fixos da sidebar (Onda 1), nasce como 3ª sub-aba de "Operação" (`Pedidos | Agenda | Produtos`), mesmo padrão da Agenda na Onda 4; rota `operacao/produtos`, breadcrumb atualizado. `network/UnitDetailView.tsx` — "Ver produtos" deixou de ser ação desabilitada (promessa da Onda 2) e virou navegação real (refatorado para `ENABLED_ACTIONS`, junto com "Ver agenda").
+
+**Validações executadas (todas reais):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **64/64 PASS**; `npm run lint` (web) 8 erros — 2 pré-existentes + 5 já aceitos das Ondas 1-4 + 1 novo no mesmo padrão `fetch-on-mount` tolerado; `docker compose build api web` PASS. **E2E real contra Postgres**: rota nova validada com login MASTER real (`200`, produtos classificados com dados reais) e `401` sem token; regressão checada em `/panorama`, `/network`, `/operations/orders` e `/operations/agenda/capacity` → `200`.
+
+**Ressalva:** extensão Claude in Chrome não conectada nesta sessão — a tela nova não foi conferida visualmente clique-a-clique, só a infraestrutura (build/lint/tsc/Docker/API real). Mesma situação já registrada nas Ondas 1-4.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Onda 5).
+
+**Pendente:** nada commitado ainda (aguardando aprovação — dupla autorização de Git). Onda 5 do `PLAN-0022` concluída (backend + frontend), falta só a conferência visual do usuário antes do commit. Próximo passo: usuário decide entre validar visualmente + commit/push das Ondas 0-5, ou seguir direto para a Onda 6 (Performance de Serviços).
+
+---
+
+## 2026-08-14 — PLAN-0022 Onda 4: Mapa de Capacidade da Agenda (backend + frontend)
+
+**Contexto:** continuação da sessão anterior (retomada exatamente do ponto marcado no `PLAN-0022`), aprovação do usuário para seguir direto para a Onda 4 ("segue para a Onda 4").
+
+**Backend:** novo módulo `apps/api/src/modules/intelligence/capacity/` com `types.ts` (contrato único), `heatmap.ts` (matemática pura de agregação dia×hora — `overlapMinutes`/`dateKey`/`buildCapacityDays` — sem Prisma, mesma separação `classifier.ts`/`service.ts` da Onda 3) e `service.ts` (`getCapacityHeatmap()`/`getSlotDetail()`, acesso a dados real: `ProfessionalShift` para disponibilidade, `Appointment` para reservas com fallback de `Service.durationMin`, receita prorateada quando o agendamento cruza mais de 1 hora). `capacity/calculator.ts` da Onda 1 não foi tocado. "Receita potencial perdida" no drill-down de horário usa a taxa do próprio horário quando há reserva, ou a média da unidade no período como referência honesta quando não há (nunca fabrica número sem explicação). Rotas novas `GET /api/admin-v2/operations/agenda/capacity` e `/operations/agenda/slots` em `adminV2.ts` — únicas do módulo com `unitId` obrigatório/único (não lista), `requireAdmin` + `canAccessUnit`. `heatmap.test.ts` — 9 testes unitários novos (`test:intelligence` agora com 27 testes).
+
+**Frontend:** `apps/web/src/admin-v2/operations/agenda/` (`types.ts`, `state.ts`, `CapacityView.tsx`, `components/CapacityHeatmapGrid.tsx`, `components/SlotDetailPanel.tsx`); `shared/api.ts` estendido (`fetchCapacityHeatmap`/`fetchSlotDetail`); `shared/format.ts` estendido (`formatShortDate`/`formatHour`/`WEEKDAY_LABELS`); `AdminV2Root.tsx` — rota `operacao/agenda`, sub-abas "Pedidos"/"Agenda" dentro do mundo Operação, breadcrumb `Panorama > Operação > Agenda`; `network/UnitDetailView.tsx` — "Ver agenda" deixou de ser ação desabilitada (promessa da Onda 2) e virou navegação real.
+
+**Validações executadas (todas reais):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **55/55 PASS**; `npm run lint` (web) 7 erros — 2 pré-existentes + 4 já aceitos das Ondas 1-3 + 1 novo no mesmo padrão `fetch-on-mount` tolerado; `docker compose build api web` PASS. **E2E real contra Postgres**: rotas novas validadas com login MASTER real (`200`) e `401` sem token; regressão checada em `/panorama`, `/network` e `/operations/orders` → `200`.
+
+**Efeito colateral corrigido (fora do escopo do plano, mesma classe de incidente já documentada nas Ondas 0/1/3):** container `postgres` estava `Exited` e `api` em crash-loop (`P1001`) no início desta sessão — pré-existente, não causado por esta onda. Subido com o mesmo volume (sem perda de dado, migrations intactas) e `api`/`web` recriados com as imagens novas.
+
+**Ressalva:** extensão Claude in Chrome não conectada nesta sessão — a tela nova não foi conferida visualmente clique-a-clique, só a infraestrutura (build/lint/tsc/Docker/API real). Mesma situação já registrada nas Ondas 1-3.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Onda 4).
+
+**Pendente:** nada commitado ainda (aguardando aprovação — dupla autorização de Git). Onda 4 do `PLAN-0022` concluída (backend + frontend), falta só a conferência visual do usuário antes do commit. Próximo passo: usuário decide entre validar visualmente + commit/push das Ondas 0-4, ou seguir direto para a Onda 5 (Portfólio Vivo de Produtos).
+
+---
+
+## 2026-08-13 — Massa de teste para validação do Admin V2 (apoio ao PLAN-0022)
+
+**Contexto:** pedido explícito do usuário, após o fechamento da Onda 3, para poder validar
+visualmente o Admin V2 com dados reais em vez de um banco vazio: "crie mais duas unidades,
+franquiadas, uma em Franco da Rocha, SP e a outra em Recife, PE. Gere pedidos de compra,
+agendamentos em todas as unidades para pelo menos 2 profissionais de cada unidade [...] o que
+faltar de dados de testes, copie dos registros que existem."
+
+**O que foi feito:** criado `apps/api/scripts/seedAdminV2TestData.ts` (script idempotente,
+reaproveitando as mesmas funções de negócio do fluxo real — `applyStockMovement`/`sellStockDirect`
+do ledger de estoque do PLAN-0020, `appendOrderStatusHistory`, `buildOrderPublicCode`/
+`generateOrderHmac`) e executado contra o Postgres local via container `api` (detalhe de
+execução em `memory/logs/BUILD-HISTORY.md`).
+
+**O que mudou (dados, não schema — nenhuma migration):**
+- 2 unidades novas `FRANCHISE`: "Franco da Rocha" (SP) e "Recife" (PE).
+- Estoque inicial em todas as 5 unidades (45 movimentos `ENTRADA_COMPRA`).
+- 6 profissionais novos (2 em Birmann 20, 2 em Franco da Rocha, 2 em Recife — Parque da Cidade
+  já tinha 3); Loja Online (unidade online) não recebeu profissionais/agendamentos, decisão
+  consciente por não ser uma unidade física com agenda.
+- 43 `Order` cobrindo os 4 estados do Board Operacional + o Fluxo real de fulfillment.
+- 36 `Appointment`/`AppointmentSlot` (4 por profissional).
+- `apps/api/package.json` — novo script `seed:admin-v2-test-data`.
+
+**Validações executadas:** `tsc -p tsconfig.build.json --noEmit` PASS; `npm run test` 46/46 PASS;
+E2E real pós-seed — `GET /api/admin-v2/panorama`, `/network`, `/operations/orders` e
+`/operations/orders/flow` retornaram `200` com dados reais e não-vazios nas 5 unidades, incluindo
+um gargalo real detectado na etapa Enviado→Entregue (média 1170min).
+
+**Pendente:** nenhum commit feito ainda (aguardando aprovação, junto com o restante das Ondas
+0-3 do `PLAN-0022`). Dados de teste identificáveis por `customerEmail` `@teste.jlr.local` e
+`notes`/`note` contendo `[SEED-ADMINV2]`, para limpeza futura se necessário.
+
+---
+
+## 2026-08-13 — PLAN-0022 Onda 3: Board Operacional de Pedidos (backend + frontend)
+
+**Contexto:** continuação da sessão anterior (retomada exatamente do ponto marcado no `PLAN-0022`), aprovação implícita do usuário a cada passo ("pode seguir").
+
+**Backend:** `apps/api/src/modules/intelligence/operational-orders/service.ts` — `getOrdersBoard()` (4 colunas: `entraram/emPreparacao/atencao/prontos`, prioridade do estado operacional sobre o estágio natural, amostra de 20/coluna com `count`/`totalValue` sempre da coluna inteira) e `getOrdersFlow()` (6 transições reais do fulfillment, média em minutos, gargalo a partir de 240min). Ajuste consciente: pedidos `CANCELADO` excluídos das duas funções (não estão travando etapa nenhuma). Rotas novas `GET /api/admin-v2/operations/orders` e `/operations/orders/flow` em `adminV2.ts`, mesmo padrão `requireAdmin` + `resolveRequestedUnitIds` das Ondas 1-2.
+
+**Frontend:** `apps/web/src/admin-v2/operations/orders/` (`types.ts`, `state.ts`, `OrdersBoardView.tsx`, `components/OrderCardView.tsx`, `components/OrderFlowTimeline.tsx`); `shared/api.ts` estendido (`fetchOrdersBoard`/`fetchOrdersFlow`); `shared/format.ts` estendido (`formatMinutes`); `AdminSidebar.tsx` — "Operação" ativada, itens disponíveis viraram `<button>` navegável; `AdminV2Root.tsx` — rota `operacao` + breadcrumb; `PanoramaCards.tsx`/`PanoramaView.tsx` — botão "Explorar operação" ligado.
+
+**Validações executadas (todas reais):** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **46/46 PASS**; `npm run lint` (web) 6 erros — 2 pré-existentes + 3 já aceitos das Ondas 1-2 + 1 novo no mesmo padrão `fetch-on-mount` tolerado; `docker compose build api web` PASS. **E2E real contra Postgres**: login MASTER real; as duas rotas novas → `200` (vazias — base de teste sem pedidos, confirmado até com `days=365`) e `401` sem token; regressão checada em `/panorama` e `/network` → `200`; rota SPA `GET /admin-v2/operacao` → `200`.
+
+**Efeito colateral corrigido (fora do escopo do plano):** container `nginx` com bind mount do `conf.d` preso a um caminho de disco antigo (`...FEADABCE16` em vez do `...FEADABCE18` atual, resquício de sessão anterior a uma mudança de ponto de montagem) — `conf.d` chegava vazio, nada escutava na porta 80. Corrigido com `docker compose up -d --force-recreate nginx`; sem perda de dado, `postgres` não foi tocado.
+
+**Ressalva:** extensão Claude in Chrome não conectada nesta sessão — a tela nova não foi conferida visualmente clique-a-clique, só a infraestrutura (build/lint/tsc/Docker/rota SPA/API real). Mesma situação de "validação visual pendente do usuário" já registrada em outros planos.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Onda 3).
+
+**Pendente:** nada commitado ainda (aguardando aprovação — dupla autorização de Git). Onda 3 do `PLAN-0022` concluída (backend + frontend), falta só a conferência visual do usuário antes do commit. Próximo passo: usuário decide entre validar visualmente + commit/push das Ondas 0-3, ou seguir direto para a Onda 4 (Mapa de Capacidade da Agenda).
+
+---
+
+## 2026-08-13 03:30:53
+- Fechamento de sessão (PLAN-0022 — Admin V2: Ondas 0-2 concluídas, Onda 3 parcial)
+  - O que foi feito:
+    - execução completa das Ondas 0 (baseline), 1 (Shell + Scope Engine + Panorama Vivo + Health Score v1) e 2 (Mapa Vivo da Rede + Diagnóstico da Unidade) do `PLAN-0022`, todas validadas com `tsc -b`, testes automatizados, build Docker e **E2E real contra Postgres** (login MASTER + chamadas reais aos endpoints novos);
+    - início da Onda 3 (Board Operacional de Pedidos): classificador de estado operacional (`operational-orders/classifier.ts`) implementado e coberto por 11 testes unitários PASS; `service.ts`/rotas/frontend da Onda 3 ainda não iniciados;
+    - sessão interrompida a pedido explícito do usuário ("salvar tudo e parar por hoje") no meio da implementação da Onda 3 — ponto de retomada documentado com precisão no próprio `PLAN-0022`.
+  - O que mudou:
+    - `memory/decisions/DECISION-013.md` (nova, ACTIVE) — regras arquiteturais do programa Admin V2;
+    - `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (novo) — plano completo do programa, com Ondas 0-2 marcadas concluídas e Onda 3 marcada em andamento com o passo exato para retomar;
+    - `apps/api/src/modules/intelligence/` (novo) — `unit-health/`, `capacity/`, `panorama/`, `network/`, `operational-orders/` (parcial: só `types.ts`+`classifier.ts`+`classifier.test.ts`);
+    - `apps/api/src/routes/adminV2.ts` (novo) — `GET /api/admin-v2/panorama`, `/network`, `/network/units/:id`;
+    - `apps/api/src/lib/messages.ts` — `MSG.UNIT_NOT_FOUND` adicionado;
+    - `apps/api/package.json` — scripts `test:intelligence` (agora 18 testes) encadeado em `test`;
+    - `apps/web/src/admin-v2/` (novo) — shell, panorama, network, engine de escopo, roteamento interno próprio;
+    - `apps/web/src/pages/AdminV2.tsx` (novo) + `apps/web/src/app/App.tsx` (rota `admin-v2/*`);
+    - `tailwind.config.js` — 3 tokens semânticos novos, aditivos à paleta existente;
+    - branch de trabalho `feature/admin-v2` (a partir de `main`), nenhum arquivo do Admin legado tocado.
+  - O que ficou pendente:
+    - Onda 3: `apps/api/src/modules/intelligence/operational-orders/service.ts` (agregação real do board + fluxo), rotas `GET /api/admin-v2/operations/orders` e `/orders/flow`, frontend (`OrdersBoardView.tsx`/`OrderFlowTimeline.tsx`), ativação do item "Operação" na sidebar, validação completa (tsc/testes/build Docker/E2E) — tudo detalhado no `PLAN-0022`, seção Onda 3;
+    - Ondas 4-9 do `PLAN-0022` (Agenda, Produtos, Serviços, Clientes, Assinaturas, Franquias) — não iniciadas;
+    - nenhum commit/push feito nesta sessão — aguardando dupla autorização explícita do usuário (nem sequer solicitada ainda, por não ter chegado a um marco de entrega fechado);
+    - gap de cobertura de teste automatizado registrado no audit desta sessão: `network/service.ts` e `panorama/service.ts` só têm validação E2E manual, sem teste de integração automatizado — considerar para uma onda futura ou como débito técnico.
+
+## 2026-08-13 03:32:10 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | OK — `DECISION-013` criada e consistente; nenhuma decisão ativa contrariada; mudanças estruturais (novas rotas/módulos) registradas nela |
+| State Integrity | OK — `PLAN-0022` aberto (esperado, é um programa multi-onda); progresso real refletido onda a onda, incluindo os dois desvios de escopo já documentados (gate de auth, adapter-links inviáveis) |
+| Operational Memory | OK — `MODIFICATION_LOG.md` e `PLAN-0022` atualizados a cada onda concluída e agora no ponto de parada |
+| Debug Memory | N/A — nenhum bug de código foi corrigido nesta sessão; a recuperação do container `postgres` parado foi manutenção de infraestrutura pré-existente (mesma classe de incidente já documentada no histórico do PLAN-0020), não um bug novo — julgamento registrado aqui em vez de criar um ERR-XXXX artificial |
+| Technical Validation | OK — lint executado (web, sem regressão além do padrão já tolerado no projeto), build executado (api+web+Docker, todas as ondas concluídas), testes executados (18/18 intelligence + 23/23 inventory + greeting, todos PASS), sem migration pendente (Onda 3 não toca schema), sem `console.log` novo |
+| Regression Risk | OK, com ressalva anotada — nenhuma área sensível (auth/pagamento/agenda/integração externa) foi alterada, só reutilizada; risco baixo. Ressalva: endpoints novos (`network`, `panorama`) têm só E2E manual, sem teste de integração automatizado — não bloqueia, mas fica registrado como débito |
+| Git Governance | PENDING (esperado) — nenhum commit feito; Git Record do `PLAN-0022` segue `[pendente]` até o fechamento formal de uma leva de ondas |
+
+**Checklist completo:** `memory/logs/AUDIT_CHECKLIST_20260813_033053-PASS.md`.
+**Sessão encerrada a pedido do usuário** ("salvar tudo e parar por hoje"). Retomar exatamente da Onda 3 do `PLAN-0022` (branch `feature/admin-v2`).
+
+---
+
+## 2026-08-13 — PLAN-0022 Onda 2: Mapa Vivo da Rede + Diagnóstico da Unidade
+
+**Contexto:** usuário autorizou seguir direto para a Onda 2 sem pausa de confirmação ("considere já tudo aprovado").
+
+**Backend:** `unit-health/service.ts` estendido para expor métricas brutas (`raw`) e minutos de ocupação, sem mudar o cálculo do score; novo módulo `intelligence/network/` (camada de apresentação sobre `unit-health`, não recalcula nada) com `getNetworkBoard()` e `getUnitDiagnostic()`; estimativa de impacto financeiro implementada **só** para a causa "ocupação" (única com tradução honesta para R$ na v1 — as demais devolvem `impactEstimate: null` em vez de número fabricado); `GET /api/admin-v2/network` e `GET /api/admin-v2/network/units/:id` novos em `adminV2.ts`; `MSG.UNIT_NOT_FOUND` adicionado a `lib/messages.ts`.
+
+**Frontend:** `network/NetworkView.tsx` (Kanban 4 colunas) + `UnitDetailView.tsx` + `HealthScoreBars.tsx`; `AdminV2Root.tsx` reestruturado de componente estático para layout com roteamento interno próprio (`<Routes>` montadas em `admin-v2/*`), breadcrumb dinâmico clicável nos dois sentidos (drill-down/roll-up real); botão "Explorar rede" do Panorama passou de desabilitado para navegação real.
+
+**Correção de escopo registrada:** o plano original previa "Ver agenda/clientes/produtos" como adapter-link para o Admin legado (`/admin?view=...&unit=...`); RAG confirmou que o shell legado não suporta esse deep-link hoje — um link assim aterrissaria no Painel padrão, não na tela certa. Ficaram desabilitados "em breve" (mesmo padrão da Onda 1) em vez de simular uma navegação que não funcionaria.
+
+**Validações executadas:** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run test` (api) 30/30 PASS; `npm run build` (web e api) PASS; `npm run lint` (web) 5 erros — 2 pré-existentes + 3 no padrão `set-state-in-effect` já aceito no projeto; `docker compose build web api` PASS. **E2E real**: `GET /api/admin-v2/network` → `200` com as 3 unidades reais, ordenadas por score; `GET /api/admin-v2/network/units/:id` → `200` com decomposição completa; id inexistente → `404`; id inválido → `400`.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Onda 2).
+
+**Pendente:** nada commitado ainda (aguardando aprovação — dupla autorização de Git). Próximo passo: Onda 3 (Board Operacional de Pedidos).
+
+---
+
+## 2026-08-13 — PLAN-0022 Ondas 0-1: Admin V2 shell + Panorama Vivo + Health Score v1
+
+**Contexto:** aprovação do usuário para iniciar a execução do `PLAN-0022` (branch `feature/admin-v2`).
+
+**Onda 0 (baseline):** branch `feature/admin-v2` criada a partir de `main`; nenhum arquivo do Admin legado tocado.
+
+**Onda 1 (Shell + Scope Engine + Panorama Vivo + Health Score v1):**
+- Backend novo: `apps/api/src/modules/intelligence/{unit-health,capacity,panorama}/` + rota `GET /api/admin-v2/panorama` (`apps/api/src/routes/adminV2.ts`, montada em `routes/index.ts`), gate `requireAdmin`. Reaproveita `getSalesInsights`/`getInventoryOverview` (PLAN-0020) — não recalcula margem/CMV. Health Score v1 com fórmula fixa (`DECISION-013`), sempre decomposto em componentes (regra de explicabilidade do plano).
+- Achado registrado no código: `Subscription` não tem `unitId` no schema — componente "Assinaturas" do score usa taxa de ativação da rede inteira (peso 5%, documentado, não fabricado por unidade).
+- Frontend novo: `apps/web/src/admin-v2/` (shell com 7 "mundos", só Panorama ativo — os demais aparecem "em breve", nunca como link morto) + rota `/admin-v2` em `App.tsx` com `RequireAdmin`. Tokens semânticos novos e aditivos no `tailwind.config.js` (`state-attention/critical/info`; `state-healthy` reaproveita `primary`).
+- `apps/api/package.json`: novo script `test:intelligence` (7 testes unitários da fórmula do Health Score, `node:test`).
+
+**Validações executadas:** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run test` (api) 30/30 PASS; `npm run build` (web e api) PASS; `npm run lint` (web) 3 erros — 2 pré-existentes (mesmo baseline do audit do PLAN-0021) + 1 novo no mesmo padrão já tolerado em `AdminDashboardInsightsIsland.tsx`; `docker compose build web api` PASS. **E2E real**: login MASTER + `GET /api/admin-v2/panorama` retornou `200` com dados reais (3 unidades); requisição sem token retornou `401`.
+
+**Efeito colateral (fora do escopo do plano, corrigido para permitir a validação E2E):** o container `postgres` estava `Exited` e o `api` em crash-loop (`P1001`) — pré-existente à sessão, mesma classe de incidente já documentada no `PLAN-0020`. Subi o `postgres` (mesmo volume — `10 migrations found... No pending migrations to apply` confirma schema intacto, sem perda de dados) e recriei o `api` com a imagem nova.
+
+**Arquivos criados/alterados:** ver checklist detalhado em `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md` (Ondas 0 e 1).
+
+**Pendente:** nada commitado ainda (aguardando aprovação — dupla autorização de Git). Próximo passo: Onda 2 (Mapa Vivo da Rede + Diagnóstico da Unidade).
+
+---
+
+## 2026-08-12 — INÍCIO de plano (Admin V2 — retrofit, Fundação + Operação)
+
+**Contexto/gatilho:** usuário trouxe um brainstorm feito com apoio de IA (`retrofit/ADMIN-V2-RETROFIT-OVERVIEW.md`, `retrofit/Retrofit_Concepts.docx`, `retrofit/RETROFIT-000.md` a `RETROFIT-014.md`) propondo um retrofit do painel administrativo orientado a Panorama → Rede → Diagnóstico → Ação (drill-down/roll-up, Health Score, board operacional de pedidos, mapa de capacidade de agenda, portfólio vivo de produtos, etc.), separado do Admin legado (`/admin-v2` em paralelo a `/admin`). Tarefa classificada como DESIGN/UI + COMPLEX CODE (`PLAN-XXXX` obrigatório pelo classificador do `BOOTSTRAP.md`). Agentes aplicados: `@orchestrator`, `@product-manager`, `@project-planner`, `@database-architect`.
+
+**Ação:**
+- RAG completo no schema Prisma, middleware de auth/unit-scope (`resolveUnitScope`/`canAccessUnit`), módulo `admin/kpis`, roteamento real do frontend (`apps/web/src/app/App.tsx`, `react-router-dom`) e models de domínio (`Order`, `Appointment`, `Service`, `Subscription`, `FranchiseLead`) para validar as premissas técnicas do brainstorm antes de planejar — confirmado que a base necessária (fulfillment com timestamps, ledger de estoque PLAN-0020, RBAC fail-closed, BI existente) já existe.
+- Avaliação de viabilidade apresentada ao usuário: **VIÁVEL**, com ressalvas (escopo é programa multi-onda, não um plano único; `RETROFIT-015/016` nunca existiram no material de origem; `FranchiseLead` é raso demais para o Kanban comercial proposto — achado que gerou a única migração de schema desta leva, na Onda 9).
+- Gate socrático (RULES.md §15) aplicado via `AskUserQuestion` — 4 perguntas estratégicas (sequenciamento vs. planos abertos, tamanho do primeiro corte, política de aposentadoria do Admin legado, ambição do Health Score v1). Respostas do usuário: desenvolvimento em paralelo aos PLAN-0019/0020/0021 (branch própria, único acoplamento é bloqueio de produção externa ao PLAN-0019/TLS); primeiro corte = Fundação + Experiência Operacional completa (RETROFIT-000 a 010); sem política de aposentadoria do legado por ora; Health Score v1 com fórmula fixa e determinística.
+- Decisão arquitetural registrada em `memory/decisions/DECISION-013.md` (ACTIVE).
+- Plano criado: `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md`, com governança do programa, matriz de reuso validada no código, identidade visual (reuso dos tokens de marca atuais + 3 tokens semânticos novos aditivos), arquitetura alvo (`apps/api/src/modules/intelligence/`, `apps/web/src/admin-v2/`) e 10 ondas detalhadas (0 a 9) com backend/frontend/critérios de aceitação por onda. Roadmap resumido das ondas futuras (Inteligência e Consolidação, RETROFIT-011 a 022) documentado dentro do próprio plano.
+
+**Arquivos criados nesta sessão:** `memory/decisions/DECISION-013.md`; `memory/plans/PLAN-0022-ADMIN-V2-FUNDACAO-OPERACAO.md`.
+
+**Validações executadas:** nenhuma validação técnica ainda — sessão é 100% de planejamento (`PLANNING`, sem código escrito), conforme protocolo do kernel (plano precisa de aprovação explícita antes de `EXECUTING_WITH_PLAN`).
+
+**Pendente:** aprovação do usuário para iniciar a Onda 0 do `PLAN-0022`. Pendências pré-existentes de PLAN-0019 (bloqueado por TLS)/PLAN-0020/PLAN-0021 (commit/push + validação final) seguem em aberto, sem relação de bloqueio com este plano.
+
+---
+
 ## 2026-07-29 — Diagrama de arquitetura do sistema (Archify)
 
 **Contexto/gatilho:** usuário pediu leitura completa do repositório e um diagrama detalhado de como o projeto funciona, usando a skill Archify. Tarefa classificada como SURVEY/INTEL (sem PLAN necessário) — agente aplicado: `explorer-agent`.

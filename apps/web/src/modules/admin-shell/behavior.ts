@@ -99,6 +99,19 @@ export const initAdminShellBehavior = ({
     );
   });
 
+  // Admin V2 (PLAN-0024, RETROFIT-020/021) — deep-link por hash (ex.: /admin#produtos).
+  // Só entrada: nunca sincroniza o hash de volta em cliques manuais do menu (fora de escopo).
+  // Whitelist contra os data-view reais do DOM — nunca confia em hash arbitrário da URL.
+  const initialHash = window.location.hash.replace(/^#/, "");
+  if (initialHash) {
+    const hasMatchingPanel = Array.from(viewPanels).some(
+      (panel) => panel.getAttribute("data-view") === initialHash
+    );
+    if (hasMatchingPanel) {
+      setActiveView(initialHash);
+    }
+  }
+
   const setModalOpen = (name: string | null, isOpen: boolean) => {
     if (!name) return;
     const modal = document.querySelector(`[data-modal="${name}"]`);

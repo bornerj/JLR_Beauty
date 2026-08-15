@@ -8,6 +8,7 @@ import { ordersRouter, handleStripeWebhook } from "./orders";
 import { usersRouter } from "./users";
 import { adminRouter } from "./admin";
 import { inventoryRouter } from "./inventory";
+import { adminV2Router } from "./adminV2";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use(usersRouter);
 router.use(adminRouter);
 router.use(inventoryRouter);
 router.use(subscriptionsRouter);
+router.use(adminV2Router);
 
 export { handleStripeWebhook };
 export default router;

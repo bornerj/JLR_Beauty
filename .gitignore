@@ -3,10 +3,6 @@
 .env.local
 .env.*.local
 *.env
-!.env.docker.example
-!.env.example
-!apps/api/.env.example
-!apps/web/.env.example
 
 # OS
 .DS_Store
@@ -20,6 +16,8 @@ __pycache__/
 *.pyd
 .Python
 *.egg-info/
+dist/
+build/
 *.egg
 .eggs/
 
@@ -37,7 +35,6 @@ yarn-error.log*
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
 *.sublime-workspace
@@ -47,35 +44,11 @@ tmp/
 *.tmp
 *.bak
 *.orig
-
-# API build output
-apps/api/dist/
-
-# Web build output
-apps/web/dist/
-apps/web/out/
-
-# Uploads (gerenciados por Docker Volume na VPS)
-apps/api/uploads/*
-!apps/api/uploads/.gitkeep
-
-# Prisma generated client
-apps/api/node_modules/
-
-# Docker
-*.dockerignore
-
-# AI tool caches (excluídos do tracking conforme projeto original)
-/.codex/
-/documentations/
-
-# Arquivos gerados de listagem
 arvore.txt
 
-# Scripts legados PHP de CMS (não rastreados)
-send_message.php
+# AI tool caches (locais, não versionados)
+/.codex/
 
 
-
-
-
+# Claude Code local settings
+.claude/

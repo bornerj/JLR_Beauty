@@ -9,12 +9,12 @@ the Claude Code entry point.
 
 ## Mandatory Session Start Protocol
 
-**Before any other action, read `kernel/BOOTSTRAP.md` in full.**
+**Before any other action, read `.sfk/kernel/BOOTSTRAP.md` in full.**
 
 BOOTSTRAP.md is the session entry point. It will instruct you to:
 1. Classify the project as NEW PROJECT or EXISTING PROJECT
-2. Load Layer 0 (SOUL, RULES, project.toml, SYSTEM.md)
-3. Load Layer 1 selectively by task type (via kernel/index.toml)
+2. Load Layer 0 (SOUL, RULES, sfk.toml, SYSTEM.md)
+3. Load Layer 1 selectively by task type (via .sfk/kernel/index.toml)
 4. Classify the request type and route to the correct agent
 5. Provide a readback confirmation to the user
 
@@ -26,13 +26,13 @@ Do not skip this step. Do not summarize it. Read it to the last line.
 
 | File | Purpose | Load |
 |------|---------|------|
-| `kernel/BOOTSTRAP.md` | Session entry point | Every session, first |
-| `kernel/RULES.md` | Sovereign governance — never override | Layer 0 |
-| `kernel/SOUL.md` | AI behavior contract | Layer 0 |
-| `kernel/project.toml` | Project identity, stack, URLs, env vars | Layer 0 |
-| `kernel/SYSTEM.md` | Technical and engineering standards | Layer 0 |
-| `kernel/index.toml` | Session router — loads files by task type | Layer 1 |
-| `kernel/ARCHITECTURE.md` | Inventory of agents, skills, scripts | On demand |
+| `.sfk/kernel/BOOTSTRAP.md` | Session entry point | Every session, first |
+| `.sfk/kernel/RULES.md` | Sovereign governance — never override | Layer 0 |
+| `.sfk/kernel/SOUL.md` | AI behavior contract | Layer 0 |
+| `sfk.toml` | Project identity, stack, URLs, env vars | Layer 0 |
+| `SYSTEM.md` | Technical and engineering standards | Layer 0 |
+| `.sfk/kernel/index.toml` | Session router — loads files by task type | Layer 1 |
+| `.sfk/kernel/ARCHITECTURE.md` | Inventory of agents, skills, scripts | On demand |
 | `memory/MODIFICATION_LOG.md` | Macro operational history | On demand |
 | `memory/progress.md` | Current module state snapshot | On demand |
 | `memory/logs/DEBUG-HISTORY.md` | Resolved bugs database (RAG source) | On bug tasks |
@@ -42,12 +42,12 @@ Do not skip this step. Do not summarize it. Read it to the last line.
 
 ## Capabilities
 
-- **20 agents** in `kernel/agents/` — specialist AI personas for domain routing
-- **56 skills** in `kernel/skills/` — domain knowledge modules (read via agent frontmatter)
-- **11 workflows** in `kernel/workflows/` — slash commands (/plan, /debug, /deploy, /test, etc.)
-- **5 scripts** in `kernel/scripts/` — validation and automation tools
+- **20 agents** in `.sfk/kernel/agents/` — specialist AI personas for domain routing
+- **56 skills** in `.sfk/kernel/skills/` — domain knowledge modules (read via agent frontmatter)
+- **11 workflows** in `.sfk/kernel/workflows/` — slash commands (/plan, /debug, /deploy, /test, etc.)
+- **5 scripts** in `.sfk/kernel/scripts/` — validation and automation tools
 
-Do not read all skills by default. Read `kernel/ARCHITECTURE.md` first, identify the
+Do not read all skills by default. Read `.sfk/kernel/ARCHITECTURE.md` first, identify the
 relevant agent, then load only the skills listed in that agent's `skills:` frontmatter.
 
 ---

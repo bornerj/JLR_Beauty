@@ -73,27 +73,18 @@ Base: `https://SEU_DOMINIO/api`
    - Confirmar leitura no `GET /api/concierge/inbox` (admin autenticado).
    - Confirmar consolidado no `GET /api/concierge/sessions` (admin autenticado).
 
-## Utilitario de teste manual
-Arquivo: `send_message.php`
-
-Uso CLI:
+## Teste manual de envio
+Sem utilitario dedicado no repositorio (o antigo `send_message.php` foi removido — script
+PHP na raiz do projeto violava a regra de `SYSTEM.md` que restringe PHP a `cms/`, e expunha
+um modo de invocacao HTTP sem autenticacao que enviava mensagens reais). Para testar o envio
+direto pela Z-API, use `curl` com as credenciais de `apps/api/.env` (nunca commitar o token):
 
 ```bash
-php send_message.php --phone=5511999999999 --message="Teste de envio"
+curl -X POST "${ZAPI_BASE_URL}/send-text" \
+  -H "Content-Type: application/json" \
+  -H "Client-Token: ${ZAPI_CLIENT_TOKEN}" \
+  -d '{"phone":"5511999999999","message":"Teste de envio"}'
 ```
-
-Uso HTTP:
-
-```text
-/send_message.php?phone=5511999999999&message=Teste%20de%20envio
-```
-
-O script:
-- le `apps/api/.env`;
-- resolve URL `send-text`;
-- envia `phone` + `message`;
-- aplica `Client-Token` se configurado;
-- retorna sucesso/erro com status HTTP.
 
 ## Troubleshooting rapido
 - `500` em endpoint local que funcionava antes:

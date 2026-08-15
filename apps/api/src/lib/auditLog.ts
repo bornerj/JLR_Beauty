@@ -21,7 +21,9 @@ export type AuditAction =
   | "STOCK_ADJUST"
   | "STOCK_RESERVATION_RELEASE"
   | "ORDER_MANUAL_SALE"
-  | "ORDER_CANCELLED";
+  | "ORDER_CANCELLED"
+  // PLAN-0022 (Onda 9 / RETROFIT-010b) — pipeline comercial de franquias
+  | "FRANCHISE_LEAD_STAGE_CHANGE";
 
 export function recordAudit(
   action: AuditAction,

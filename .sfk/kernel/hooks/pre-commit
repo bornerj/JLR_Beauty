@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# SFK pre-commit hook — enforces the memory discipline the AI keeps forgetting (D4).
+#
+# Rule: a SIGNIFICANT change (source code, docs, or a DB migration) may not be
+# committed unless memory/MODIFICATION_LOG.md is part of the same commit.
+#
+# Escape hatch: `git commit --no-verify` bypasses this hook entirely.
+# Install: run .sfk/kernel/hooks/install.sh  (sets core.hooksPath to this folder).
+
+set -euo pipefail
+
+LOG="memory/MODIFICATION_LOG.md"
+BUILD_LEDGER="memory/logs/BUILD-HISTORY.md"
+
+# Files staged for this commit (added/copied/modified/renamed).
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+[ -z "$staged" ] && exit 0
+
+is_significant=0
+migration_touched=0
+log_staged=0
+ledger_staged=0
+
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    "$LOG")          log_staged=1 ;;
+    "$BUILD_LEDGER") ledger_staged=1 ;;
+  esac
+  case "$f" in
+    db/migrations/*.sql|db/seeds/*.sql) migration_touched=1; is_significant=1 ;;
+    # Engine and tooling changes are governed by the maintainer, not project memory.
+    .sfk/*|bin/*|_blueprint/*) ;;
+    # Product surface: source code and product docs count as significant.
+    src/*|app/*|lib/*|packages/*|docs/*|*.py|*.ts|*.tsx|*.js|*.jsx|*.go|*.rs|*.java|*.rb|*.php|*.sql)
+      is_significant=1 ;;
+  esac
+done <<< "$staged"
+
+fail=0
+
+if [ "$is_significant" -eq 1 ] && [ "$log_staged" -eq 0 ]; then
+  echo "❌ SFK pre-commit: significant change without a memory record." >&2
+  echo "   Update $LOG and stage it in this commit (SFK RULES §9)." >&2
+  fail=1
+fi
+
+if [ "$migration_touched" -eq 1 ] && [ "$ledger_staged" -eq 0 ]; then
+  echo "❌ SFK pre-commit: DB migration/seed changed without updating the ledger." >&2
+  echo "   Record what ran (when/where/why) in $BUILD_LEDGER and stage it (SFK RULES §9, D3)." >&2
+  fail=1
+fi
+
+if [ "$fail" -eq 1 ]; then
+  echo "" >&2
+  echo "→ Fix the records above, or bypass intentionally with: git commit --no-verify" >&2
+  exit 1
+fi
+
+exit 0
