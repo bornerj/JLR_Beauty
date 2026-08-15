@@ -559,6 +559,11 @@ const ensureOrders = async (units: Map<string, UnitRow>): Promise<void> => {
   const productRows = await prisma.product.findMany({
     select: { id: true, name: true, price: true, costPrice: true },
   });
+  if (productRows.length === 0) {
+    throw new Error(
+      "Nenhum produto encontrado — rode o seed base (npm run seed) antes deste script de massa de teste do Admin V2."
+    );
+  }
   const products = new Map(productRows.map((product) => [product.id, product]));
 
   let unitIndex = 0;

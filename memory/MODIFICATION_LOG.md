@@ -2,6 +2,62 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — Revisão pré-merge do PR #1 (`/code-review high`): 7 achados corrigidos
+
+- **Contexto/objetivo**: usuário pediu pra revisar e mergear o PR #1 (`main` ← `feature/admin-v2`,
+  431 arquivos, ~17 mil linhas — PLAN-0022/0023/0024). Rodado `/code-review high` contra
+  `main...feature/admin-v2`; 10 achados. Usuário pediu pra corrigir os 7 primeiros (3 que
+  bloqueavam merge + 4 de débito técnico) antes de mergear; os 2 últimos (⚪, não confirmados de
+  verdade por timeout do agente revisor) ficaram de fora por decisão explícita.
+- **Correções aplicadas**:
+  1. **`send_message.php`** (raiz do repo) — removido. Script de teste Z-API com modo de
+     invocação HTTP sem autenticação (`GET ?phone=X&message=Y` enviava WhatsApp real com
+     credenciais de produção); violava a regra do `SYSTEM.md` que restringe PHP a `cms/`. Doc
+     `docs/config/WHATSAPP_API_ZAPI.md` atualizada com alternativa via `curl` (sem modo HTTP).
+  2. **`UnitDetailView.tsx`** — drill-down perdia o filtro de unidade (dois `navigate()` em
+     sequência, o segundo sobrescrevia o `?unit=` do primeiro). Ver `ERR-0045`.
+  3. **`PanoramaCards.tsx` / `PanoramaSignals.tsx`** — "Explorar clientes" e "Ver clientes"
+     (oportunidade) ficaram presos em "em breve" mesmo com `/admin-v2/clientes` já pronto nesta
+     mesma leva; ambos agora navegam de verdade.
+  4. **`adminV2.ts`** — as 17 rotas (query params + PATCH body) passaram a usar schemas Zod
+     explícitos (`unitIdsListSchema`, `periodQuerySchema`, `singleUnitIdQuerySchema`,
+     `slotQuerySchema`, `stageBodySchema`) em vez de checagens manuais de `typeof`/`Number`,
+     conforme regra do `SYSTEM.md`. Filtros opcionais continuam tolerantes (`.catch()` preserva
+     o comportamento de antes — query mal formada = filtro ignorado, nunca `400`); campos
+     obrigatórios devolvem `400` com `formatZodDetail`, mesmo padrão de `routes/schedule.ts`.
+  5. **`operational-orders/service.ts`** — `columnFor` podia esconder um pedido `BLOCKED` atrás
+     do status `PENDENTE`. Ver `ERR-0046`.
+  6. **Migration `20260814214126_add_franchise_pipeline`** — o `DROP INDEX` "não documentado"
+     apontado pelo review já estava documentado em `memory/logs/BUILD-HISTORY.md` desde a sessão
+     que criou a migration (2026-08-14) — falso positivo do revisor (não tinha acesso a esse
+     arquivo). Nenhuma ação necessária, só confirmado.
+  7. **`seedAdminV2TestData.ts`** — `pickOrderItems` indexava um array de produtos vazio (`NaN`
+     → crash confuso). Adicionado guard logo após buscar `productRows`, com mensagem clara
+     ("rode o seed base antes deste script").
+- **Validações executadas**: `npx tsc -b --noEmit` (api+web) limpo; `npm run build` (api+web)
+  PASS; `npm run test` (api) **134/134 PASS** (sem regressão); `npm run lint` (web) — mesmos 17
+  erros pré-existentes/tolerados, nenhum novo. `docker compose build api web` + `up -d
+  --force-recreate api web nginx` — todos saudáveis. **E2E real** (login MASTER): `400` com
+  Zod em capacity sem `unitId`/`unitId` inválido/`hour` inválido/`stage` inválido; `200` com
+  dados válidos; `200` em panorama com `unitIds` bagunçado (tolerante, filtro ignorado); board
+  de pedidos com 43 pedidos, mesma contagem de antes (sem regressão do fix `columnFor`). **Visual
+  real via Playwright**: "Explorar clientes" e clique real confirmando navegação pra
+  `/admin-v2/clientes`; drill-down "Ver agenda" confirmando `?unit=1` preservado na URL e
+  `CapacityView` já filtrada em "Parque da Cidade" (não mais o estado vazio).
+- **Arquivos alterados**: `send_message.php` (removido), `docs/config/WHATSAPP_API_ZAPI.md`,
+  `apps/web/src/admin-v2/network/UnitDetailView.tsx`,
+  `apps/web/src/admin-v2/panorama/PanoramaView.tsx`,
+  `apps/web/src/admin-v2/panorama/components/PanoramaCards.tsx`,
+  `apps/web/src/admin-v2/panorama/components/PanoramaSignals.tsx`,
+  `apps/api/src/routes/adminV2.ts`,
+  `apps/api/src/modules/intelligence/operational-orders/service.ts`,
+  `apps/api/scripts/seedAdminV2TestData.ts`, `memory/logs/DEBUG-HISTORY.md` (ERR-0045, ERR-0046).
+- **Status**: concluído, validado de verdade. Achados #8 e #9 do review (panorama ignorando
+  período no `ordersNeedingAttention`; `revenueTrendPercent` caindo pra 0 com receita anterior
+  zero) **não foram corrigidos** — não confirmados de verdade (timeout do agente revisor) e o
+  usuário decidiu deixá-los de fora desta rodada; registrar como débito técnico pra revisão
+  futura se o usuário quiser investigar.
+
 ## 2026-08-15 — PLAN-0024: Consolidação (RETROFIT-020 Cadastros + RETROFIT-021 Sistema)
 
 - **Contexto/objetivo**: usuário pediu para seguir pra Consolidação depois do fechamento do

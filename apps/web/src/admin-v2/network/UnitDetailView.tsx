@@ -30,7 +30,7 @@ const ENABLED_ACTIONS = [
 export function UnitDetailView() {
   const { unitId } = useParams<{ unitId: string }>();
   const navigate = useNavigate();
-  const { scope, setUnitId } = useAdminScope();
+  const { scope } = useAdminScope();
   const [state, setState] = useState<DiagnosticState>({ loading: true, data: null, error: null });
 
   const load = useCallback(async () => {
@@ -138,10 +138,7 @@ export function UnitDetailView() {
           <button
             key={action.label}
             type="button"
-            onClick={() => {
-              setUnitId(unit.unitId);
-              navigate(action.path);
-            }}
+            onClick={() => navigate(`${action.path}?unit=${unit.unitId}`)}
             className="rounded-full border border-primary/60 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
           >
             {action.label}

@@ -34,7 +34,13 @@ export function AttentionFeed({ signals }: { signals: PanoramaAttentionSignal[] 
   );
 }
 
-export function OpportunitiesFeed({ opportunities }: { opportunities: PanoramaOpportunity[] }) {
+export function OpportunitiesFeed({
+  opportunities,
+  onViewCustomers,
+}: {
+  opportunities: PanoramaOpportunity[];
+  onViewCustomers: () => void;
+}) {
   if (opportunities.length === 0) return null;
 
   return (
@@ -50,16 +56,15 @@ export function OpportunitiesFeed({ opportunities }: { opportunities: PanoramaOp
             <div className="mt-1 flex gap-2">
               <button
                 type="button"
-                disabled
-                title="Ver clientes — em breve (RETROFIT-008)"
-                className="cursor-not-allowed rounded-full border border-stone-200 px-3 py-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400"
+                onClick={onViewCustomers}
+                className="rounded-full border border-primary/60 px-3 py-1.5 text-sm font-semibold text-primary hover:bg-primary/10"
               >
-                Ver clientes · em breve
+                Ver clientes
               </button>
               <button
                 type="button"
                 disabled
-                title="Criar campanha — em breve (onda de Ações Recomendadas)"
+                title="Criar campanha — em breve (nenhuma tela de campanhas existe ainda)"
                 className="cursor-not-allowed rounded-full border border-stone-200 px-3 py-1.5 text-sm font-semibold text-stone-500 dark:text-stone-400"
               >
                 Criar campanha · em breve

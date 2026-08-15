@@ -119,11 +119,11 @@ export function PanoramaView() {
         <NetworkSummaryCard network={panorama.network} onDrillDown={() => navigate("/admin-v2/rede")} />
         <OperationsSummaryCard operations={panorama.operations} onDrillDown={() => navigate("/admin-v2/operacao")} />
         <FinancialSummaryCard financial={panorama.financial} />
-        <CustomerSummaryCard customers={panorama.customers} />
+        <CustomerSummaryCard customers={panorama.customers} onDrillDown={() => navigate("/admin-v2/clientes")} />
       </div>
 
       <AttentionFeed signals={panorama.attention} />
-      <OpportunitiesFeed opportunities={panorama.opportunities} />
+      <OpportunitiesFeed opportunities={panorama.opportunities} onViewCustomers={() => navigate("/admin-v2/clientes")} />
     </div>
   );
 }

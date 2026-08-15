@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { requireAdmin, resolveUnitScope, canAccessUnit, type AuthRequest } from "../middleware/auth";
 import { logger } from "../utils/logger";
 import { MSG } from "../lib/messages";
+import { withDetail, formatZodDetail } from "../lib/routeHelpers";
 import { getPanorama } from "../modules/intelligence/panorama/service";
 import { getNetworkBoard, getUnitDiagnostic } from "../modules/intelligence/network/service";
 import { getOrdersBoard, getOrdersFlow } from "../modules/intelligence/operational-orders/service";
@@ -29,14 +31,46 @@ import { getInsightFeed } from "../modules/intelligence/insights/service";
 
 const adminV2Router = Router();
 
-const parseUnitIds = (raw: unknown): number[] | undefined => {
-  if (typeof raw !== "string" || raw.trim() === "" || raw === "all") return undefined;
-  const ids = raw
-    .split(",")
-    .map((value) => Number(value.trim()))
-    .filter((value) => Number.isFinite(value) && value > 0);
-  return ids.length > 0 ? ids : undefined;
-};
+/**
+ * Schemas Zod (SYSTEM.md — "Toda entrada deve ter schema Zod explicito"). Filtros opcionais
+ * (unitIds, days/from/to) seguem tolerantes por design, mesmo comportamento de antes desta
+ * leva: query mal formada vira filtro ignorado, nunca `400` — `.catch()` preserva isso sem
+ * voltar a checagem manual de `typeof`. Campos obrigatórios (unitId único, date/hour do
+ * slot, stage do PATCH) são validados a valer e devolvem `400` com o detalhe do Zod quando
+ * inválidos — mesmo padrão de `routes/schedule.ts`.
+ */
+const unitIdsListSchema = z
+  .string()
+  .optional()
+  .transform((raw) => {
+    if (!raw || raw.trim() === "" || raw === "all") return undefined;
+    const ids = raw
+      .split(",")
+      .map((value) => Number(value.trim()))
+      .filter((value) => Number.isFinite(value) && value > 0);
+    return ids.length > 0 ? ids : undefined;
+  })
+  .catch(undefined);
+
+const periodQuerySchema = z.object({
+  days: z.coerce.number().finite().optional().catch(undefined),
+  from: z.string().optional().catch(undefined),
+  to: z.string().optional().catch(undefined),
+});
+
+const singleUnitIdQuerySchema = z.object({
+  unitId: z.coerce.number().positive(),
+});
+
+const slotQuerySchema = z.object({
+  unitId: z.coerce.number().positive(),
+  date: z.string().min(1),
+  hour: z.coerce.number().int().min(0).max(23),
+});
+
+const stageBodySchema = z.object({
+  stage: z.enum(FRANCHISE_STAGES),
+});
 
 /**
  * requireAdmin só deixa ADMIN/MASTER passarem, e resolveUnitScope sempre devolve "all"
@@ -46,22 +80,11 @@ const parseUnitIds = (raw: unknown): number[] | undefined => {
  */
 const resolveRequestedUnitIds = (req: AuthRequest): number[] | undefined => {
   const scope = resolveUnitScope(req);
-  const requested = parseUnitIds(req.query.unitIds);
+  const requested = unitIdsListSchema.parse(req.query.unitIds);
   return scope.kind === "all" ? requested : (requested?.filter((id) => scope.unitIds.includes(id)) ?? scope.unitIds);
 };
 
-/** Onda 4 (Mapa de Capacidade da Agenda): rotas por unidade única — `unitId` é obrigatório na querystring, não uma lista. */
-const parseSingleUnitId = (raw: unknown): number | null => {
-  if (typeof raw !== "string") return null;
-  const value = Number(raw.trim());
-  return Number.isFinite(value) && value > 0 ? value : null;
-};
-
-const parsePeriodQuery = (req: AuthRequest) => ({
-  days: typeof req.query.days === "string" && Number.isFinite(Number(req.query.days)) ? Number(req.query.days) : undefined,
-  from: typeof req.query.from === "string" ? req.query.from : undefined,
-  to: typeof req.query.to === "string" ? req.query.to : undefined,
-});
+const parsePeriodQuery = (req: AuthRequest) => periodQuerySchema.parse(req.query);
 
 adminV2Router.get("/admin-v2/panorama", requireAdmin, async (req: AuthRequest, res) => {
   try {
@@ -153,11 +176,15 @@ adminV2Router.get("/admin-v2/operations/orders/flow", requireAdmin, async (req: 
 });
 
 adminV2Router.get("/admin-v2/operations/agenda/capacity", requireAdmin, async (req: AuthRequest, res) => {
-  const unitId = parseSingleUnitId(req.query.unitId);
-  if (unitId === null) {
-    res.status(400).json({ message: MSG.INVALID_PAYLOAD });
+  const parsedQuery = singleUnitIdQuerySchema.safeParse(req.query);
+  if (!parsedQuery.success) {
+    res.status(400).json({
+      message: MSG.INVALID_PAYLOAD,
+      ...withDetail(formatZodDetail(parsedQuery.error.issues)),
+    });
     return;
   }
+  const { unitId } = parsedQuery.data;
   if (!canAccessUnit(req, unitId)) {
     res.status(403).json({ message: MSG.FORBIDDEN });
     return;
@@ -182,14 +209,15 @@ adminV2Router.get("/admin-v2/operations/agenda/capacity", requireAdmin, async (r
 });
 
 adminV2Router.get("/admin-v2/operations/agenda/slots", requireAdmin, async (req: AuthRequest, res) => {
-  const unitId = parseSingleUnitId(req.query.unitId);
-  const date = typeof req.query.date === "string" ? req.query.date : null;
-  const hourRaw = typeof req.query.hour === "string" ? Number(req.query.hour) : NaN;
-  const hour = Number.isInteger(hourRaw) && hourRaw >= 0 && hourRaw <= 23 ? hourRaw : null;
-  if (unitId === null || !date || hour === null) {
-    res.status(400).json({ message: MSG.INVALID_PAYLOAD });
+  const parsedQuery = slotQuerySchema.safeParse(req.query);
+  if (!parsedQuery.success) {
+    res.status(400).json({
+      message: MSG.INVALID_PAYLOAD,
+      ...withDetail(formatZodDetail(parsedQuery.error.issues)),
+    });
     return;
   }
+  const { unitId, date, hour } = parsedQuery.data;
   if (!canAccessUnit(req, unitId)) {
     res.status(403).json({ message: MSG.FORBIDDEN });
     return;
@@ -300,14 +328,18 @@ adminV2Router.patch("/admin-v2/growth/franchises/:id/stage", requireAdmin, async
     res.status(400).json({ message: MSG.INVALID_PAYLOAD });
     return;
   }
-  const stage = typeof req.body?.stage === "string" ? req.body.stage : null;
-  if (!stage || !(FRANCHISE_STAGES as readonly string[]).includes(stage)) {
-    res.status(400).json({ message: MSG.INVALID_PAYLOAD });
+  const parsedBody = stageBodySchema.safeParse(req.body);
+  if (!parsedBody.success) {
+    res.status(400).json({
+      message: MSG.INVALID_PAYLOAD,
+      ...withDetail(formatZodDetail(parsedBody.error.issues)),
+    });
     return;
   }
+  const stage: FranchiseStage = parsedBody.data.stage;
 
   try {
-    const pipeline = await moveLeadStage(leadId, stage as FranchiseStage);
+    const pipeline = await moveLeadStage(leadId, stage);
     recordAudit("FRANCHISE_LEAD_STAGE_CHANGE", { userId: req.user?.id, req, meta: { leadId, toStage: stage } });
     res.json(pipeline);
   } catch (error) {

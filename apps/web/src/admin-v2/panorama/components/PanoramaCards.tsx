@@ -69,9 +69,9 @@ export function FinancialSummaryCard({ financial }: { financial: PanoramaFinanci
   );
 }
 
-export function CustomerSummaryCard({ customers }: { customers: PanoramaCustomers }) {
+export function CustomerSummaryCard({ customers, onDrillDown }: { customers: PanoramaCustomers; onDrillDown: () => void }) {
   return (
-    <DrillCard title="Clientes" action="Explorar clientes">
+    <DrillCard title="Clientes" action="Explorar clientes" onDrillDown={onDrillDown}>
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-forest">
         <span>
           <strong className="text-lg">{customers.newInPeriod}</strong> novos

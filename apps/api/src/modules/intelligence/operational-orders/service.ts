@@ -76,8 +76,8 @@ const toCard = (order: BoardOrderRow, now: Date): OperationalOrderCard => {
  * estado derivado nunca é escondido atrás do estágio "normal" do fulfillment).
  */
 const columnFor = (order: BoardOrderRow, card: OperationalOrderCard): keyof OrdersBoard["columns"] => {
-  if (order.status === "PENDENTE") return "entraram";
   if (card.operationalState !== "NORMAL") return "atencao";
+  if (order.status === "PENDENTE") return "entraram";
   if (READY_FULFILLMENT_STATUSES.includes(order.fulfillmentStatus as (typeof READY_FULFILLMENT_STATUSES)[number])) {
     return "prontos";
   }
