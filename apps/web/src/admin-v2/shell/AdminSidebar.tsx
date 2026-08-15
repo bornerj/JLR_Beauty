@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 /**
  * Admin V2 (PLAN-0022) — sidebar de 7 "mundos" (RETROFIT-001), não módulos.
  * "Panorama" (Onda 1), "Rede" (Onda 2), "Operação" (Onda 3), "Clientes" (Onda 7) e
- * "Crescimento" (Onda 9) estão ativos; os demais nascem nas ondas seguintes do mesmo
- * plano e aparecem aqui já com o rótulo final, marcados "Em breve" até terem tela —
+ * "Crescimento" (Onda 9) vêm do PLAN-0022. "Cadastros" e "Sistema" (RETROFIT-020/021,
+ * PLAN-0024) são hubs de adapter/link pras telas legadas — sem reescrita estética
+ * (`DECISION-013` regra #5). Todos os 7 "mundos" estão ativos agora; um item só volta
+ * a ficar `available: false` ("em breve") se um novo mundo nascer sem tela ainda —
  * nunca como link morto.
  */
 
@@ -22,8 +24,8 @@ const ENTRIES: SidebarEntry[] = [
   { key: "rede", label: "Rede", icon: "hub", available: true, path: "/admin-v2/rede" },
   { key: "clientes", label: "Clientes", icon: "groups", available: true, path: "/admin-v2/clientes" },
   { key: "crescimento", label: "Crescimento", icon: "trending_up", available: true, path: "/admin-v2/crescimento" },
-  { key: "cadastros", label: "Cadastros", icon: "inventory_2", available: false },
-  { key: "sistema", label: "Sistema", icon: "settings", available: false },
+  { key: "cadastros", label: "Cadastros", icon: "inventory_2", available: true, path: "/admin-v2/cadastros" },
+  { key: "sistema", label: "Sistema", icon: "settings", available: true, path: "/admin-v2/sistema" },
 ];
 
 export function AdminSidebar({ activeKey }: { activeKey: string }) {

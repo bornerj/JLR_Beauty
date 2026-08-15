@@ -17,6 +17,8 @@ import { GargalosView } from "./gargalos/GargalosView";
 import { MoneyView } from "./money/MoneyView";
 import { ComparatorView } from "./comparator/ComparatorView";
 import { InsightsView } from "./insights/InsightsView";
+import { CadastrosHubView } from "./cadastros/CadastrosHubView";
+import { SistemaHubView } from "./sistema/SistemaHubView";
 
 /**
  * Admin V2 (PLAN-0022) — raiz da árvore nova, isolada do shell legado (AdminContent.tsx).
@@ -154,6 +156,8 @@ function AdminV2Shell() {
   const isComparatorArea = location.pathname.includes("/comparador");
   const isInsightsArea = location.pathname.includes("/insights");
   const isIntelligenceArea = isRadarArea || isGargalosArea || isMoneyArea || isComparatorArea || isInsightsArea;
+  const isCadastrosArea = location.pathname.includes("/cadastros");
+  const isSistemaArea = location.pathname.includes("/sistema");
   const intelligenceTab: IntelligenceTabKey = isGargalosArea
     ? "gargalos"
     : isMoneyArea
@@ -179,7 +183,11 @@ function AdminV2Shell() {
         ? "clientes"
         : isGrowthArea
           ? "crescimento"
-          : "panorama";
+          : isCadastrosArea
+            ? "cadastros"
+            : isSistemaArea
+              ? "sistema"
+              : "panorama";
 
   const breadcrumb: AdminBreadcrumbItem[] = [{ label: "Panorama", onNavigate: () => navigate("/admin-v2") }];
   if (isNetworkArea) {
@@ -208,6 +216,12 @@ function AdminV2Shell() {
   }
   if (isGrowthArea) {
     breadcrumb.push({ label: "Crescimento" });
+  }
+  if (isCadastrosArea) {
+    breadcrumb.push({ label: "Cadastros" });
+  }
+  if (isSistemaArea) {
+    breadcrumb.push({ label: "Sistema" });
   }
   if (isIntelligenceArea) {
     breadcrumb.push({
@@ -238,6 +252,8 @@ function AdminV2Shell() {
         <Route path="dinheiro" element={<MoneyView />} />
         <Route path="comparador" element={<ComparatorView />} />
         <Route path="insights" element={<InsightsView />} />
+        <Route path="cadastros" element={<CadastrosHubView />} />
+        <Route path="sistema" element={<SistemaHubView />} />
       </Routes>
     </AdminShell>
   );

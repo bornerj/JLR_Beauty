@@ -2,6 +2,43 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — PLAN-0024: Consolidação (RETROFIT-020 Cadastros + RETROFIT-021 Sistema)
+
+- **Contexto/objetivo**: usuário pediu para seguir pra Consolidação depois do fechamento do
+  `PLAN-0023`. Gate socrático aplicado antes de planejar (RAG achou que o Admin legado não tem
+  nenhum deep-link hoje — `data-view` trocado só por clique em memória, sem hash/URL — o que
+  tornaria um link ingênuo do V2 sempre cair no dashboard padrão). Usuário confirmou 2 decisões:
+  (1) escopo = RETROFIT-020+021 apenas, RETROFIT-022 (aposentar o legado) fica fora, sem
+  critério fixado (`DECISION-013`); (2) adicionar deep-link por hash no legado, em vez de linkar
+  sempre pro dashboard genérico. `PLAN-0024-ADMIN-V2-CONSOLIDACAO.md` escrito, aprovado pelo
+  usuário, executado na mesma sessão.
+- **Arquivos alterados**:
+  - `apps/web/src/modules/admin-shell/behavior.ts` — deep-link por hash na inicialização do
+    Admin legado (`initAdminShellBehavior`), com whitelist contra os `data-view` reais do DOM.
+  - `apps/web/src/admin-v2/shell/HubCard.tsx` (novo) — card compartilhado dos 2 hubs (link real
+    ou desabilitado com motivo — nunca link morto).
+  - `apps/web/src/admin-v2/cadastros/CadastrosHubView.tsx` (novo) — hub de Cadastros, 6 cards.
+  - `apps/web/src/admin-v2/sistema/SistemaHubView.tsx` (novo) — hub de Sistema, 6 cards ativos +
+    2 desabilitados (`Segurança`/`Infra`, sem tela dedicada no legado hoje).
+  - `apps/web/src/admin-v2/AdminV2Root.tsx` — rotas `cadastros`/`sistema`, `activeKey`,
+    breadcrumb.
+  - `apps/web/src/admin-v2/shell/AdminSidebar.tsx` — `cadastros`/`sistema` de `available: false`
+    pra `true`, comentário de topo atualizado.
+- **Validações executadas**: `npx tsc -b --noEmit` (web) PASS; `npm run build` (web) PASS;
+  `npm run lint` (web) — os mesmos 17 erros pré-existentes/tolerados, nenhum novo nos arquivos
+  desta leva; `docker compose build web` + `up -d --force-recreate web nginx` (cascata recriou
+  `api` também, esperado) — todos saudáveis; **validação visual real** via Playwright headless
+  (extensão `claude-in-chrome` indisponível nesta máquina, mesmo método usado no fechamento do
+  `PLAN-0023`) — 30 checks automatizados: os 12 deep-links (6 Cadastros + 6 Sistema) abrindo a
+  tela certa do legado (não mais o dashboard padrão), os 2 itens desabilitados sem link morto, e
+  regressão do clique manual no legado (confirmado via `dispatchEvent` — o clique real do
+  Playwright esbarrou numa peculiaridade pré-existente do CSS do sidebar legado, hover-to-reveal,
+  não um bug desta leva). Scripts de validação temporários removidos ao final.
+- **Status**: `PLAN-0024` **concluído e validado de verdade**. Commitado nesta sessão (commit
+  separado por leva, a pedido do usuário); falta push (aguardando autorização). RETROFIT-022
+  (migração/aposentadoria do legado) segue sem entrar, precisa de nova decisão de produto
+  explícita.
+
 ## 2026-08-15 — PLAN-0023: fechamento da validação pendente das Ondas 6-7 (Insight Engine + Ações Recomendadas)
 
 - **Contexto/objetivo**: `PLAN-0023` (plano ativo, sem `DONE`) tinha as Ondas 6-7 marcadas como
