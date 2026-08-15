@@ -1,6 +1,6 @@
 # PLAN-0023 — Admin V2: Programa de Retrofit (Inteligência)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-5 (RETROFIT-011/012/013/014/017) ✅ CONCLUÍDAS 2026-08-15, todas com E2E real + validação visual. Ondas 6-7 (RETROFIT-018 Insight Engine, RETROFIT-019 Ações Recomendadas) ✅ código completo, **149+13=162/162 testes automatizados PASS**, `tsc`/build limpos — **E2E real e validação visual ainda PENDENTES** (rebuild Docker em andamento no fechamento desta sessão, ver `MODIFICATION_LOG.md`). **Roadmap de Inteligência do PLAN-0023 código-completo** (RETROFIT-011 a 019) — falta fechar a validação das Ondas 6-7. Próxima sessão: completar E2E+visual das Ondas 6-7, depois decidir entre Consolidação (RETROFIT-020/021/022, fora deste plano) ou revisão/merge do PR #1.
+**Status:** ✅ Ondas 1-7 (RETROFIT-011/012/013/014/017/018/019) CONCLUÍDAS 2026-08-15, todas com E2E real + validação visual (Ondas 6-7 fechadas depois das demais — ver `## Ondas 6-7 — Fechamento da validação pendente`). **Roadmap de Inteligência do PLAN-0023 100% entregue e validado.** Consolidação (RETROFIT-020/021, fora deste plano) segue em `PLAN-0024`.
 **Origem:** continuação direta do `PLAN-0022` (Fundação + Experiência Operacional, Ondas 0-9 + RETROFIT-010b, 100% entregue e validada visualmente em 2026-08-15) — a própria seção "Próximos Passos" daquele plano já previa que "planejamento detalhado de Inteligência (RETROFIT-011 a 019)... fica para um plano futuro (`PLAN-0023` em diante), quando a Fundação+Operação estiver validada em uso real". Está validada — este plano nasce agora, a pedido do usuário ("continue com o retrofit seguinte ao último concluído").
 **Decisão arquitetural herdada:** `DECISION-013` (ACTIVE) — mesmas regras fixas do `PLAN-0022` (Health Score, escopo por unidade, explicabilidade) continuam valendo aqui, não são revalidadas onda a onda.
 **Escopo macro:** só `apps/api/src/modules/intelligence/` (módulos novos) e `apps/web/src/admin-v2/` (telas novas) — nenhuma migração de schema prevista nesta leva (Inteligência é 100% derivada dos dados já existentes/já classificados pelas Ondas 1-9).
@@ -229,4 +229,24 @@ Consolidação (RETROFIT-020 a 022) fica fora deste plano — só entra quando o
 - [x] `insights/types.ts` — mirror atualizado (`RecommendedAction`, `Insight.recommendedActions`).
 - [x] `insights/InsightsView.tsx` — cada card de insight ganhou uma lista de sugestões abaixo da mensagem/impacto: texto simples quando `actionPath` é `null`, link sublinhado (navegação real) quando existe.
 
-**Validações executadas:** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **162/162 PASS** (5 + 23 + 134 intelligence). **Pendente no fechamento desta sessão** (mesma rodada de build que a Onda 6 — ver nota acima): `docker compose build`, redeploy, E2E real contra Postgres e validação visual real ainda não concluídos quando a sessão foi encerrada a pedido do usuário.
+**Validações executadas:** `tsc -p tsconfig.build.json --noEmit` (api) PASS; `npx tsc -b` (web) PASS; `npm run build` (api e web) PASS; `npm run test` (api) **162/162 PASS** (5 + 23 + 134 intelligence). ~~Pendente no fechamento desta sessão~~ — **completado em 2026-08-15**, ver `## Ondas 6-7 — Fechamento da validação pendente` abaixo.
+
+---
+
+### Ondas 6-7 — Fechamento da validação pendente (2026-08-15)
+
+`docker compose build api web` executado (cache hit em todas as camadas — código já estava na imagem do rebuild anterior); containers `api`/`web`/`nginx`/`postgres` saudáveis.
+
+**E2E real contra Postgres** (login MASTER via `POST /api/auth/login`, JWT real):
+- `GET /api/admin-v2/insights?days=30` → `200`, 8 insights, dedup Radar×Gargalos correto (Agenda/Operação/Portfólio/Assinaturas só a versão Gargalos com R$; Serviços/Clientes só Radar; Comparador presente porque `biggestGap` não era `null`), ordenação por impacto R$ decrescente com `null` por último, `totalKnownImpact` (R$ 1.953.478,71) bate exatamente com a soma manual dos `impact.amount`.
+- `recommendedActions` conferido contra o catálogo fixo: só Franquias (`/admin-v2/crescimento`) tem `actionPath` real nesta massa de dados; os demais 7 são texto puro (`actionPath: null`) — nenhuma categoria com Financeiro ativo neste recorte, então `/admin-v2/dinheiro` não apareceu (esperado, não é bug).
+- Regressão OK em `/panorama` (rota index `/admin-v2`), `/network`, `/radar`, `/gargalos`, `/comparator`, `/money` — todos `200` (3 rodadas). `401` sem token confirmado em `/insights`.
+
+**Validação visual real** (Playwright headless contra o Docker local, `apps/web` já tem `@playwright/test` como devDependency — usado como alternativa por indisponibilidade da extensão Chrome nesta máquina):
+- Login real via UI (modal "Entrar" do site) com o usuário MASTER.
+- `/admin-v2` (Panorama): botão "Ver insights →" presente ao lado de Radar/Gargalos, narrativa da Onda 5 visível ("Loja Online está em atenção... principal causa: Ocupação").
+- `/admin-v2/insights`: 5ª aba ativa, breadcrumb `Panorama > Inteligência > INSIGHTS`, card "Impacto total conhecido" e os 8 cards de insight renderizados batendo número a número com o E2E; link sublinhado só no card de Franquias, texto puro nos demais — exatamente como a governança do RETROFIT-019 define.
+- Clique real "Ver insights →" (Panorama → Insights) e clique real no link de ação de Franquias (Insights → `/admin-v2/crescimento`) — navegação funcionando ponta a ponta, Pipeline carrega os 5 leads parados citados no insight.
+- Nenhum erro de console/rede específico das Ondas 6-7; os únicos console errors observados são de bootstrap do Admin legado (branding/cupons/seções/etc.), pré-existentes e fora do escopo desta leva — não investigados aqui (anti-scope-drift).
+
+**Conclusão:** Ondas 6-7 (RETROFIT-018 Insight Engine + RETROFIT-019 Ações Recomendadas) agora **realmente validadas** (E2E real + visual real), não só código-completo. PLAN-0023 pode avançar para a decisão de Consolidação (RETROFIT-020/021/022) ou revisão/merge do PR #1.

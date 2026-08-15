@@ -2,6 +2,41 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — PLAN-0023: fechamento da validação pendente das Ondas 6-7 (Insight Engine + Ações Recomendadas)
+
+- **Contexto/objetivo**: `PLAN-0023` (plano ativo, sem `DONE`) tinha as Ondas 6-7 marcadas como
+  "código-completo, testes unitários PASS" mas com E2E real e validação visual pendentes desde
+  o fechamento da sessão anterior (rebuild Docker em andamento). Usuário pediu para continuar o
+  plano, rebuildar o Docker e validar.
+- **Ações executadas**:
+  - `docker compose build api web` — cache hit em todas as camadas (código já estava na imagem
+    do rebuild anterior); containers `api`/`web`/`nginx`/`postgres` saudáveis.
+  - Login real (`POST /api/auth/login`, usuário MASTER) + E2E real contra Postgres em todos os
+    endpoints de inteligência: `panorama` (index `/admin-v2`), `network`, `radar`, `gargalos`,
+    `comparator`, `money`, `insights` — todos `200` (3 rodadas); `401` sem token confirmado.
+    Conferido manualmente: dedup Radar×Gargalos por categoria, ordenação por impacto R$
+    decrescente, `totalKnownImpact` batendo com a soma manual, catálogo de `recommendedActions`
+    (só Franquias com `actionPath` real nesta massa de dados).
+  - Validação visual real via **Playwright headless** (extensão `claude-in-chrome` indisponível
+    nesta máquina — usada como alternativa, `@playwright/test` já é devDependency de `apps/web`;
+    `chromium` instalado via `playwright install`): login real pela UI, screenshots de
+    `/admin-v2` (Panorama, botão "Ver insights →") e `/admin-v2/insights` (5ª aba, breadcrumb,
+    8 cards batendo com o E2E), clique real "Ver insights →" e clique real no link de ação de
+    Franquias (`/admin-v2/insights` → `/admin-v2/crescimento`, Pipeline carregando os 5 leads
+    parados citados no insight). Scripts de debug temporários (`apps/web/*.tmp.mjs`,
+    `debug-*.mjs`) removidos ao final — nada deixado solto no working tree.
+  - **Nota lateral (não investigada, fora de escopo)**: bootstrap do Admin legado emite vários
+    `console.error`/`warn` (branding, cupons, seções, assinantes, etc.) em toda navegação —
+    pré-existente, não relacionado às Ondas 6-7; registrado aqui para não ser confundido com
+    regressão numa sessão futura.
+- **Arquivos alterados**: `memory/plans/PLAN-0023-ADMIN-V2-INTELIGENCIA.md` (seção nova
+  "Ondas 6-7 — Fechamento da validação pendente"), `memory/progress.md` (linha do módulo
+  atualizada), `memory/MODIFICATION_LOG.md` (este registro).
+- **Validações executadas**: ver acima (E2E real + visual real, 100% das rotas de inteligência).
+- **Status**: Ondas 6-7 agora **realmente validadas** — PLAN-0023 sem pendências de validação
+  nesta leva. Sem commit/push (aguardando autorização do usuário). Próxima decisão do usuário:
+  Consolidação (RETROFIT-020/021/022) ou revisão/merge do PR #1.
+
 ## 2026-08-15 — fix: typecheck errors em scoring.test.ts (point-in-time)
 
 - **Contexto/objetivo**: usuário pediu "fix typecheck errors". `tsc -b --noEmit` (apps/api,
