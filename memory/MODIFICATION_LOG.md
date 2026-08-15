@@ -2,6 +2,33 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — Merge do PR #1: Admin V2 (PLAN-0022/0023/0024) entra em `main`
+
+- **Contexto/objetivo**: usuário pediu explicitamente pra revisar e mergear o PR #1. Sem `gh`
+  CLI disponível neste ambiente (confirmado antes de agir) — combinado com o usuário fazer o
+  merge via git direto: `git checkout main` (local, tracking `origin/main`) + `git merge --no-ff
+  feature/admin-v2` + `git push origin main`. GitHub fecha o PR #1 automaticamente ao detectar
+  que os commits chegaram na `main` (mesmo efeito do botão "Merge" da UI).
+- **Ações executadas**: `git fetch origin main` (confirmado que `main` não tinha avançado desde
+  o merge-base usado durante toda a leva — `9422f64`, seguro mergear); `git checkout -B main
+  origin/main`; `git merge --no-ff feature/admin-v2` — **sem conflitos**, estratégia `ort`, 432
+  arquivos (16822 inserções, 375 remoções) vs. `main` antiga; `git push origin main` →
+  `9422f64..1479cce`.
+- **Arquivos alterados**: nenhum novo — merge commit puro trazendo todo o histórico de
+  `feature/admin-v2` (10 commits: fundação/operação/inteligência do PLAN-0022/0023,
+  consolidação do PLAN-0024, fix de typecheck, e a correção dos 7 achados do review pré-merge,
+  ver entrada logo abaixo) pra `main`. `memory/progress.md` atualizado (3 linhas — PLAN-0022,
+  0023, 0024 — marcadas como commitadas/pushadas/**mergeadas**).
+- **Validações executadas**: nenhuma validação nova — o merge não altera código, só combina
+  histórico; todas as validações (tsc/build/lint/testes/E2E real/visual) já tinham sido feitas
+  branch a branch antes de cada commit, documentadas nas entradas anteriores deste log e nos
+  planos `PLAN-0022`/`PLAN-0023`/`PLAN-0024`.
+- **Status**: PR #1 mergeado e pushado. `main` em `1479cce`. Admin V2 (`/admin-v2`) agora faz
+  parte da branch principal do projeto, em paralelo ao Admin legado (`/admin`), conforme
+  `DECISION-013`. Próxima decisão do usuário: RETROFIT-022 (migração/aposentadoria do Admin
+  legado) segue sem entrar, precisa de nova decisão de produto explícita quando/se o usuário
+  quiser revisitar.
+
 ## 2026-08-15 — Revisão pré-merge do PR #1 (`/code-review high`): 7 achados corrigidos
 
 - **Contexto/objetivo**: usuário pediu pra revisar e mergear o PR #1 (`main` ← `feature/admin-v2`,
