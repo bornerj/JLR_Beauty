@@ -2,6 +2,31 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 15:17 — SESSION AUDIT — PASS (fechamento de sessão)
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | OK — `DECISION-013` continua válida; fix dos achados #8/#9 é ajuste de heurística v1 (já documentado como "ajustável só via novo PR"), não mudança de arquitetura |
+| State Integrity | OK — sem plano aberto nesta sessão; investigação tratada corretamente como execução pontual |
+| Operational Memory | OK — 1 entrada no `MODIFICATION_LOG.md` |
+| Debug Memory | OK — `ERR-0047` (período ignorado) e `ERR-0048` (revenueTrendPercent zerando, achado duplicado em 2 arquivos), formato padrão |
+| Technical Validation | OK — build/testes limpos (`npm run test` 134/134 PASS); lint N/A (api sem lint configurado, nenhum arquivo web tocado); nenhum `console.log` não autorizado |
+| Regression Risk | OK — mudança isolada em métricas de inteligência, sem tocar auth/pagamento/agendamento; validado via E2E real + visual real |
+| Git Governance | OK — pre-commit review apresentado; commit convencional; push autorizado separadamente do commit |
+
+**Checklist completo:** `memory/logs/AUDIT_CHECKLIST_20260815_151721-PASS.md`.
+
+**Resumo da sessão:** investigação a fundo dos achados #8 e #9 do `/code-review high` (deixados
+em aberto no fechamento anterior por timeout do agente revisor). Ambos confirmados como bugs
+reais — o achado #9 pior do que reportado (mesmo bug duplicado em `panorama/service.ts`, fora
+do escopo original). Corrigidos, validados de ponta a ponta (E2E real + visual real, Docker
+rebuild), commitados e pushados em `main` (`4a36743`).
+
+**Pendência não-bloqueante:** RETROFIT-022 (migração/aposentadoria do Admin legado) — sem
+critério fixado, só entra com nova decisão de produto explícita.
+
+**Sessão encerrada a pedido do usuário** ("feche a sessão conforme protocolo do SFK").
+
 ## 2026-08-15 — Investigação dos achados #8 e #9 do `/code-review high` (pós-merge)
 
 - **Contexto/objetivo**: sessão anterior fechou o PR #1 deixando 2 achados do review sem
