@@ -165,8 +165,8 @@ alcance sistêmico do fix).
 
 ## Git Record of Delivery
 
-- Step 1 (Pre-commit review): pendente
-- Step 2 (Commit authorization): pendente
-- Step 3 (Commit confirmation): pendente
-- Step 4 (Push authorization and result): pendente
-- Push status: PENDING
+- Step 1 (Pre-commit review): feito — 25 arquivos, tabela por item apresentada ao usuário com validações.
+- Step 2 (Commit authorization): usuário aprovou explicitamente ("pode commitar").
+- Step 3 (Commit confirmation): `90a1214` — "feat(admin-v2): PLAN-0025 polimento de UX + fix sistêmico de CSS (state-*)", branch `main`.
+- Step 4 (Push authorization and result): usuário autorizou explicitamente ("pode fazer o push"), pedido separado do commit. `git push origin main` → `a55bb06..90a1214`.
+- Push status: COMPLETED
