@@ -40,6 +40,9 @@ export function OperationsSummaryCard({
           <strong className="text-lg">{operations.stockAlerts}</strong> alerta(s) de estoque
         </li>
         <li>
+          Valor em estoque <strong className="text-forest">{formatCurrencyBRL(operations.stockValue)}</strong>
+        </li>
+        <li>
           <strong className="text-lg">{operations.lowOccupancyUnits}</strong> unidade(s) com ocupação abaixo de 50%
         </li>
       </ul>

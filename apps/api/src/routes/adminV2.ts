@@ -70,6 +70,9 @@ const slotQuerySchema = z.object({
 
 const stageBodySchema = z.object({
   stage: z.enum(FRANCHISE_STAGES),
+  /** PLAN-0025 (item 3) — opcional no contrato (não quebra clients que não mandem o campo);
+   * a obrigatoriedade de preencher é imposta na UI (modal), não aqui. */
+  reason: z.string().min(1).max(500).optional(),
 });
 
 /**
@@ -337,10 +340,11 @@ adminV2Router.patch("/admin-v2/growth/franchises/:id/stage", requireAdmin, async
     return;
   }
   const stage: FranchiseStage = parsedBody.data.stage;
+  const reason = parsedBody.data.reason;
 
   try {
-    const pipeline = await moveLeadStage(leadId, stage);
-    recordAudit("FRANCHISE_LEAD_STAGE_CHANGE", { userId: req.user?.id, req, meta: { leadId, toStage: stage } });
+    const pipeline = await moveLeadStage(leadId, stage, reason);
+    recordAudit("FRANCHISE_LEAD_STAGE_CHANGE", { userId: req.user?.id, req, meta: { leadId, toStage: stage, reason } });
     res.json(pipeline);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {

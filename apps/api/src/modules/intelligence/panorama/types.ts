@@ -14,6 +14,10 @@ export type PanoramaOperations = {
   ordersNeedingAttention: number;
   /** Estoque atual (sem histórico) — sempre o estado "agora", não escopado ao período. */
   stockAlerts: number;
+  /** PLAN-0025 (item 7) — capital total parado em estoque (custo × quantidade), consolidado
+   * no escopo pedido. Mesmo cálculo de `getInventoryOverview` (PLAN-0020), já buscado por
+   * esta função — só passou a ser exposto. Sempre "agora", mesma nota de `stockAlerts`. */
+  stockValue: number;
   /** Unidades com componente de ocupação do Health Score abaixo de 50% no período. */
   lowOccupancyUnits: number;
 };

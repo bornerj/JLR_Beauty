@@ -11,6 +11,7 @@ export type PanoramaNetwork = {
 export type PanoramaOperations = {
   ordersNeedingAttention: number;
   stockAlerts: number;
+  stockValue: number;
   lowOccupancyUnits: number;
 };
 

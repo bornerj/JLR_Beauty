@@ -305,11 +305,12 @@ export const moveFranchiseLeadStage = async (args: {
   token: string;
   leadId: number;
   stage: FranchisePipeline["stages"][number]["stage"];
+  reason: string;
 }): Promise<FranchisePipeline> => {
   const response = await fetch(`${getApiUrl()}/api/admin-v2/growth/franchises/${args.leadId}/stage`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ stage: args.stage }),
+    body: JSON.stringify({ stage: args.stage, reason: args.reason }),
   });
   if (!response.ok) {
     throw new Error(await parseApiError(response));

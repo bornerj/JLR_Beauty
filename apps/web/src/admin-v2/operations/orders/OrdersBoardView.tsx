@@ -4,6 +4,7 @@ import { logger } from "../../../utils/logger";
 import { useAdminScope } from "../../shell/adminScope";
 import { fetchOrdersBoard, fetchOrdersFlow } from "../../shared/api";
 import { formatCurrencyBRL } from "../../shared/format";
+import { KanbanColumnHeader } from "../../shell/KanbanColumnHeader";
 import type { OrdersBoard, OrdersFlow } from "./types";
 import { OrderCardView } from "./components/OrderCardView";
 import { OrderFlowTimeline } from "./components/OrderFlowTimeline";
@@ -90,12 +91,14 @@ export function OrdersBoardView() {
           const hiddenCount = column.count - column.orders.length;
           return (
             <div key={columnKey} className="flex flex-col gap-3">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="text-sm font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-                  {COLUMN_LABELS[columnKey]} · {column.count}
-                </p>
-                <p className="text-sm text-stone-500 dark:text-stone-400">{formatCurrencyBRL(column.totalValue)}</p>
-              </div>
+              <KanbanColumnHeader>
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-sm font-bold uppercase tracking-wider text-forest">
+                    {COLUMN_LABELS[columnKey]} · {column.count}
+                  </p>
+                  <p className="text-sm text-stone-600 dark:text-stone-400">{formatCurrencyBRL(column.totalValue)}</p>
+                </div>
+              </KanbanColumnHeader>
               <div className="flex flex-col gap-2">
                 {column.orders.length === 0 ? (
                   <p className="rounded-lg border border-dashed border-stone-200 p-3 text-sm text-stone-500 dark:text-stone-400">

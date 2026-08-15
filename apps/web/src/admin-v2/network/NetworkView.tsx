@@ -4,6 +4,7 @@ import { logger } from "../../utils/logger";
 import { useAdminScope } from "../shell/adminScope";
 import { fetchNetworkBoard } from "../shared/api";
 import { STATE_LABELS } from "../shared/health";
+import { KanbanColumnHeader } from "../shell/KanbanColumnHeader";
 import type { NetworkBoard } from "./types";
 import { NetworkUnitCardView } from "./components/NetworkUnitCardView";
 
@@ -76,7 +77,9 @@ export function NetworkView() {
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="text-3xl font-bold text-forest">Rede</h1>
-        <p className="text-base text-stone-600 dark:text-stone-400">últimos {board.period.days} dia(s)</p>
+        <p className="text-base text-stone-600 dark:text-stone-400">
+          quais unidades estão bem, quais precisam de atenção, e por quê · últimos {board.period.days} dia(s)
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -84,9 +87,11 @@ export function NetworkView() {
           const cards = board.columns[columnKey];
           return (
             <div key={columnKey} className="flex flex-col gap-3">
-              <p className="text-sm font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-                {STATE_LABELS[COLUMN_STATE_KEY[columnKey]]} · {cards.length}
-              </p>
+              <KanbanColumnHeader>
+                <p className="text-sm font-bold uppercase tracking-wider text-forest">
+                  {STATE_LABELS[COLUMN_STATE_KEY[columnKey]]} · {cards.length}
+                </p>
+              </KanbanColumnHeader>
               <div className="flex flex-col gap-2">
                 {cards.length === 0 ? (
                   <p className="rounded-lg border border-dashed border-stone-200 p-3 text-sm text-stone-500 dark:text-stone-400">

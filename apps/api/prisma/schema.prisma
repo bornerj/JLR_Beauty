@@ -710,6 +710,9 @@ model FranchiseLeadStageHistory {
   toStage   FranchiseStage
   lead      FranchiseLead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
   changedAt DateTime        @default(now())
+  /// PLAN-0025 (item 3) — motivo/evento que motivou a mudança de etapa, capturado via modal
+  /// no frontend. Nullable: registros históricos anteriores a esta migração ficam sem motivo.
+  reason    String?
 
   @@index([leadId, changedAt])
 }

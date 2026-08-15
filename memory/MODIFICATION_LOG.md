@@ -2,6 +2,81 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — `PLAN-0025` executado: polimento de UX do Admin V2 + achado sistêmico de CSS
+
+- **Contexto/objetivo**: execução do `PLAN-0025` aprovada pelo usuário ("pode começar"). 6 ondas
+  (itens 1, 3, 4, 5, 6, 7 do pedido original) mais 1 achado não planejado, corrigido na mesma
+  leva depois de gate socrático.
+- **Onda 1 (item 1 — cabeçalho dos kanban)**: `KanbanColumnHeader.tsx` (novo, compartilhado)
+  aplicado em `NetworkView.tsx`, `OrdersBoardView.tsx`, `PipelineBoardView.tsx` — fundo
+  `cream-sidebar`/borda `gold`, reusando tokens já existentes do shell.
+- **Onda 2 (item 3 — motivo de mudança de etapa)**: migração aditiva
+  `20260815192400_add_franchise_stage_history_reason` (`FranchiseLeadStageHistory.reason
+  String?`); `moveLeadStage()` e a rota `PATCH .../stage` passaram a aceitar `reason`;
+  `StageChangeReasonModal.tsx` (novo) — abre ao trocar a etapa no `LeadCard`, texto obrigatório,
+  Cancelar reverte o select (controlado, sem lógica extra), Confirmar chama a API e fecha sozinho.
+- **Onda 3 (item 4 — botões OAuth mortos)**: `AuthModalsSection.tsx` — removidos os botões
+  Google/Facebook (login e cadastro) e o divisor "ou". Decisão do usuário: não implementar OAuth
+  agora (zero infraestrutura hoje + bloqueio real de TLS em produção, `PLAN-0019` `BLOCKED`).
+- **Onda 4 (item 5 — texto explicativo da Rede)**: `NetworkView.tsx` ganhou o subtítulo "quais
+  unidades estão bem, quais precisam de atenção, e por quê" (reusa a pergunta já documentada no
+  `PLAN-0022` Onda 2, não inventada).
+- **Onda 5 (item 6 — contraste da Agenda-Capacidade)**: `OCCUPANCY_CELL_CLASS` com opacidades
+  aumentadas (`/20`-`/25` → `/40`-`/55`). Mesma lógica de negócio mantida (vermelho=ocioso,
+  verde=ocupado), por decisão explícita do usuário.
+- **Onda 6 (item 7 — indicadores de estoque)**: `PanoramaOperations.stockValue` exposto (já era
+  calculado por `getInventoryOverview`, só descartado); card "Operação agora" do Panorama ganhou
+  a linha "Valor em estoque". Ticket médio por unidade já existia no Comparador — nada novo.
+- **Onda 0 — achado não planejado, corrigido na mesma leva**: durante a validação visual do item
+  6, checagem de pixel real (não só "parece certo") revelou que os 4 tokens semânticos `state-*`
+  (`DECISION-013` regra #6) nunca foram compilados no CSS servido desde a Onda 1 do `PLAN-0022`
+  — o projeto usa CSS Tailwind pré-compilado/hand-maintained, sem passo de build Tailwind no
+  `npm run build`/`Dockerfile` (mesma causa raiz do `ERR-0040`, aqui em escopo sistêmico: afetava
+  Health Score, Insight Engine, Radar/Gargalos, não só a Agenda-Capacidade). Gate socrático
+  aplicado antes de corrigir (usuário aprovou regenerar de verdade via Tailwind CLI em vez de
+  remendo pontual). Tentativa de **substituir** os 2 CSS existentes foi cogitada e **rejeitada**
+  — eles têm CSS customizado hand-written misturado (`.metric-card`, `.footer-*`, `.nav-*`, etc.)
+  que `tailwindcss build` não reproduz. Fix aditivo aplicado:
+  `apps/web/src/styles/tailwind.generated.css` (novo, gerado via `npx tailwindcss@3.4.17`, 161
+  classes que faltavam) importado por último em `main.tsx`. Ver `ERR-0049`.
+- **Validações executadas**: `tsc -b` (api+web) limpo; `npm run build` (api+web) PASS; `npm run
+  test` (api) **134/134 PASS**; `npm run lint` (web) sem regressão nova; `docker compose build` +
+  redeploy (2 rodadas); **E2E real** (PATCH de stage com/sem `reason`, persistência conferida
+  direto no banco; `stockValue` real no Panorama; regressão OK em todos os endpoints de
+  inteligência); **validação visual real** — 11 checks Playwright + **checagem de pixel via PIL**
+  confirmando o fix de CSS em 3 telas (Agenda-Capacidade, Panorama, Insights — a última nem
+  tocada por este plano, confirmando o alcance sistêmico do fix).
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0025-ADMIN-V2-POLIMENTO-UX.md`; `memory/logs/DEBUG-HISTORY.md` (`ERR-0049`);
+  `memory/logs/BUILD-HISTORY.md` (migração + referência do pipeline de CSS).
+- **Status**: `PLAN-0025` concluído, validado de verdade. Sem commit/push (aguardando
+  autorização do usuário). Item 2 (Cadastros/Sistema nativos) segue desmembrado, aguardando
+  atualização da `DECISION-013` antes de virar `PLAN-0026`.
+
+## 2026-08-15 — `PLAN-0025` escrito: polimento de UX do Admin V2 (7 itens do usuário)
+
+- **Contexto/objetivo**: usuário trouxe 7 itens de ajuste/melhoria pós-merge do PR #1. RAG feito
+  em todos antes de planejar; gate socrático em 3 pontos que mudavam escopo/direção.
+- **Achados do RAG que mudaram o plano**:
+  - Item 2 (Cadastros/Sistema nativos) contraria `DECISION-013` regra #5 e é de longe o maior
+    item (~10 telas legadas) — **desmembrado** do plano, vira `PLAN-0026` futuro, condicionado a
+    atualizar a `DECISION-013` primeiro. `memory/progress.md` registra a pendência.
+  - Item 4 (OAuth Google/Facebook): zero infraestrutura hoje, e bloqueio real de produção
+    (Google exige callback HTTPS, `PLAN-0019` TLS segue `BLOCKED`) — usuário decidiu não
+    implementar agora, só remover os botões mortos.
+  - Item 6 (contraste da Agenda-Capacidade): a descrição do usuário ("branco em 0%, cor quando
+    ocupado") inverteria a lógica de negócio atual (vermelho=ocioso/perdendo receita,
+    verde=ocupado, proposital) — usuário confirmou manter a lógica, só revisar o contraste.
+  - Item 7 (indicadores de venda/estoque): a maior parte já existe no backend — ticket médio por
+    unidade já está no Comparador (RETROFIT-014); valor em estoque (`stockValue`) já é calculado
+    por `getInventoryOverview()` mas descartado pelo Panorama — é plumbing, não cálculo novo.
+- **Arquivos alterados**: `memory/plans/PLAN-0025-ADMIN-V2-POLIMENTO-UX.md` (novo, 6 ondas:
+  cabeçalho dos kanban, motivo de mudança de etapa + migração aditiva, remoção dos botões OAuth,
+  texto explicativo da Rede, contraste da Agenda-Capacidade, indicadores de estoque no
+  Panorama), `memory/progress.md` (linha nova pra pendência do item 2/futuro `PLAN-0026`).
+- **Status**: plano escrito, aguardando aprovação do usuário para executar. Sem código alterado
+  ainda.
+
 ## 2026-08-15 15:17 — SESSION AUDIT — PASS (fechamento de sessão)
 
 | Item | Resultado |

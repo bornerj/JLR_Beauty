@@ -55,19 +55,6 @@ export const AuthModalsSection = (): ReactElement => {
             >
               Entrar
             </button>
-            <div className="flex items-center gap-3 my-4">
-              <span className="flex-1 h-px bg-forest/10 dark:bg-white/10"></span>
-              <span className="text-[10px] text-forest/50 dark:text-white/50 uppercase tracking-widest">ou</span>
-              <span className="flex-1 h-px bg-forest/10 dark:bg-white/10"></span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button className="border border-forest/10 dark:border-white/10 text-forest dark:text-white py-2 text-xs rounded-lg hover:border-primary">
-                Google
-              </button>
-              <button className="border border-forest/10 dark:border-white/10 text-forest dark:text-white py-2 text-xs rounded-lg hover:border-primary">
-                Facebook
-              </button>
-            </div>
             <p className="text-xs text-forest/60 dark:text-white/60 mt-4">
               Não tem cadastro?
               <button onClick={() => authWindow.switchToSignup?.()} className="text-primary hover:underline ml-1">
@@ -142,19 +129,6 @@ export const AuthModalsSection = (): ReactElement => {
             >
               Cadastrar
             </button>
-            <div className="flex items-center gap-3 my-4">
-              <span className="flex-1 h-px bg-forest/10 dark:bg-white/10"></span>
-              <span className="text-[10px] text-forest/50 dark:text-white/50 uppercase tracking-widest">ou</span>
-              <span className="flex-1 h-px bg-forest/10 dark:bg-white/10"></span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button className="border border-forest/10 dark:border-white/10 text-forest dark:text-white py-2 text-xs rounded-lg hover:border-primary">
-                Google
-              </button>
-              <button className="border border-forest/10 dark:border-white/10 text-forest dark:text-white py-2 text-xs rounded-lg hover:border-primary">
-                Facebook
-              </button>
-            </div>
             <p className="text-xs text-forest/60 dark:text-white/60 mt-4">
               Já tem conta?
               <button onClick={() => authWindow.switchToLogin?.()} className="text-primary hover:underline ml-1">

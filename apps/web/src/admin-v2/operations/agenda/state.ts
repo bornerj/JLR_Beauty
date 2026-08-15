@@ -20,11 +20,18 @@ export const OCCUPANCY_LEVEL_LABELS: Record<OccupancyLevel, string> = {
   HEALTHY: "Ocupada",
 };
 
+/**
+ * PLAN-0025 (item 6): opacidades aumentadas (`/20`-`/25` -> `/40`-`/55`) — no contraste
+ * anterior, os 3 níveis ficavam próximos demais do branco da tabela e do "sem escala"
+ * (`bg-stone-50`), difíceis de distinguir à primeira vista. Mesma lógica de negócio
+ * (vermelho = ocioso/perdendo receita, verde = ocupado) — decisão explícita do usuário de
+ * manter, só revisar o contraste visual.
+ */
 export const OCCUPANCY_CELL_CLASS: Record<OccupancyLevel, string> = {
   NONE: "bg-stone-50 text-stone-400 dark:bg-forest-green/20 dark:text-stone-500",
-  CRITICAL: "bg-state-critical/20 text-forest hover:bg-state-critical/30",
-  ATTENTION: "bg-state-attention/20 text-forest hover:bg-state-attention/30",
-  HEALTHY: "bg-state-healthy/25 text-forest hover:bg-state-healthy/35",
+  CRITICAL: "bg-state-critical/40 text-forest hover:bg-state-critical/50",
+  ATTENTION: "bg-state-attention/40 text-forest hover:bg-state-attention/50",
+  HEALTHY: "bg-state-healthy/45 text-forest hover:bg-state-healthy/55",
 };
 
 export const OCCUPANCY_DOT_CLASS: Record<OccupancyLevel, string> = {

@@ -4,23 +4,27 @@ import { FRANCHISE_STAGES } from "../types";
 import type { FranchiseStage, PipelineLead } from "../types";
 
 /**
- * Admin V2 (PLAN-0022, Onda 9 + RETROFIT-010b) — cartão de lead no Kanban comercial
- * (RETROFIT-010). O board continua "usuário nunca arrasta" (mesmo padrão do Mapa da
- * Rede, Onda 2) — a movimentação de etapa é um seletor explícito, não drag-and-drop.
- * Movimento livre entre qualquer etapa (não só a próxima) — justificativa em
- * `moveLeadStage` no backend.
+ * Admin V2 (PLAN-0022, Onda 9 + RETROFIT-010b; motivo obrigatório desde PLAN-0025) —
+ * cartão de lead no Kanban comercial (RETROFIT-010). O board continua "usuário nunca
+ * arrasta" (mesmo padrão do Mapa da Rede, Onda 2) — a movimentação de etapa é um seletor
+ * explícito, não drag-and-drop. Selecionar uma etapa aqui só sinaliza a intenção pro
+ * `PipelineBoardView` (que abre o modal de motivo) — a mutação real só acontece se o
+ * usuário confirmar lá; como o `<select>` é controlado por `lead.stage`, cancelar o modal
+ * já reverte a UI sozinho (a prop não mudou). Movimento livre entre qualquer etapa (não só
+ * a próxima) — justificativa em `moveLeadStage` no backend.
  */
 
 export function LeadCard({
   lead,
   moving,
-  moveError,
-  onMoveStage,
+  onStageSelected,
 }: {
   lead: PipelineLead;
+  /** true enquanto existe uma troca de etapa pendente/em andamento pra este lead (modal
+   * de motivo aberto ou submetendo) — desabilita o select pra evitar uma segunda intenção
+   * em cima da primeira. Erro de envio aparece no modal, não mais aqui. */
   moving: boolean;
-  moveError: string | null;
-  onMoveStage: (stage: FranchiseStage) => void;
+  onStageSelected: (stage: FranchiseStage) => void;
 }) {
   return (
     <div
@@ -46,7 +50,7 @@ export function LeadCard({
         aria-label={`Mover ${lead.name} para outra etapa`}
         value={lead.stage}
         disabled={moving}
-        onChange={(event) => onMoveStage(event.target.value as FranchiseStage)}
+        onChange={(event) => onStageSelected(event.target.value as FranchiseStage)}
         className="mt-1 rounded-lg border border-gold/40 bg-white px-2 py-1 text-xs font-semibold text-forest disabled:opacity-50 dark:bg-forest"
       >
         {FRANCHISE_STAGES.map((stage) => (
@@ -55,7 +59,6 @@ export function LeadCard({
           </option>
         ))}
       </select>
-      {moveError && <p className="text-[11px] font-semibold text-state-critical">{moveError}</p>}
     </div>
   );
 }

@@ -229,6 +229,7 @@ export const getPanorama = async (
     operations: {
       ordersNeedingAttention,
       stockAlerts: inventoryOverview.consolidated.outOfStock + inventoryOverview.consolidated.lowStock,
+      stockValue: inventoryOverview.consolidated.stockValue,
       lowOccupancyUnits,
     },
     financial: {

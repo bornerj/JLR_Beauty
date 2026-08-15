@@ -13,7 +13,7 @@ const baseInputs = (): RadarInputs => ({
     period: PERIOD,
     scope: { unitIds: "all" },
     network: { units: 1, takeoff: 0, healthy: 1, attention: 0, critical: 0 },
-    operations: { ordersNeedingAttention: 0, stockAlerts: 0, lowOccupancyUnits: 0 },
+    operations: { ordersNeedingAttention: 0, stockAlerts: 0, stockValue: 0, lowOccupancyUnits: 0 },
     financial: { revenue: 1000, revenueTrendPercent: 0, marginPercent: 50, marginTrendPp: 0 },
     customers: { newInPeriod: 0, recurrenceRate: 0, atRisk: 0 },
     attention: [],

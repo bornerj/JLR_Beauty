@@ -3,26 +3,31 @@ import { getToken } from "../../../lib/auth";
 import { logger } from "../../../utils/logger";
 import { fetchFranchisePipeline, moveFranchiseLeadStage } from "../../shared/api";
 import { formatCurrencyBRL } from "../../shared/format";
+import { KanbanColumnHeader } from "../../shell/KanbanColumnHeader";
 import { STAGE_LABELS } from "./state";
 import { LeadCard } from "./components/LeadCard";
+import { StageChangeReasonModal } from "./components/StageChangeReasonModal";
 import { FRANCHISE_STAGES } from "./types";
 import type { FranchisePipeline, FranchiseStage } from "./types";
 
 /**
- * Admin V2 (PLAN-0022, Onda 9 + RETROFIT-010b) — Pipeline de Franquias (RETROFIT-010).
- * Pergunta que a tela fecha: "onde estão as oportunidades comerciais de franquia?"
- * Kanban comercial clássico, com alerta visual quando uma etapa está mais lenta que o
- * tempo médio histórico esperado. Movimentação de etapa via seletor explícito no cartão
- * (RETROFIT-010b) — nunca drag-and-drop, mesmo padrão do Mapa da Rede da Onda 2.
- * Distinto de "franquia em operação" (`Unit`, Ondas 1-8) — este é o funil de VENDA,
- * antes de virar unidade.
+ * Admin V2 (PLAN-0022, Onda 9 + RETROFIT-010b; motivo obrigatório desde PLAN-0025) —
+ * Pipeline de Franquias (RETROFIT-010). Pergunta que a tela fecha: "onde estão as
+ * oportunidades comerciais de franquia?" Kanban comercial clássico, com alerta visual
+ * quando uma etapa está mais lenta que o tempo médio histórico esperado. Movimentação de
+ * etapa via seletor explícito no cartão (RETROFIT-010b) — nunca drag-and-drop, mesmo
+ * padrão do Mapa da Rede da Onda 2 — seguida de um modal pequeno pedindo o motivo/evento
+ * antes de confirmar de verdade (PLAN-0025, item 3). Distinto de "franquia em operação"
+ * (`Unit`, Ondas 1-8) — este é o funil de VENDA, antes de virar unidade.
  */
 
 type PipelineState = { loading: boolean; data: FranchisePipeline | null; error: string | null };
-type MoveState = { leadId: number; error: string | null } | null;
+type PendingChange = { leadId: number; leadName: string; targetStage: FranchiseStage } | null;
+type MoveState = { leadId: number; submitting: boolean; error: string | null } | null;
 
 export function PipelineBoardView() {
   const [state, setState] = useState<PipelineState>({ loading: true, data: null, error: null });
+  const [pendingChange, setPendingChange] = useState<PendingChange>(null);
   const [moveState, setMoveState] = useState<MoveState>(null);
 
   const load = useCallback(async () => {
@@ -46,23 +51,34 @@ export function PipelineBoardView() {
     void load();
   }, [load]);
 
-  const moveStage = useCallback(async (leadId: number, stage: FranchiseStage) => {
-    const token = getToken();
-    if (!token) {
-      setMoveState({ leadId, error: "Sessão expirada. Faça login novamente." });
-      return;
-    }
-    setMoveState({ leadId, error: null });
-    try {
-      const data = await moveFranchiseLeadStage({ token, leadId, stage });
-      setState({ loading: false, data, error: null });
-      setMoveState(null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Falha ao mover o lead de etapa.";
-      logger.warn("Falha ao mover etapa de lead de franquia (Admin V2)", { error: message, leadId, stage });
-      setMoveState({ leadId, error: message });
-    }
+  const cancelPendingChange = useCallback(() => {
+    setPendingChange(null);
+    setMoveState(null);
   }, []);
+
+  const confirmPendingChange = useCallback(
+    async (reason: string) => {
+      if (!pendingChange) return;
+      const { leadId, targetStage } = pendingChange;
+      const token = getToken();
+      if (!token) {
+        setMoveState({ leadId, submitting: false, error: "Sessão expirada. Faça login novamente." });
+        return;
+      }
+      setMoveState({ leadId, submitting: true, error: null });
+      try {
+        const data = await moveFranchiseLeadStage({ token, leadId, stage: targetStage, reason });
+        setState({ loading: false, data, error: null });
+        setPendingChange(null);
+        setMoveState(null);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Falha ao mover o lead de etapa.";
+        logger.warn("Falha ao mover etapa de lead de franquia (Admin V2)", { error: message, leadId, stage: targetStage });
+        setMoveState({ leadId, submitting: false, error: message });
+      }
+    },
+    [pendingChange]
+  );
 
   if (state.loading && !state.data) {
     return <p className="text-base text-stone-600 dark:text-stone-400">Carregando pipeline de franquias…</p>;
@@ -102,11 +118,7 @@ export function PipelineBoardView() {
             const leads = pipeline.leads.filter((lead) => lead.stage === stageSummary.stage);
             return (
               <div key={stageSummary.stage} className="flex w-64 flex-shrink-0 flex-col gap-3">
-                <div
-                  className={`rounded-lg border p-3 ${
-                    stageSummary.isBottleneck ? "border-state-critical/40 bg-state-critical/5" : "border-[#cfe7d1] bg-white dark:border-forest-green dark:bg-forest"
-                  }`}
-                >
+                <KanbanColumnHeader className={stageSummary.isBottleneck ? "border-state-critical/60" : undefined}>
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="text-xs font-bold uppercase tracking-wider text-forest">{STAGE_LABELS[stageSummary.stage]}</p>
                     <p className="text-sm font-bold text-forest">{stageSummary.count}</p>
@@ -122,7 +134,7 @@ export function PipelineBoardView() {
                       ⚠ mais lento que o normal ({Math.round(stageSummary.avgDaysInStageNow ?? 0)}d parado em média)
                     </p>
                   )}
-                </div>
+                </KanbanColumnHeader>
 
                 <div className="flex flex-col gap-2">
                   {leads.length === 0 ? (
@@ -134,9 +146,10 @@ export function PipelineBoardView() {
                       <LeadCard
                         key={lead.leadId}
                         lead={lead}
-                        moving={moveState?.leadId === lead.leadId && moveState.error === null}
-                        moveError={moveState?.leadId === lead.leadId ? moveState.error : null}
-                        onMoveStage={(stage) => void moveStage(lead.leadId, stage)}
+                        moving={pendingChange?.leadId === lead.leadId}
+                        onStageSelected={(stage) =>
+                          setPendingChange({ leadId: lead.leadId, leadName: lead.name, targetStage: stage })
+                        }
                       />
                     ))
                   )}
@@ -146,6 +159,17 @@ export function PipelineBoardView() {
           })}
         </div>
       </div>
+
+      {pendingChange && (
+        <StageChangeReasonModal
+          leadName={pendingChange.leadName}
+          targetStage={pendingChange.targetStage}
+          submitting={moveState?.submitting ?? false}
+          error={moveState?.leadId === pendingChange.leadId ? moveState.error : null}
+          onCancel={cancelPendingChange}
+          onConfirm={(reason) => void confirmPendingChange(reason)}
+        />
+      )}
     </div>
   );
 }

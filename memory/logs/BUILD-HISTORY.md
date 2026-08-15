@@ -9,6 +9,51 @@ Notes:
 - Pin the version — unpinned npx tailwindcss may resolve a different version and break builds.
 -->
 
+## 2026-08-15 — Migração `add_franchise_stage_history_reason` (PLAN-0025, item 3)
+
+**O que mudou (aditivo, sem perda de dado):** `FranchiseLeadStageHistory.reason String?` (nullable
+— registros históricos anteriores a esta migração ficam com `reason: null`). Captura o motivo/evento
+que motivou a mudança de etapa de um lead de franquia, pedido via modal no frontend antes de
+confirmar a troca (`StageChangeReasonModal.tsx`).
+
+**Como rodou (mesmo procedimento documentado na migração `add_franchise_pipeline` abaixo — `postgres`
+só é alcançável de dentro da rede Docker Compose):**
+1. `docker cp apps/api/prisma/schema.prisma jlr_beauty-api-1:/app/prisma/schema.prisma`.
+2. `docker compose exec api sh -c 'DATABASE_URL="$DATABASE_MIGRATION_URL" npx prisma migrate dev --name add_franchise_stage_history_reason --skip-seed'` — role `jlrbeauty` (dona do banco), não a role de runtime `jlr_api_rw`.
+3. `docker cp jlr_beauty-api-1:/app/prisma/migrations/20260815192400_add_franchise_stage_history_reason apps/api/prisma/migrations/` — migration copiada de volta pro repositório.
+4. `npx prisma generate` local, pro Prisma Client do host reconhecer o campo novo.
+
+**Achado durante a execução:** nenhum drift pré-existente veio junto desta vez — `migration.sql`
+final é uma única linha (`ALTER TABLE "FranchiseLeadStageHistory" ADD COLUMN "reason" TEXT;`),
+diferente da migração anterior (`add_franchise_pipeline`, abaixo) que trouxe 2 mudanças de drift
+não relacionadas ao escopo da onda.
+
+---
+
+## Tailwind CSS — CSS pré-compilado, sem passo de build (ver `ERR-0049`)
+
+O `npm run build` (`tsc -b && vite build`) e o `Dockerfile` do `web` **não rodam nenhum passo de
+build do Tailwind** — `apps/web/src/styles/tailwind.css` e `tailwind.react.patch.css` são
+CSS pré-compilado, hand-maintained, commitado no repositório (não regenerado automaticamente).
+Classes Tailwind novas usadas no código que não estejam em nenhum dos 3 arquivos CSS
+(`tailwind.css`, `tailwind.react.patch.css`, `tailwind.generated.css`) **simplesmente não existem**
+no build servido — sem erro de lint/build/teste, silenciosamente (mesmo padrão do `ERR-0040`,
+achado de novo e de forma sistêmica no `ERR-0049`, 2026-08-15).
+
+**Comando confirmado nesta sessão** (`npx tailwindcss@3.4.17` funciona sem instalação prévia neste
+ambiente — fetch on-demand):
+```bash
+# rode da raiz do repo
+echo '@tailwind utilities;' > /tmp/tw-input.css
+npx tailwindcss@3.4.17 -c tailwind.config.js -i /tmp/tw-input.css \
+  -o apps/web/src/styles/tailwind.generated.css
+```
+
+**Nunca rode isso apontando pra `tailwind.css`/`tailwind.react.patch.css` diretamente** — esses 2
+arquivos têm CSS customizado hand-written misturado (`.metric-card`, `.footer-*`, `.nav-*`,
+`.brand-*`, `.flip-card`, `.display-*`, etc.) que `tailwindcss build` não reproduz; sobrescrever
+apaga esse CSS. `tailwind.generated.css` é aditivo por design — sempre regenerar só ele.
+
 ## 2026-08-14 — Migração `add_franchise_pipeline` (PLAN-0022, Onda 9)
 
 **O que mudou (aditivo, sem perda de dado — `FranchiseLead` estava vazia no ambiente local,

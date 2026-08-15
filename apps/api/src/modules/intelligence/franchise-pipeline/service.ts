@@ -74,7 +74,11 @@ export const getFranchisePipeline = async (): Promise<FranchisePipeline> => {
  * Sem-op honesto quando a etapa pedida já é a atual — não grava uma transição fantasma
  * no histórico (poluiria a média de "tempo médio esperado" com uma duração de 0 dias).
  */
-export const moveLeadStage = async (leadId: number, newStage: FranchiseStage): Promise<FranchisePipeline> => {
+export const moveLeadStage = async (
+  leadId: number,
+  newStage: FranchiseStage,
+  reason?: string
+): Promise<FranchisePipeline> => {
   const lead = await prisma.franchiseLead.findUniqueOrThrow({ where: { id: leadId }, select: { id: true, stage: true } });
 
   if (lead.stage !== newStage) {
@@ -82,7 +86,7 @@ export const moveLeadStage = async (leadId: number, newStage: FranchiseStage): P
     await prisma.$transaction([
       prisma.franchiseLead.update({ where: { id: leadId }, data: { stage: newStage, stageChangedAt: changedAt } }),
       prisma.franchiseLeadStageHistory.create({
-        data: { leadId, fromStage: lead.stage, toStage: newStage, changedAt },
+        data: { leadId, fromStage: lead.stage, toStage: newStage, changedAt, reason: reason ?? null },
       }),
     ]);
   }
