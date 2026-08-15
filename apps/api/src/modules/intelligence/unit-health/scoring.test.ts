@@ -4,6 +4,7 @@ import { computeHealthScore } from "./scoring";
 import type { UnitHealthRawMetrics } from "./types";
 
 const baseMetrics: UnitHealthRawMetrics = {
+  revenue: 10000,
   marginPercent: 20,
   revenueTrendPercent: 0,
   occupancyRate: 50,
@@ -20,6 +21,7 @@ test("computeHealthScore: unidade mediana em tudo cai em ATTENTION, nunca em CRI
 
 test("computeHealthScore: unidade excelente em tudo bate TAKEOFF", () => {
   const result = computeHealthScore({
+    revenue: 50000,
     marginPercent: 45,
     revenueTrendPercent: 20,
     occupancyRate: 95,
@@ -33,6 +35,7 @@ test("computeHealthScore: unidade excelente em tudo bate TAKEOFF", () => {
 
 test("computeHealthScore: unidade péssima em tudo bate CRITICAL", () => {
   const result = computeHealthScore({
+    revenue: 1000,
     marginPercent: 2,
     revenueTrendPercent: -25,
     occupancyRate: 10,
@@ -46,6 +49,7 @@ test("computeHealthScore: unidade péssima em tudo bate CRITICAL", () => {
 
 test("computeHealthScore: componentes fora de 0-100 (dados inconsistentes) são sempre clampados", () => {
   const result = computeHealthScore({
+    revenue: -1000, // receita negativa (estorno líquido) — não afeta normalização, só exibição
     marginPercent: -50, // margem negativa (prejuízo) — não pode gerar componente negativo
     revenueTrendPercent: 500, // outlier extremo — não pode estourar 100
     occupancyRate: 150, // taxa inválida vinda de um cálculo com bug upstream
@@ -68,6 +72,7 @@ test("computeHealthScore: regra de explicabilidade — sempre devolve score + st
 
 test("computeHealthScore: aponta corretamente o principal problema e a principal força", () => {
   const result = computeHealthScore({
+    revenue: 30000,
     marginPercent: 45, // profitability alto
     revenueTrendPercent: 20, // growth alto
     occupancyRate: 95, // occupancy alto

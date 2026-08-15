@@ -2,6 +2,20 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — fix: typecheck errors em scoring.test.ts (point-in-time)
+
+- **Contexto/objetivo**: usuário pediu "fix typecheck errors". `tsc -b --noEmit` (apps/api,
+  inclui testes; `tsc -p tsconfig.build.json` exclui testes e por isso não pegava o erro)
+  apontou 6 erros TS2741/TS2345 em `unit-health/scoring.test.ts`: os 5 objetos de métricas do
+  teste não tinham o campo `revenue`, adicionado ao tipo `UnitHealthRawMetrics` durante a
+  RETROFIT-017 (Health Score evolução, PLAN-0023 Onda 5) mas nunca propagado ao teste.
+- **Arquivos alterados**: `apps/api/src/modules/intelligence/unit-health/scoring.test.ts` —
+  adicionado `revenue: <valor>` em cada um dos 5 objetos `UnitHealthRawMetrics` literais
+  (valor é só exibição, não entra na normalização — não afeta as asserções).
+- **Validações executadas**: `npx tsc -b --noEmit` limpo em `apps/api` e `apps/web`;
+  `npm run test` (api) — **134/134 PASS**.
+- **Status**: concluído. Sem commit/push (aguardando autorização do usuário).
+
 ## 2026-08-15 05:35:29 — SESSION AUDIT — PASS (fechamento de sessão)
 
 | Item | Resultado |
