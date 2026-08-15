@@ -9,7 +9,10 @@ export type PanoramaNetwork = {
 };
 
 export type PanoramaOperations = {
+  /** Pedidos PAGO travados há mais de 24h em relação ao fim do período (`range.to`), não a
+   * "agora" — ver comentário de `countOrdersNeedingAttention` em `service.ts`. */
   ordersNeedingAttention: number;
+  /** Estoque atual (sem histórico) — sempre o estado "agora", não escopado ao período. */
   stockAlerts: number;
   /** Unidades com componente de ocupação do Health Score abaixo de 50% no período. */
   lowOccupancyUnits: number;

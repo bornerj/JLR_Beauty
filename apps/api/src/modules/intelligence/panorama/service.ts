@@ -44,8 +44,22 @@ const countByIdentity = (
   return map;
 };
 
-const countOrdersNeedingAttention = async (unitIds: number[] | undefined): Promise<number> => {
-  const staleBefore = new Date(Date.now() - ORDER_ATTENTION_HOURS * 60 * 60 * 1000);
+/**
+ * `referenceDate` é `range.to` do período pedido, não `Date.now()` — achado #8 do
+ * `/code-review high` (2026-08-15): antes disso, uma requisição com `to` no passado (a UI
+ * hoje só manda janelas rolantes terminando em "agora", mas a API aceita `from`/`to`
+ * arbitrários) devolvia a contagem de pedidos travados de HOJE, ignorando o período pedido
+ * — inconsistente com todo o resto de `getPanorama` (`financial`/`customers`/`network`
+ * respeitam `range.from`/`range.to`). Limitação real, documentada: `Order` guarda só o
+ * `fulfillmentStatus` atual, não um histórico — não dá pra reconstruir "estava travado
+ * naquela data" sem event-sourcing. O que este fix garante é a consistência de escopo (a
+ * contagem nunca ignora o `to` pedido), não uma reconstrução histórica perfeita.
+ */
+const countOrdersNeedingAttention = async (
+  referenceDate: Date,
+  unitIds: number[] | undefined
+): Promise<number> => {
+  const staleBefore = new Date(referenceDate.getTime() - ORDER_ATTENTION_HOURS * 60 * 60 * 1000);
   return prisma.order.count({
     where: {
       status: "PAGO",
@@ -170,7 +184,7 @@ export const getPanorama = async (
         unitId: singleUnitId,
       }),
       getInventoryOverview(unitIds),
-      countOrdersNeedingAttention(unitIds ?? undefined),
+      countOrdersNeedingAttention(range.to, unitIds ?? undefined),
       calculateCustomerSignals(range.from, range.to, unitIds),
     ]);
 
@@ -189,10 +203,20 @@ export const getPanorama = async (
   const lowOccupancyUnits = unitsHealth.filter((unit) => unit.components.occupancy < 50).length;
 
   const revenuePrevious = previousInsights.totals.revenue;
+  const revenueCurrent = currentInsights.totals.revenue;
+  /**
+   * Mesmo fix do achado #9 aplicado em `unit-health/service.ts` (2026-08-15) — encontrado
+   * duplicado aqui durante a investigação, não fazia parte do achado original do review.
+   * Quando não há receita anterior pra comparar, `+25%` é usado como piso honesto (não uma
+   * reconstrução do valor real) em vez de `0%` (flat, subestimava qualquer crescimento vindo
+   * de uma base zero). Duas receitas zeradas continuam `0%`.
+   */
   const revenueTrendPercent =
     revenuePrevious > 0
-      ? round1(((currentInsights.totals.revenue - revenuePrevious) / revenuePrevious) * 100)
-      : 0;
+      ? round1(((revenueCurrent - revenuePrevious) / revenuePrevious) * 100)
+      : revenueCurrent > 0
+        ? 25
+        : 0;
   const marginTrendPp = round1(currentInsights.totals.marginPercent - previousInsights.totals.marginPercent);
 
   const attention = buildAttentionSignals(unitsHealth, ordersNeedingAttention);

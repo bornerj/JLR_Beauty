@@ -2,6 +2,40 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-15 — Investigação dos achados #8 e #9 do `/code-review high` (pós-merge)
+
+- **Contexto/objetivo**: sessão anterior fechou o PR #1 deixando 2 achados do review sem
+  correção — não confirmados de verdade por timeout do agente revisor. Usuário pediu pra
+  investigar os dois a fundo nesta sessão.
+- **Achado #8 — confirmado e corrigido**: `panorama/service.ts` — `countOrdersNeedingAttention`
+  usava `Date.now()` em vez do `to` do período pedido (único campo do `getPanorama` que
+  ignorava o filtro de período). Corrigido pra receber `range.to` como referência. Ver
+  `ERR-0047`.
+- **Achado #9 — confirmado, e pior do que reportado**: `unit-health/service.ts` —
+  `revenueTrendPercent` caía pra `0%` (flat) quando a receita do período anterior era zero,
+  subestimando o componente de Crescimento (peso 20%) do Health Score. **Investigação achou o
+  mesmo bug duplicado em `panorama/service.ts`** (não fazia parte do achado original). Usuário
+  escolheu explicitamente o tratamento via `AskUserQuestion` (piso de `+25%`, o menor valor que
+  já satura `normalizeGrowth`, em vez de `null`/mudança de contrato — decisão consciente de não
+  fabricar um percentual exato, mas também não introduzir uma mudança maior de tipo). Corrigido
+  nos dois arquivos. Ver `ERR-0048`.
+- **Validações executadas**: `npx tsc -b --noEmit` (api) limpo; `npm run build` (api) PASS;
+  `npm run test` (api) **134/134 PASS**, sem regressão; `docker compose build api` +
+  `up -d --force-recreate api` — saudável. **E2E real**: período normal (`days=30`) mantém
+  `ordersNeedingAttention: 28` (sem regressão); período histórico arbitrário
+  (`from=2020-01-01&to=2020-01-31`) passou a devolver `0` (antes devolveria `28`
+  incorretamente); as 5 unidades passaram a mostrar `revenueTrendPercent: 25` em vez de `0`
+  (Health Score de cada uma subiu, componente de Crescimento saturando corretamente);
+  regressão OK nos 7 endpoints de inteligência. **Visual real via Playwright**: card "Resultado"
+  do Panorama mostrando "Receita +25.0%" (era "0.0%" nas screenshots desta mesma sessão, antes
+  do fix).
+- **Arquivos alterados**: `apps/api/src/modules/intelligence/panorama/service.ts`,
+  `apps/api/src/modules/intelligence/panorama/types.ts`,
+  `apps/api/src/modules/intelligence/unit-health/service.ts`,
+  `memory/logs/DEBUG-HISTORY.md` (`ERR-0047`, `ERR-0048`).
+- **Status**: concluído, validado de verdade. Sem commit/push (aguardando autorização do
+  usuário).
+
 ## 2026-08-15 14:49 — SESSION AUDIT — PASS (fechamento de sessão)
 
 | Item | Resultado |

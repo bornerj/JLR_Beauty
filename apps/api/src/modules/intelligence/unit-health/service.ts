@@ -126,10 +126,22 @@ const computeUnitHealthMetrics = async (
     ]);
 
   const revenuePrevious = previousInsights.totals.revenue;
+  const revenueCurrent = currentInsights.totals.revenue;
+  /**
+   * Achado #9 do `/code-review high` (2026-08-15): quando `revenuePrevious` é 0, o cálculo
+   * de percentual não existe (divisão por zero) — tratar isso como "0% = flat" subestimava o
+   * componente de Crescimento do Health Score (peso 20%) para qualquer unidade no primeiro
+   * período ou com receita anterior genuinamente zero. Fix: quando há receita atual mas
+   * nenhuma anterior pra comparar, usa `+25%` como piso — o menor valor que já satura
+   * `normalizeGrowth` (nota 100) — em vez de inventar um percentual exato que não se sabe
+   * qual é. Quando as duas receitas são zero, `0%` (flat) continua correto.
+   */
   const revenueTrendPercent =
     revenuePrevious > 0
-      ? round1(((currentInsights.totals.revenue - revenuePrevious) / revenuePrevious) * 100)
-      : 0;
+      ? round1(((revenueCurrent - revenuePrevious) / revenuePrevious) * 100)
+      : revenueCurrent > 0
+        ? 25
+        : 0;
 
   const raw: UnitHealthRawMetrics = {
     revenue: currentInsights.totals.revenue,
