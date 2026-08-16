@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-12 ✅ CONCLUÍDAS 2026-08-16. **Tier P e tier M inteiros fechados**; Onda 11 (Produtos, a mais pesada) e Onda 12 (Clientes, primeira do desmembramento de "Pessoas") também concluídas. Ondas 13-14 (Profissionais/Usuários) aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** ✅ 14/14 ONDAS CONCLUÍDAS 2026-08-16 — plano inteiro entregue e validado de verdade (E2E real + visual real em todas as ondas). Hub de Cadastros e hub de Sistema 100% nativos. Falta só o fechamento formal de Git (push acumulado, per autorização em pé) antes de renomear este arquivo pra `-DONE-`.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -329,9 +329,33 @@
 
 ---
 
-## Onda 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 14 — Usuários ✅ CONCLUÍDA 2026-08-16 (terceira do desmembramento de "Pessoas", fecha o plano)
 
-Mesmo padrão de todo o programa: RAG completo (schema, payload exato, campos reais do form legado) só quando é a vez da onda. Fecha o desmembramento de "Pessoas" e o plano inteiro — sensível (gestão de role/permissão via `users.ts`), revisar escopo por papel com atenção redobrada.
+**Pergunta que a tela fecha:** *quais contas de acesso existem, com que papel/status, e como criar/editar/excluir uma?*
+
+**RAG feito:** `users.ts` tem CRUD completo (`GET/POST/PATCH/DELETE /users`) — única das 3 entidades do desmembramento com as 4 operações (Clientes não tem `DELETE`, Profissionais não tem `POST`). Regras de permissão confirmadas no backend: só `MASTER` pode atribuir o papel `MASTER` (`POST`/`PATCH` genéricos, 403 caso contrário); excluir a própria conta é bloqueado (403); senha é opcional no `PATCH` (mantém a atual se omitida). Legado (`admin-people` aba Usuários, markup em `AdminPeopleView.tsx` + interação centralizada em `admin-core/behavior.ts`, mesmo padrão "interação em módulo separado do markup" achado na Onda 1) tem tabela de 14 colunas (incluindo uma só com a URL crua do avatar e o papel repetido em 2 colunas — redundância genuína, não modernização) + modal de preview somente-leitura separado do modal de edição.
+
+**Achado de contrato real (documentado, não corrigido — mesmo padrão do `ERR-0053`)**: existe uma rota dedicada e auditada pra troca de papel, `PATCH /users/:id/role` (`requireMaster`, grava `AuditLog` via `recordAudit("ROLE_CHANGE", ...)`), mas o formulário legado manda `role` dentro do `PATCH /users/:id` genérico — que **não** audita a troca. Replicado por paridade (mandar `role` no `PATCH` genérico, como o legado sempre fez); trocar de rota mudaria quem pode editar o quê (dedicada exige `MASTER`, genérica exige só `ADMIN`) e não foi pedido nesta onda.
+
+**Backend:** nenhuma mudança — reusa `/api/users` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/cadastros/users/types.ts` — `User`, `UserCreateInput`, `UserUpdateInput`, `USER_ROLES`/`USER_ROLE_LABELS`, `USER_STATUSES`/`USER_STATUS_LABELS`.
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchUsers`/`createUser`/`updateUser`/`deleteUser` (reusa `uploadAsset` da Onda 3 pro avatar).
+- [x] `apps/web/src/admin-v2/cadastros/users/components/UserFormModal.tsx` — criar/editar (senha obrigatória só na criação, em branco na edição mantém a atual), upload de avatar real com preview, **select de papel esconde "Master" quando quem está logado não é `MASTER`** (gate client-side espelhando a regra 403 do backend, mesmo padrão da Onda 6).
+- [x] `apps/web/src/admin-v2/cadastros/users/UsersListView.tsx` — tabela **simplificada pra 9 colunas** (de 14 do legado — removida a coluna de URL crua do avatar e a duplicação de papel, decisão de modernização documentada, mesmo espírito das Ondas 8/11) + busca + filtro de papel/status; `DeleteConfirmModal` reusado; **botão de excluir desabilitado na própria linha** (espelha o 403 de auto-exclusão do backend, evita o erro em vez de só tratá-lo). Sem modal de preview somente-leitura separado — edição já cobre tudo, mesmo padrão das outras 13 ondas.
+- [x] `AdminV2Root.tsx` — rota `cadastros/usuarios`; entrada em `CADASTROS_SUBROUTE_LABELS`. Sem colisão de slug (nenhum mundo de nível superior usa `/usuarios`).
+- [x] `CadastrosHubView.tsx` — card "Usuários" vira `native: true` — **hub de Cadastros fecha 100% nativo (8/8 cards)**, texto do header atualizado.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `eslint` nos arquivos tocados — só o padrão `react-hooks/set-state-in-effect` (fetch-on-mount) já tolerado; `npm run build` (web) PASS; CSS conferido sem precisar regenerar (todas as classes arbitrárias já existiam de ondas anteriores); `docker compose build web` + redeploy `--force-recreate`; `npm run test` (api) 134/134 PASS. **E2E real contra Postgres, cuidado redobrado por mexer em contas de acesso reais**: baseline de 11 usuários capturado (inclui as 2 contas `MASTER` reais do ambiente); criado usuário de teste descartável (nunca tocando nas contas reais); testado ciclo completo — `PATCH` de campos + troca de senha + troca de papel pra `MANAGER` + atribuição de `MASTER` (permitida, quem chamou já é `MASTER`) + reversão pra `CLIENT`; **bloqueio de auto-exclusão confirmado de verdade** (`DELETE` na própria conta logada → `403`, sem tocar em nenhuma conta real além da minha própria de teste); usuário de teste excluído (`204`); banco confirmado de volta a 11 usuários exatos, nenhuma conta real alterada. **Validação visual real** (Chrome real via `claude-in-chrome`, login `MASTER`, 12 checks, todos PASS): hub mostra "Usuários" nativo, 8/8 cards do hub agora "Abrir →"; breadcrumb correto; 11/11 usuários listados; select de papel do modal de criação mostra "Master" (confirma o gate — some quando logado como não-`MASTER`, verificado por leitura de código); criar usuário via UI, editar (status → Suspenso) reflete na tabela; excluir abre `DeleteConfirmModal` (não `window.confirm()`) e remove da lista, **persistência confirmada com reload** (volta a 11/11); busca filtra corretamente; botão de excluir da própria conta logada confirmado desabilitado via árvore de acessibilidade (tooltip "Não é possível excluir a própria conta").
+
+---
+
+## Plano concluído — 14/14 ondas ✅ 2026-08-16
+
+Todo o roadmap do `PLAN-0026` foi entregue: tier P (7 ondas) + tier M (3 ondas) + tier G (4 ondas — Produtos, Clientes, Profissionais, Usuários). Hub de Cadastros e hub de Sistema estão 100% nativos no Admin V2 — nenhum card aponta mais pro Admin legado (`/admin#view`). O legado (`apps/web/src/modules/admin-*/`) permanece intocado e funcional, servindo `/admin` normalmente (`DECISION-014` regra #6 — aposentadoria do legado continua fora de escopo, sem critério fixado).
+
+**Achados reais ao longo do plano** (todos documentados em `memory/logs/DEBUG-HISTORY.md`): `ERR-0050` (schema Zod de cupom), `ERR-0051` (CSS estático, Onda 6), `ERR-0052` (z-index de modal aninhado, Onda 7), `ERR-0053` (backend — produto com histórico de estoque não pode ser excluído, fora de escopo, Onda 11), `ERR-0054` (colisão de slug de rota, Onda 12), `ERR-0055` (fuso horário em data-pura-UTC, Onda 13).
 
 ---
 
@@ -349,8 +373,8 @@ Mesmo padrão de todo o programa: RAG completo (schema, payload exato, campos re
 
 ## Git Record of Delivery
 
-- Step 1 (Pre-commit review): pendente
-- Step 2 (Commit authorization): pendente
-- Step 3 (Commit confirmation): pendente
-- Step 4 (Push authorization and result): pendente
+- Step 1 (Pre-commit review): feito onda a onda (arquivos + validações listados em cada seção acima). Ondas 1-13 já commitadas individualmente (`531270b`, `4ea3066`, `7b84f6e`, `907f2d6`, ..., `74fe308`); Onda 14 é o commit pendente desta rodada.
+- Step 2 (Commit authorization): autorização em pé do usuário (2026-08-16) — "commit sem perguntar por onda" — cobre todas as 14 ondas, incluindo esta.
+- Step 3 (Commit confirmation): pendente (commit da Onda 14 a ser feito nesta sessão).
+- Step 4 (Push authorization and result): pendente — autorização em pé cobre só o commit por onda; push exige uma segunda aprovação explícita do usuário, própria pro final do plano (ainda não pedida).
 - Push status: PENDING

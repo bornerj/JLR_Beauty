@@ -7,11 +7,11 @@ import { HubCard } from "../shell/HubCard";
  * rota interna do V2 (`native: true`) só quando a tela correspondente é entregue. As duas
  * formas convivem até a lista inteira migrar.
  *
- * **Desmembramento de "Pessoas" (`DECISION-014` regra #3, Ondas 12-14)**: o legado tinha
- * Clientes/Profissionais/Usuários numa mega-tela só (`admin-people`, 1 card no hub). Onda 12
- * entregou Clientes nativo, Onda 13 entregou Profissionais nativo — os 3 viram cards
- * próprios aqui, cada um migrando pra rota interna na sua onda. Usuários ainda aponta pro
- * `/admin#usuarios` legado (destino real, só não deep-linkado pra sub-aba específica).
+ * **Desmembramento de "Pessoas" (`DECISION-014` regra #3, Ondas 12-14) — CONCLUÍDO**: o
+ * legado tinha Clientes/Profissionais/Usuários numa mega-tela só (`admin-people`, 1 card no
+ * hub). Onda 12 entregou Clientes nativo, Onda 13 Profissionais, Onda 14 Usuários — os 3
+ * viram cards próprios aqui, todos nativos. Fecha o `PLAN-0026` inteiro (14/14 ondas): hub
+ * de Cadastros 100% nativo.
  *
  * "Unidades" não entra: não existe `data-view` correspondente no Admin legado hoje
  * (unidades são geridas via seed/migration, não tela) — não fabricado link falso.
@@ -25,7 +25,7 @@ const CARDS = [
   { icon: "local_shipping", label: "Entrega", href: "/admin-v2/cadastros/entrega", native: true },
   { icon: "person", label: "Clientes", href: "/admin-v2/cadastros/clientes", native: true },
   { icon: "badge", label: "Profissionais", href: "/admin-v2/cadastros/profissionais", native: true },
-  { icon: "manage_accounts", label: "Usuários", href: "/admin#usuarios" },
+  { icon: "manage_accounts", label: "Usuários", href: "/admin-v2/cadastros/usuarios", native: true },
 ];
 
 export function CadastrosHubView() {
@@ -34,8 +34,7 @@ export function CadastrosHubView() {
       <div>
         <h1 className="text-3xl font-bold text-forest">Cadastros</h1>
         <p className="text-base text-stone-600 dark:text-stone-400">
-          Acesso às telas de cadastro — algumas já nativas do Admin V2 (`PLAN-0026`), outras
-          ainda apontando pro Admin legado enquanto sua onda não chega.
+          Acesso às telas de cadastro — 100% nativas do Admin V2 (`PLAN-0026` concluído).
         </p>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

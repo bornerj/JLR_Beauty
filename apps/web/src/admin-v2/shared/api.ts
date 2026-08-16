@@ -38,6 +38,7 @@ import type {
   ProfessionalCommissionProfile,
   ProfessionalCommissionProfileInput,
 } from "../cadastros/professionals/types";
+import type { User, UserCreateInput, UserUpdateInput } from "../cadastros/users/types";
 import type {
   Service,
   ServiceInput,
@@ -1174,6 +1175,49 @@ export const updateProfessionalCommissionProfile = async (args: {
 
 export const deleteProfessionalCommissionProfile = async (args: { token: string; id: number }): Promise<void> => {
   const response = await fetch(`${getApiUrl()}/api/professional-commission-profiles/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 14) — Usuários, reusa `/api/users` (`apps/api/src/routes/users.ts`)
+ * sem alteração. Terceira e última tela do desmembramento de "Pessoas" (`DECISION-014`
+ * regra #3) — fecha o plano. CRUD completo (diferente de Clientes/Profissionais, que não
+ * tinham `POST`/`DELETE` respectivamente — `Usuários` é a única entidade das 3 com as 4
+ * operações disponíveis no backend).
+ */
+export const fetchUsers = async (args: { token: string }): Promise<User[]> => {
+  const response = await fetch(`${getApiUrl()}/api/users`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as User[];
+};
+
+export const createUser = async (args: { token: string; input: UserCreateInput }): Promise<User> => {
+  const response = await fetch(`${getApiUrl()}/api/users`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as User;
+};
+
+export const updateUser = async (args: { token: string; id: number; input: UserUpdateInput }): Promise<User> => {
+  const response = await fetch(`${getApiUrl()}/api/users/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as User;
+};
+
+export const deleteUser = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/users/${args.id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${args.token}` },
   });

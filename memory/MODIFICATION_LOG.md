@@ -2,6 +2,48 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 14 (Usuários): terceira e última do desmembramento de "Pessoas", fecha o plano inteiro (14/14 ondas)
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Usuários, tier G,
+  terceira e última das 3 telas do desmembramento de "Pessoas" (`DECISION-014` regra #3) —
+  fecha o `PLAN-0026` por completo.
+- **RAG confirmado**: `users.ts` tem CRUD completo (`GET/POST/PATCH/DELETE /users`) — única
+  das 3 entidades com as 4 operações. Regras de permissão do backend: só `MASTER` atribui o
+  papel `MASTER` (403 caso contrário); excluir a própria conta é bloqueado (403); senha
+  opcional no `PATCH` (mantém a atual se omitida).
+- **Achado de contrato real (documentado, não corrigido)**: existe rota dedicada e auditada
+  pra troca de papel, `PATCH /users/:id/role` (`requireMaster`, grava `AuditLog`), mas o
+  form (legado e nativo, por paridade) manda `role` no `PATCH` genérico — que não audita.
+  Replicado por paridade; trocar de rota mudaria quem pode editar o quê (não pedido nesta
+  onda).
+- **Entregue**: `cadastros/users/types.ts`; `shared/api.ts` ganhou `fetchUsers`/`createUser`/
+  `updateUser`/`deleteUser`; `components/UserFormModal.tsx` (criar/editar, senha opcional na
+  edição, upload de avatar real, select de papel esconde "Master" pra quem não é `MASTER`);
+  `UsersListView.tsx` (tabela simplificada de 14 pra 9 colunas — removida URL crua do avatar
+  e papel duplicado, decisão documentada — + busca + filtro de papel/status; botão de
+  excluir desabilitado na própria linha); rota `cadastros/usuarios`; `CadastrosHubView.tsx` —
+  card "Usuários" vira nativo, **hub de Cadastros fecha 100% nativo (8/8 cards)**.
+- **Validações executadas**: `tsc -b`/`eslint`/`build` (web) limpos; `npm run test` (api)
+  134/134 PASS; CSS conferido sem precisar regenerar; `docker compose build web` + redeploy
+  `--force-recreate`. **E2E real contra Postgres, cuidado redobrado por mexer em contas de
+  acesso reais** (11 usuários reais no ambiente, incluindo 2 `MASTER`): baseline capturado;
+  usuário de teste descartável criado, editado (campos + senha + papel, incluindo atribuição
+  de `MASTER` permitida e revertida), excluído — nenhuma conta real tocada; **bloqueio de
+  auto-exclusão confirmado de verdade** (`DELETE` na própria conta logada → `403`); banco
+  confirmado de volta a 11 usuários exatos. **Validação visual real** (Chrome real via
+  `claude-in-chrome`, login MASTER, 12 checks, todos PASS): hub 8/8 nativo; criar/editar/
+  excluir via UI funcionam ponta a ponta, **persistência confirmada com reload**; select de
+  papel mostra "Master" pra quem está logado como `MASTER`; botão de auto-exclusão
+  confirmado desabilitado via árvore de acessibilidade.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 14).
+- **Status**: Onda 14 concluída, validada de verdade, commit pendente. **Plano `PLAN-0026`
+  inteiro concluído (14/14 ondas)** — falta só o fechamento formal de Git (commit desta
+  onda + push acumulado de todo o plano, aguardando segunda aprovação do usuário) antes de
+  renomear o arquivo do plano pra `-DONE-`.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 13 (Profissionais): segunda do desmembramento de "Pessoas", 1 bug de fuso horário achado e corrigido
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Profissionais, tier G,
