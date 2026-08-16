@@ -2,6 +2,44 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 5 (Textos das Páginas): 331 campos, achado crítico de contrato
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Textos das Páginas,
+  tier P, já era React puro no legado (309 linhas + `SegmentEditor.tsx`, 91 linhas).
+- **RAG confirmado**: catálogo com 331 entradas (`pageTexts/catalog.ts`), cada texto
+  endereçável por chave em `Setting` (`public.pageTexts`), suporta texto simples ou
+  segmentado (múltiplas partes com estilo visual próprio).
+- **Achado crítico de contrato (não óbvio, exigiu ler `service.ts` linha a linha)**:
+  `savePublicPageTexts` **substitui o mapa inteiro** — o `PUT` faz merge com os *defaults*
+  do catálogo, não com o que já estava salvo. Um save que manda só as chaves editadas
+  resetaria as outras 300+ pro valor padrão. A tela sempre carrega as 331 chaves completas
+  (já mescladas com defaults pelo `GET`) e manda o mapa inteiro de volta em todo `PUT`.
+- **Entregue**: `sistema/pageTexts/types.ts`; `shared/api.ts` ganhou
+  `fetchPageTexts`/`fetchPreviousPageTexts`/`savePageTexts`/`restorePreviousPageTexts`;
+  `components/SegmentEditor.tsx` (porte 1:1, editor de texto multi-parte com preview);
+  `PageTextsView.tsx` (abas por página + acordeão por seção, undo de 1 nível preservado);
+  `DeleteConfirmModal.tsx` **generalizado** (`tone`/`confirmLabel`/`confirmingLabel`
+  opcionais, default preserva 100% o comportamento original) pra servir confirmação neutra
+  (restaurar) sem duplicar componente; rota `sistema/textos-paginas`; card no hub de Sistema
+  vira `native: true`.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS; `docker
+  compose build web` + redeploy `--force-recreate`. **E2E real contra Postgres, cuidado
+  redobrado por ser conteúdo de produção real (não massa de teste)**: baseline de 331 chaves
+  capturado via `GET` antes de qualquer mutação; editar 1 campo + salvar confirmado; revertido
+  ao mapa original **byte-a-byte** (comparação Python de dicionário completo); endpoint
+  `/restore` testado explicitamente e revertido de novo ao real — banco saiu do teste
+  exatamente como entrou. **Validação visual real** (Playwright, 11 checks, todos PASS):
+  edição+salvar com sucesso, **persistência confirmada com reload**, modal de restauração
+  (tom neutro) funciona, troca de aba renderiza conteúdo real correto, **DB confirmado
+  restaurado byte-a-byte ao final via chamada de API dedicada**, independente do que o fluxo
+  de UI deixou.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 5).
+- **Status**: Onda 5 concluída, validada de verdade, **commitada** (push acumulado pro final
+  do plano, per autorização em pé). Onda 6 (Seções Telas) inicia em seguida sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 4 (Cupons): quarta tela nativa, 1 bug real achado e corrigido
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Cupons de Desconto,

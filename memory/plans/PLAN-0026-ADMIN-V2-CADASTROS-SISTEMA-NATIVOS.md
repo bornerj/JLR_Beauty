@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1 (Planos), 2 (Entrega), 3 (Branding) e 4 (Cupons) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. Ondas 5-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1 (Planos), 2 (Entrega), 3 (Branding), 4 (Cupons) e 5 (Textos das Páginas) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. Ondas 6-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -30,7 +30,7 @@
 | 2 | 2 | **Entrega** (checkout/frete) | P | `/api/settings/:key` (genérico) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real |
 | 3 | 3 | **Branding** | P | `admin.ts` (`/admin/branding`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; rota dedicada, não o `/settings/:key` genérico |
 | 4 | 4 | **Cupons** (discount-coupons) | P | `admin.ts` (CRUD completo) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real |
-| 5 | 5 | **Textos das Páginas** | P | `admin.ts` (`/admin/page-texts` + `/previous` + `/restore`) | 331 campos, catálogo já mapeado no RAG (`pageTexts/catalog.ts`); preservar undo de 1 nível |
+| 5 | 5 | **Textos das Páginas** | P | `admin.ts` (`/admin/page-texts` + `/previous` + `/restore`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; 331 campos, undo de 1 nível preservado |
 | 6 | 6 | **Seções Telas** (liga/desliga) | P | `admin.ts` (`/admin/section-toggles`) | 32 chaves `page.section`; **só MASTER edita** (checagem além do `requireAdmin` padrão) — preservar exatamente |
 | 7 | 7 | **Galeria de Mídias** | P | `admin.ts` (`/admin/media-slots` + `/uploads` genérico) | 78 slots, fallback em cascata (banco → catálogo → cache local) — preservar |
 | 8 | 8 | **Serviços** | M | `catalog.ts` (`/services` CRUD) | Legado tem `behavior.ts` (416 linhas) — reescrever como React |
@@ -124,7 +124,28 @@
 
 ---
 
-## Ondas 5 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 5 — Textos das Páginas ✅ CONCLUÍDA 2026-08-16
+
+**Pergunta que a tela fecha:** *quais textos do site público existem, e como editar qualquer um deles sem gerar deploy?*
+
+**RAG feito:** catálogo (`apps/api/src/modules/pageTexts/catalog.ts`) tem **331 entradas** (`key`, `page`, `section`, `label`, `type: "simple" | "segmented"`, `defaultValue`), cada uma endereçável por chave em `Setting` (`public.pageTexts`). Legado (`admin-page-texts/AdminPageTextsView.tsx` + `SegmentEditor.tsx`, 309+91 linhas) já era React puro. **Achado crítico de contrato, não óbvio pelo schema Zod sozinho**: `savePublicPageTexts` (`pageTexts/service.ts`) **substitui o mapa inteiro** — faz merge com os *defaults* do catálogo, não com o que estava salvo antes. Um `PUT` que manda só as chaves editadas nesta sessão reseta todas as outras 300+ pro valor padrão. A tela (nativa e legada) precisa manter as 331 chaves em memória (carregadas já mescladas com defaults pelo `GET`) e mandar o mapa completo de volta em todo `PUT`, nunca um diff.
+
+**Backend:** nenhuma mudança — reusa `/api/admin/page-texts` (+ `/previous` + `/restore`) sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/sistema/pageTexts/types.ts` — `PageTextCatalogEntry`; `StyleId`/`TextSegment`/`PageTextValue`/`PageTextsMap` reusados de `modules/public-site/pageTexts.ts` (módulo utilitário compartilhado com o site público, não é `admin-*` legado).
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchPageTexts`/`fetchPreviousPageTexts`/`savePageTexts`/`restorePreviousPageTexts`.
+- [x] `apps/web/src/admin-v2/sistema/pageTexts/components/SegmentEditor.tsx` — porte 1:1 do editor de texto segmentado (múltiplas partes com estilo próprio + preview ao vivo), só troca de classes pro visual do V2.
+- [x] `apps/web/src/admin-v2/sistema/pageTexts/PageTextsView.tsx` — abas por página (Home/Franquias/Assinaturas/Missão&Valores) + acordeão por seção, mesmo padrão do legado pra não renderizar os 331 campos de uma vez; botão "Restaurar versão anterior" (undo de 1 nível, preservado).
+- [x] `apps/web/src/admin-v2/shell/DeleteConfirmModal.tsx` — **generalizado** com `tone`/`confirmLabel`/`confirmingLabel` opcionais (default preserva 100% o comportamento original de exclusão) pra também servir confirmação neutra (restaurar), em vez de criar um segundo componente quase idêntico.
+- [x] `AdminV2Root.tsx` — rota `sistema/textos-paginas`; entrada em `SISTEMA_SUBROUTE_LABELS`.
+- [x] `SistemaHubView.tsx` — card "Textos das Páginas" vira `native: true`.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `eslint` nos arquivos tocados limpo; `npm run build` (web) PASS; `docker compose build web` + redeploy `--force-recreate`. **E2E real contra Postgres, com cuidado redobrado por ser conteúdo de produção real (não massa de teste)**: baseline de 331 chaves capturado via `GET` antes de qualquer mutação; `PUT` com 1 campo alterado (mapa completo, 330 chavesinalteradas + 1 QA marker) → confirmado; `PUT` revertendo o mapa completo original → confirmado **byte-a-byte idêntico ao baseline** (comparação Python de dicionário completo, não só amostra); endpoint `/restore` testado explicitamente (GET previous, POST restore, confirma valor restaurado) e revertido de novo ao original real ao final — banco de produção saiu do teste exatamente como entrou. **Validação visual real** (Playwright, 11 checks, todos PASS): hub mostra "Textos das Páginas" com "Abrir →"; 331 campos confirmados no header; edição + salvar com sucesso; **persistência confirmada com reload**; botão restaurar visível (`hasPrevious=true`, dado real de produção); modal de restauração (tom neutro, não vermelho) funciona e traz o valor anterior de volta; troca de aba (Home→Franquias) renderiza seções e conteúdo real corretos; **DB confirmado restaurado byte-a-byte ao final via chamada de API dedicada, independente do que o fluxo de UI deixou**.
+
+---
+
+## Ondas 6 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 

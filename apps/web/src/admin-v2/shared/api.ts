@@ -15,6 +15,7 @@ import type { InsightFeed } from "../insights/types";
 import type { Membership, MembershipInput } from "../cadastros/plans/types";
 import type { DiscountCoupon, DiscountCouponInput } from "../cadastros/coupons/types";
 import type { PublicBranding } from "../../modules/public-site/branding";
+import type { PageTextCatalogEntry, PageTextsMap } from "../sistema/pageTexts/types";
 
 /** Admin V2 (PLAN-0022) — cliente HTTP para /api/admin-v2/*, mesmo padrão de apps/web/src/modules/admin-kpis/api/client.ts. */
 
@@ -503,6 +504,63 @@ export const deleteDiscountCoupon = async (args: { token: string; id: number }):
   if (!response.ok) {
     throw new Error(await parseApiError(response));
   }
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 5) — Textos das Páginas, reusa `/api/admin/page-texts` (+
+ * `/previous` + `/restore`) sem alteração (`DECISION-014` regra #2). `savePageTexts`
+ * **substitui o mapa inteiro** — não é PATCH incremental (`savePublicPageTexts` no backend
+ * faz merge com defaults, não com o que já estava salvo) — a tela precisa sempre mandar o
+ * mapa completo em memória, nunca só as chaves editadas, senão os campos não tocados nesta
+ * sessão voltam pro valor default. Mesmo contrato do legado
+ * (`admin-page-texts/AdminPageTextsView.tsx`, que já manda `{ texts }` completo).
+ */
+export const fetchPageTexts = async (args: {
+  token: string;
+}): Promise<{ catalog: PageTextCatalogEntry[]; texts: PageTextsMap }> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/page-texts`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as { catalog: PageTextCatalogEntry[]; texts: PageTextsMap };
+};
+
+export const fetchPreviousPageTexts = async (args: { token: string }): Promise<PageTextsMap | null> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/page-texts/previous`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { texts: PageTextsMap | null };
+  return payload.texts;
+};
+
+export const savePageTexts = async (args: { token: string; texts: PageTextsMap }): Promise<PageTextsMap> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/page-texts`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ texts: args.texts }),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { texts: PageTextsMap };
+  return payload.texts;
+};
+
+export const restorePreviousPageTexts = async (args: { token: string }): Promise<PageTextsMap> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/page-texts/restore`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { texts: PageTextsMap };
+  return payload.texts;
 };
 
 /**

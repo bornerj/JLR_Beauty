@@ -23,6 +23,7 @@ import { DeliverySettingsView } from "./cadastros/delivery/DeliverySettingsView"
 import { CouponsListView } from "./cadastros/coupons/CouponsListView";
 import { SistemaHubView } from "./sistema/SistemaHubView";
 import { BrandingSettingsView } from "./sistema/branding/BrandingSettingsView";
+import { PageTextsView } from "./sistema/pageTexts/PageTextsView";
 
 /**
  * Admin V2 (PLAN-0022) — raiz da árvore nova, isolada do shell legado (AdminContent.tsx).
@@ -171,7 +172,7 @@ function AdminV2Shell() {
   const cadastrosSubRoute = location.pathname.match(/\/cadastros\/([^/]+)/)?.[1] ?? null;
   const cadastrosSubRouteLabel = cadastrosSubRoute ? CADASTROS_SUBROUTE_LABELS[cadastrosSubRoute] : undefined;
   /** Mesmo padrão acima, agora pro hub de Sistema (Onda 3 em diante). */
-  const SISTEMA_SUBROUTE_LABELS: Record<string, string> = { branding: "Branding" };
+  const SISTEMA_SUBROUTE_LABELS: Record<string, string> = { branding: "Branding", "textos-paginas": "Textos das Páginas" };
   const sistemaSubRoute = location.pathname.match(/\/sistema\/([^/]+)/)?.[1] ?? null;
   const sistemaSubRouteLabel = sistemaSubRoute ? SISTEMA_SUBROUTE_LABELS[sistemaSubRoute] : undefined;
   const intelligenceTab: IntelligenceTabKey = isGargalosArea
@@ -286,6 +287,7 @@ function AdminV2Shell() {
         <Route path="cadastros/cupons" element={<CouponsListView />} />
         <Route path="sistema" element={<SistemaHubView />} />
         <Route path="sistema/branding" element={<BrandingSettingsView />} />
+        <Route path="sistema/textos-paginas" element={<PageTextsView />} />
       </Routes>
     </AdminShell>
   );
