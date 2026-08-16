@@ -2,6 +2,41 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `DECISION-014` + `PLAN-0026` escrito: Cadastros/Sistema nativos no Admin V2
+
+- **Contexto/objetivo**: usuário pediu o plano pra nativizar as telas de Cadastros/Sistema
+  (item 2, desmembrado do `PLAN-0025`), autorizando explicitamente alterar a `DECISION-013`
+  pra este caso específico.
+- **RAG feito antes de planejar** (via subagente Explore, ~184s): os 3 sistemas de conteúdo
+  endereçável por banco (Textos das Páginas, Seções Telas, Galeria de Mídias) — todos guardados
+  como blobs JSON na tabela genérica `Setting`/`ContentEntry`, catálogo de campos definido em
+  TypeScript (não no schema). Confirmado com o usuário: essas 3 telas + Cupons/Entrega/Branding
+  são "quase reskin" (React puro no legado, endpoints já existentes).
+- **Investigação de complexidade das demais telas** (contagem de linhas por módulo como proxy):
+  achado decisivo — `admin-people` (2.708 linhas), `admin-products` (1.436), `admin-services`
+  (679), `admin-whatsapp-contacts` (470), `admin-tests` (453) usam um padrão imperativo antigo
+  (`behavior.ts` com `querySelector`/`addEventListener` manual), diferente do resto do projeto
+  (React declarativo). Confirmado no backend: 100% do CRUD necessário já existe (`catalog.ts`,
+  `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`) — nenhuma rota nova prevista.
+- **`DECISION-014` criada** (ACTIVE) — substitui a regra #5 da `DECISION-013` (marcada
+  riscada/substituída no arquivo original, sem apagar o histórico). 6 regras fixas: componente
+  novo sempre (nunca editar módulo legado), reuso obrigatório de backend, telas monolíticas
+  desmembradas por entidade (Pessoas → Clientes/Profissionais/Usuários), sequenciamento por
+  complexidade real, paleta/cálculo de negócio herdados da `DECISION-013` sem revalidação,
+  aposentadoria do legado continua fora de escopo.
+- **`PLAN-0026` escrito** — 14 ondas (1 tela/entidade por onda): 7 tier P (Planos, Entrega,
+  Branding, Cupons, Textos, Seções, Galeria), 3 tier M (Serviços, WhatsApp/Integrações, Testes),
+  4 tier G por último (Produtos, Clientes, Profissionais, Usuários). Onda 1 (Planos) detalhada
+  como onda-modelo; Ondas 2-14 ficam como roadmap resumido, a detalhar quando chegar a vez
+  (mesmo padrão já usado no `PLAN-0022`) — não fabricado detalhe de implementação de telas ainda
+  não investigadas a fundo. "Segurança"/"Infra" do hub Sistema ficam fora (sem tela legada
+  equivalente, confirmado no `PLAN-0024`).
+- **Arquivos alterados**: `memory/decisions/DECISION-014.md` (novo),
+  `memory/decisions/DECISION-013.md` (regra #5 marcada substituída),
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (novo), `memory/progress.md`.
+- **Status**: plano escrito, aguardando aprovação do usuário pra executar. Nenhum código
+  alterado ainda.
+
 ## 2026-08-15 — `PLAN-0025` executado: polimento de UX do Admin V2 + achado sistêmico de CSS
 
 - **Contexto/objetivo**: execução do `PLAN-0025` aprovada pelo usuário ("pode começar"). 6 ondas
