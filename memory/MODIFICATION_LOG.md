@@ -2,6 +2,47 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — Fechamento de sessão (pós-PLAN-0026: consulta a PLAN-0021 + checagem de ambiente)
+
+- **O que foi feito**: após o fechamento do `PLAN-0026` (registro anterior), o usuário
+  perguntou do que se tratava o `PLAN-0021` (Reorganização do Menu Admin) — respondido com
+  base na leitura do plano (ainda aberto, execução técnica feita em 2026-07-22, faltando
+  validação visual do usuário + commit/push). Usuário pediu pra subir o ambiente e mostrar o
+  Admin legado (reorganizado) e o Admin V2 pra teste manual, sinalizando intenção futura de
+  aposentar o Admin legado. Ambiente já estava de pé (`docker compose ps`: api/nginx/
+  postgres/web saudáveis) — sem rebuild necessário. Login feito no Admin legado via Chrome
+  real, menu lateral conferido visualmente: ordem bate exatamente com o
+  `PLAN-0021` (Painel, Agenda, WhatsApp, Vendas, Equipes-Metas, Equipes-Perform, Cadastro,
+  Assinantes, Seções Telas, Galeria, Master). Usuário interrompeu a exploração automatizada
+  ("pare com as tentativas de acessar via claude-in-chrome") antes de conferir os submenus
+  internos de "Cadastro"/"Master" — interrompido de imediato, aba fechada, URLs de acesso
+  manual (`/admin`, `/admin-v2`) repassadas pro usuário testar ele mesmo.
+- **O que mudou**: nada em código ou schema. Nenhum arquivo de produto tocado nesta sessão
+  além do fechamento do `PLAN-0026` já registrado no bloco anterior.
+- **O que ficou pendente**:
+  - `PLAN-0021` continua aberto — falta validação visual do próprio usuário (agora que o
+    ambiente está confirmado de pé) e, depois, commit/push (dupla autorização, ainda não
+    pedida).
+  - Aposentadoria do Admin legado (mencionada pelo usuário como intenção) — segue fora de
+    escopo até virar uma decisão/plano formal explícito, per `DECISION-014` regra #6.
+  - `PLAN-0019`/`PLAN-0020` seguem abertos, não tocados.
+
+## 2026-08-16 — SESSION AUDIT — PASS (fechamento de sessão)
+
+| Item | Resultado |
+|---|---|
+| 1. Decision Integrity | PASS — nenhuma decisão alterada neste segmento |
+| 2. State Integrity | PASS — `PLAN-0026` DONE; `PLAN-0021`/`0020`/`0019` pré-existentes, não tocados |
+| 3. Operational Memory | PASS — fechamento de sessão registrado no `MODIFICATION_LOG` |
+| 4. Debug Memory | PASS — nenhum bug neste segmento |
+| 5. Technical Validation | PASS (N/A) — nenhum código alterado |
+| 6. Regression Risk | PASS — só navegação read-only, interrompida a pedido do usuário |
+| 7. Git Governance | PASS — `git status` limpo antes do fechamento; push deste commit a autorizar separadamente |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260816_172342-PASS.md`.
+
+---
+
 ## 2026-08-16 — SESSION AUDIT — PASS
 
 | Item | Resultado |
