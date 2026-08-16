@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 
 /**
- * Admin V2 (PLAN-0024, RETROFIT-020/021) — card de navegação para as telas "hub"
- * (Cadastros/Sistema): grade de acessos reais às telas do Admin legado (adapter/link,
- * `DECISION-013` regra #5 — sem reescrita estética nesta fase). Sempre um link real
- * (`<Link>` vira `<a href>`) quando `href` existe; nunca um link morto — item sem tela
- * correspondente no legado vem com `disabledReason` e fica desabilitado, mesmo padrão
- * de "em breve" já usado em `AdminSidebar`/`DrillCard`.
+ * Admin V2 (PLAN-0024, RETROFIT-020/021; `native` desde o PLAN-0026) — card de navegação
+ * para as telas "hub" (Cadastros/Sistema). Sempre um link real (`<Link>` vira `<a href>`)
+ * quando `href` existe; nunca um link morto — item sem tela correspondente no legado vem
+ * com `disabledReason` e fica desabilitado, mesmo padrão de "em breve" já usado em
+ * `AdminSidebar`/`DrillCard`. `native: true` indica que a tela já foi reescrita dentro do
+ * Admin V2 (`DECISION-014`) — muda só a legenda, não some com o adapter/link pro legado
+ * das telas ainda não migradas.
  */
 
 export function HubCard({
@@ -14,11 +15,13 @@ export function HubCard({
   label,
   href,
   disabledReason,
+  native = false,
 }: {
   icon: string;
   label: string;
   href?: string;
   disabledReason?: string;
+  native?: boolean;
 }) {
   if (!href) {
     return (
@@ -40,7 +43,9 @@ export function HubCard({
     >
       <span className="material-symbols-outlined text-2xl text-primary">{icon}</span>
       <p className="text-sm font-bold text-forest">{label}</p>
-      <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">Abrir no Admin →</p>
+      <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        {native ? "Abrir →" : "Abrir no Admin →"}
+      </p>
     </Link>
   );
 }

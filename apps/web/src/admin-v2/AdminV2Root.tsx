@@ -18,6 +18,7 @@ import { MoneyView } from "./money/MoneyView";
 import { ComparatorView } from "./comparator/ComparatorView";
 import { InsightsView } from "./insights/InsightsView";
 import { CadastrosHubView } from "./cadastros/CadastrosHubView";
+import { PlansListView } from "./cadastros/plans/PlansListView";
 import { SistemaHubView } from "./sistema/SistemaHubView";
 
 /**
@@ -158,6 +159,7 @@ function AdminV2Shell() {
   const isIntelligenceArea = isRadarArea || isGargalosArea || isMoneyArea || isComparatorArea || isInsightsArea;
   const isCadastrosArea = location.pathname.includes("/cadastros");
   const isSistemaArea = location.pathname.includes("/sistema");
+  const isPlanosArea = location.pathname.includes("/cadastros/planos");
   const intelligenceTab: IntelligenceTabKey = isGargalosArea
     ? "gargalos"
     : isMoneyArea
@@ -218,7 +220,13 @@ function AdminV2Shell() {
     breadcrumb.push({ label: "Crescimento" });
   }
   if (isCadastrosArea) {
-    breadcrumb.push({ label: "Cadastros" });
+    breadcrumb.push({
+      label: "Cadastros",
+      onNavigate: isPlanosArea ? () => navigate("/admin-v2/cadastros") : undefined,
+    });
+  }
+  if (isPlanosArea) {
+    breadcrumb.push({ label: "Planos" });
   }
   if (isSistemaArea) {
     breadcrumb.push({ label: "Sistema" });
@@ -253,6 +261,7 @@ function AdminV2Shell() {
         <Route path="comparador" element={<ComparatorView />} />
         <Route path="insights" element={<InsightsView />} />
         <Route path="cadastros" element={<CadastrosHubView />} />
+        <Route path="cadastros/planos" element={<PlansListView />} />
         <Route path="sistema" element={<SistemaHubView />} />
       </Routes>
     </AdminShell>

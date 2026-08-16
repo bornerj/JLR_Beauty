@@ -12,6 +12,7 @@ import type { BottlenecksRanking } from "../gargalos/types";
 import type { MoneyOverview } from "../money/types";
 import type { UnitComparator } from "../comparator/types";
 import type { InsightFeed } from "../insights/types";
+import type { Membership, MembershipInput } from "../cadastros/plans/types";
 
 /** Admin V2 (PLAN-0022) — cliente HTTP para /api/admin-v2/*, mesmo padrão de apps/web/src/modules/admin-kpis/api/client.ts. */
 
@@ -328,4 +329,56 @@ export const fetchAdminV2Units = async (args: { token: string }): Promise<AdminV
   }
   const payload = (await response.json()) as { units: AdminV2Unit[] };
   return payload.units;
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 1 — Cadastros nativos) — reusa `/api/memberships`
+ * (`apps/api/src/routes/subscriptions.ts`), sem endpoint novo (`DECISION-014` regra #2).
+ */
+export const fetchMemberships = async (args: { token: string }): Promise<Membership[]> => {
+  const response = await fetch(`${getApiUrl()}/api/memberships`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as Membership[];
+};
+
+export const createMembership = async (args: { token: string; input: MembershipInput }): Promise<Membership> => {
+  const response = await fetch(`${getApiUrl()}/api/memberships`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as Membership;
+};
+
+export const updateMembership = async (args: {
+  token: string;
+  id: number;
+  input: MembershipInput;
+}): Promise<Membership> => {
+  const response = await fetch(`${getApiUrl()}/api/memberships/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as Membership;
+};
+
+export const deleteMembership = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/memberships/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
 };

@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 📝 PLANNING — aguardando aprovação do usuário para iniciar `EXECUTING_WITH_PLAN`.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Onda 1 (Planos) ✅ CONCLUÍDA 2026-08-16, validada por E2E real + visual real. Ondas 2-14 aguardando execução.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -26,7 +26,7 @@
 | # | Onda | Tela/Entidade | Tier | Backend (confirmado) | Nota de escopo |
 |---|---|---|---|---|---|
 | 0 | — | `DECISION-014` | — | — | ✅ feita — ver decisão acima |
-| 1 | 1 | **Planos** (memberships) | P | `subscriptions.ts` (`/memberships` CRUD) | Onda-modelo — a mais simples, valida o padrão de tela nativa de Cadastro antes das mais complexas |
+| 1 | 1 | **Planos** (memberships) | P | `subscriptions.ts` (`/memberships` CRUD) | ✅ CONCLUÍDA 2026-08-16 — onda-modelo, validada E2E real + visual real |
 | 2 | 2 | **Entrega** (checkout/frete) | P | `/api/settings/:key` (genérico) | Config-form, não list-CRUD — mesmo padrão de Branding |
 | 3 | 3 | **Branding** | P | `admin.ts` (`/admin/branding`) | Config-form; já é React puro no legado (496 linhas, sem `behavior.ts`) |
 | 4 | 4 | **Cupons** (discount-coupons) | P | `admin.ts` (CRUD completo) | Já é React puro no legado (538 linhas) |
@@ -45,20 +45,26 @@
 
 ---
 
-## Onda 1 — Planos (memberships) — detalhada como onda-modelo
+## Onda 1 — Planos (memberships) ✅ CONCLUÍDA 2026-08-16
 
 **Pergunta que a tela fecha:** *quais planos de assinatura existem, e como cadastrar/editar um?*
 
-**RAG feito:** legado `admin-plans` — 121 linhas, `AdminPlansView.tsx`, React puro, sem `behavior.ts`. Backend: `subscriptionsRouter` em `apps/api/src/routes/subscriptions.ts` — `GET/POST/PATCH/DELETE /memberships`. A ser confirmado no início da execução desta onda (não fabricado aqui): schema exato do Prisma `Membership`/`Plan`, campos do formulário legado, se há paginação server-side ou lista completa de uma vez (121 linhas sugere lista pequena, sem paginação — planos costumam ser poucos, dezenas no máximo).
+**RAG feito (confirmado no início da execução):** `Membership` no `schema.prisma` (`id, name, title, description?, price Decimal, benefits Json?, isFeatured, status String default "Ativo"`). Achado importante: `price` volta do backend como **`string`** (`Prisma.Decimal.toJSON()`), não `number` — a rota não converte antes de devolver; tratado explicitamente no `types.ts`. `benefits` é validado como `string[]` no Zod da rota (`membershipSchema`), apesar de `Json?` no schema. Legado `admin-plans` (121 linhas, `AdminPlansView.tsx`) é só markup — toda a interação (form, validação, lista, editar/excluir) vive centralizada em `admin-core/behavior.ts` (linhas 1389-1730), não num `behavior.ts` próprio do módulo — achado que corrige a estimativa inicial de complexidade (o "tier P" continua correto pra Planos em si, mas o método de "contar linhas por módulo" subestima onda a onda quando a interação está centralizada em outro módulo; atenção a isso nas próximas ondas).
 
-**Checklist (a confirmar/expandir no início da execução):**
-- [ ] RAG rápido: schema Prisma do model de planos, payload exato de cada endpoint, campos do form legado.
-- [ ] `apps/web/src/admin-v2/cadastros/plans/types.ts` — contrato espelhando o backend.
-- [ ] `apps/web/src/admin-v2/cadastros/plans/PlansListView.tsx` — lista + modal de criar/editar + confirmação de exclusão.
-- [ ] `apps/web/src/admin-v2/AdminV2Root.tsx` — rota `cadastros/planos`.
-- [ ] `CadastrosHubView.tsx` — card "Planos" vira link interno.
+**Backend:** nenhuma mudança — reusa `GET/POST/PATCH/DELETE /api/memberships` (`apps/api/src/routes/subscriptions.ts`) sem alteração, confirmando `DECISION-014` regra #2.
 
-**Validações (mesmo padrão de todo o programa, repetido em cada onda):** `tsc -b` (api+web) limpo; `npm run build` PASS; `npm run test` sem regressão; `docker compose build` + redeploy; E2E real (CRUD completo via curl/script contra o Postgres real); validação visual real (Playwright, criar/editar/excluir um plano de teste, confirmar na tela).
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/cadastros/plans/types.ts` — `Membership`, `MembershipInput`, `MEMBERSHIP_STATUS_OPTIONS`.
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchMemberships`/`createMembership`/`updateMembership`/`deleteMembership`.
+- [x] `apps/web/src/admin-v2/cadastros/plans/components/PlanFormModal.tsx` — criar/editar, lista dinâmica de benefícios (adicionar/remover linha), mesmos campos do legado.
+- [x] `apps/web/src/admin-v2/shell/DeleteConfirmModal.tsx` (novo, **compartilhado** entre futuras ondas de Cadastros) — confirmação de exclusão em modal próprio, nunca `window.confirm()` (bloquearia automação/Playwright e fugiria do visual do V2, mesmo padrão do `StageChangeReasonModal` do `PLAN-0025`).
+- [x] `apps/web/src/admin-v2/cadastros/plans/components/PlanCard.tsx` — card de exibição (preço formatado, badge "destaque", lista de benefícios, ações editar/excluir).
+- [x] `apps/web/src/admin-v2/cadastros/plans/PlansListView.tsx` — orquestra lista + os 2 modais.
+- [x] `apps/web/src/admin-v2/AdminV2Root.tsx` — rota `cadastros/planos`, breadcrumb `Panorama > Cadastros > Planos`.
+- [x] `CadastrosHubView.tsx` — card "Planos" vira `<Link>` interno (`native: true`); comentário de topo do arquivo atualizado.
+- [x] `apps/web/src/admin-v2/shell/HubCard.tsx` — novo prop `native?: boolean`, muda a legenda ("Abrir →" vs "Abrir no Admin →") sem quebrar os cards ainda não migrados.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `npm run build` (web) PASS; `npm run lint` (web) — 18 erros (17 pré-existentes + 1 novo, mesmo padrão `fetch-on-mount` já tolerado em toda tela do Admin V2, confirmado que não é um tipo de erro novo); `docker compose build web` + redeploy `--force-recreate`. **E2E real contra Postgres** (login MASTER): `POST /api/memberships` → `201` (`price` volta como `"49.9"`, confirmando o achado do RAG); `PATCH` → `200`; `GET` confirmando a contagem antes/depois; `DELETE` → `204`; banco conferido de volta ao estado original (3 planos: Platinum/Gold/Silver) ao final, nenhum dado de teste deixado pra trás. **Validação visual real** (Playwright): hub de Cadastros mostra o card "Planos" já nativo; navegação real pro `/admin-v2/cadastros/planos`; breadcrumb correto; criar plano via UI (modal fecha sozinho); editar reflete na lista; excluir abre modal de confirmação (não `window.confirm()`) e remove da lista após confirmar — confirmado tanto pela screenshot final (visual, cards com formatação/badge corretos) quanto por um teste isolado com log de rede (`DELETE .../5 → 204`, contagem final = 0 na lista).
 
 ---
 

@@ -2,6 +2,37 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 1 (Planos): primeira tela nativa de Cadastros
+
+- **Contexto/objetivo**: usuário aprovou a execução do `PLAN-0026` e pediu pra começar.
+  Primeira onda (tier P, "onda-modelo"): Cadastro de Planos.
+- **RAG confirmado no início da execução**: `Membership` no `schema.prisma`; `price` volta do
+  backend como `string` (`Prisma.Decimal.toJSON()`, não convertido pela rota); `benefits`
+  validado como `string[]` no Zod da rota apesar de `Json?` no schema. Achado que ajusta o
+  método de estimativa: a interação do legado (`admin-plans`) vive centralizada em
+  `admin-core/behavior.ts`, não num `behavior.ts` próprio do módulo — atenção nas próximas
+  ondas ao estimar complexidade só pela contagem de linhas do módulo isolado.
+- **Entregue**: `cadastros/plans/types.ts`, `PlansListView.tsx`, `components/PlanFormModal.tsx`,
+  `components/PlanCard.tsx`; `shell/DeleteConfirmModal.tsx` (novo, compartilhado entre futuras
+  ondas — nunca `window.confirm()`, mesmo padrão do `StageChangeReasonModal` do `PLAN-0025`);
+  `shared/api.ts` (4 funções reusando `/api/memberships` sem endpoint novo); rota
+  `cadastros/planos` + breadcrumb em `AdminV2Root.tsx`; `HubCard.tsx` ganhou o modo `native`
+  (legenda muda de "Abrir no Admin →" pra "Abrir →" sem quebrar os cards ainda não migrados);
+  `CadastrosHubView.tsx` — card "Planos" vira link interno.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS; `npm run lint`
+  (web) — 18 erros (17 pré-existentes + 1 novo, mesmo padrão `fetch-on-mount` já tolerado em
+  toda tela do Admin V2); `docker compose build web` + redeploy. **E2E real contra Postgres**
+  (login MASTER): CRUD completo via `curl` (create `201`, `price` confirmado como string; update
+  `200`; delete `204`), banco conferido de volta ao estado original ao final (3 planos), nenhum
+  dado de teste deixado pra trás. **Validação visual real** (Playwright): hub de Cadastros com
+  o card já nativo, navegação real, breadcrumb correto, criar/editar/excluir via UI — o primeiro
+  teste automatizado teve 1 falso-negativo por seletor ambíguo do próprio script (não do app),
+  confirmado com um teste isolado (log de rede: `DELETE .../5 → 204`, lista final vazia).
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 1).
+- **Status**: Onda 1 concluída, validada de verdade. Sem commit/push (aguardando autorização
+  do usuário). Faltam Ondas 2-14.
+
 ## 2026-08-16 — `DECISION-014` + `PLAN-0026` escrito: Cadastros/Sistema nativos no Admin V2
 
 - **Contexto/objetivo**: usuário pediu o plano pra nativizar as telas de Cadastros/Sistema
