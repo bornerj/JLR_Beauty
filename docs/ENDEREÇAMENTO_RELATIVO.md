@@ -1,0 +1,9 @@
+Os três sistemas "endereçáveis por banco" — como funcionam de verdade
+
+Os três (Textos, Seções, Galeria) compartilham a mesma estrutura de dados: uma única tabela genérica Setting (ContentEntry no banco), chave-valor com value em JSON. Não existe uma tabela dedicada PageText/SectionToggle/MediaSlot — cada "sistema" é um blob JSON guardado sob uma chave (public.pageTexts, public.sectionToggles, public.mediaSlots), e o catálogo de quais campos/seções/slots existem é definido em TypeScript (duplicado entre frontend e backend), não no schema do banco.
+
+1. Textos das Páginas — 331 campos (catálogo em apps/api/src/modules/pageTexts/catalog.ts), agrupados por página→seção. Editor mostra abas por página, acordeão por seção, um <textarea> por campo (328 simples + 3 "segmentados" com estilo de texto rico). "Restaurar versão anterior" é um único snapshot de undo (não histórico completo). Site público busca tudo uma vez por sessão (GET /api/public/page-texts) e cacheia em memória + localStorage — não é live, precisa recarregar a página pra refletir uma edição.
+
+2. Seções Telas (liga/desliga) — um mapa booleano page.section (32 chaves hoje: home 8, franquias 19, assinaturas 5). Granularidade é por seção inteira, nunca por campo/subcomponente. Só MASTER pode editar — checagem extra além do requireAdmin padrão, importante preservar isso na versão nativa. Site público consome do mesmo jeito (fetch uma vez, gate {enabled ? <Section/> : null}).
+
+3. Galeria de Mídias — 78 slots nomeados (home_hero_bg_01, etc.), catálogo com URL de fallback por slot. Upload é genérico (POST /api/admin/uploads só grava arquivo e devolve URL) + atribuição do slot é uma chamada separada. Site público resolve via useMediaSlot(id), com fallback em cascata (valor do banco → fallback do catálogo → cache local se a rede falhar) — nunca renderiza vazio.
