@@ -2,6 +2,42 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 10 (Testes e Validação): fecha tier M e o hub de Sistema (6/6 nativo)
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Testes e Validação,
+  tier M, legado tinha `behavior.ts` imperativo (385 linhas).
+- **Achado que mudou o desenho da tela**: o legado misturava 13 smoke-checks de API (testam
+  o backend compartilhado, portáveis) com checagens de **DOM do shell legado** (`.top-nav`,
+  `.site-footer`, `[data-view]`, `[data-view-trigger]`, `[data-user-create-save]`,
+  `[data-service-save]`, `[data-product-save]`, etc.) que **nunca existirão** na árvore React
+  do Admin V2. Portar esse segundo grupo faria a tela sempre mostrar "FALHOU" falsamente.
+  **Decisão**: mantidos só os 13 smoke-checks de API + teste de gravação (criar+excluir
+  serviço/produto) + teste de validação — tudo que testa o backend de verdade. Descartado
+  documentado explicitamente no cabeçalho do componente (não é "funcionalidade perdida",
+  é escopo irrelevante nesta app).
+- **Entregue**: `shared/api.ts` ganhou `pingApi`/`apiRequest` (genéricos, evitam 13+ funções
+  tipadas one-off); `sistema/tests/TestsView.tsx` (botão executar, 4 cards de resumo, lista
+  de resultados, mesmo gate de segurança do legado pro teste de gravação); rota `sistema/
+  testes`; card no hub vira `native: true` — **hub de Sistema fecha 100% nativo (6/6)**.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS; CSS conferido
+  sem precisar regenerar; `docker compose build web` + redeploy `--force-recreate`. **E2E
+  real**: 14 endpoints confirmados `200` via curl antes da validação visual. **Validação
+  visual real** (Playwright, 12 checks, todos PASS) — **essa onda é uma ferramenta de
+  auto-teste, então rodá-la via UI já é o E2E**: "Executar testes" produziu **18/18 PASSOU,
+  0 falhas**, incluindo os 2 testes de gravação reais (serviço+produto criados e removidos,
+  contagens confirmadas inalteradas antes/depois) e confirmado que nenhum ID de checagem de
+  DOM legado aparece nos resultados — a redução de escopo foi aplicada de fato.
+- **Marco**: com a Onda 10, **tier P (7 ondas) e tier M (3 ondas) estão inteiramente
+  concluídos** — 10 de 14 ondas, hub de Sistema 100% nativo. Restam só as 4 ondas do tier G
+  (Produtos/Clientes/Profissionais/Usuários, todas em Cadastros).
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 10).
+- **Status**: Onda 10 concluída, validada de verdade, **commitada** (push acumulado pro
+  final do plano, per autorização em pé). Onda 11 (Produtos, tier G) inicia em seguida sem
+  pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 9 (WhatsApp/Integrações): auditoria + config do bot
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. WhatsApp/Integrações,

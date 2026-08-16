@@ -797,6 +797,34 @@ export const fetchConciergeSessions = async (args: {
 };
 
 /**
+ * Admin V2 (PLAN-0026, Onda 10) — smoke-check genérico (`GET /api<path>`, só confirma que a
+ * rota responde OK, sem tipar o corpo) e `apiRequest` (mesmo genérico, mas com método/corpo
+ * livres) — usados pela tela de Testes e Validação pra checar saúde de vários endpoints sem
+ * precisar de 1 função tipada por rota.
+ */
+export const pingApi = async (args: { token: string; path: string }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api${args.path}`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+export const apiRequest = async (args: {
+  token: string;
+  path: string;
+  method: string;
+  body?: unknown;
+}): Promise<{ status: number; json: unknown }> => {
+  const response = await fetch(`${getApiUrl()}/api${args.path}`, {
+    method: args.method,
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: args.body !== undefined ? JSON.stringify(args.body) : undefined,
+  });
+  const json = await response.json().catch(() => null);
+  return { status: response.status, json };
+};
+
+/**
  * Cliente genérico de upload (`/api/uploads`), reusado por qualquer tela que precise subir
  * imagem (Branding nesta onda; Galeria de Mídias na Onda 7). Mesmo endpoint do legado.
  */

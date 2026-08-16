@@ -5,8 +5,8 @@ import { HubCard } from "../shell/HubCard";
  * legado (`DECISION-013` regra #5); desde o `PLAN-0026`/`DECISION-014` cada tela vira
  * nativa onda a onda (mesmo padrão de `CadastrosHubView.tsx`) — o card muda de link externo
  * (`/admin#view`, deep-link por hash, ver `admin-shell/behavior.ts`) pra rota interna do V2
- * (`native: true`) só quando a tela correspondente é entregue. Branding (Onda 3) já nativa;
- * as demais seguem apontando pro legado até sua onda chegar.
+ * (`native: true`) só quando a tela correspondente é entregue. **Onda 10 (Testes) fechou o
+ * hub inteiro** — as 6 telas navegáveis de Sistema já são nativas.
  *
  * Segurança e Infra ficam desabilitadas: não existe `data-view` dedicada pra elas no
  * Admin legado hoje — Segurança é feature de backend (AuditLog/RLS) sem tela própria,
@@ -20,7 +20,7 @@ const CARDS = [
   { icon: "view_agenda", label: "Seções", href: "/admin-v2/sistema/secoes", native: true },
   { icon: "photo_library", label: "Galeria de Mídias", href: "/admin-v2/sistema/galeria-midias", native: true },
   { icon: "chat", label: "WhatsApp / Integrações", href: "/admin-v2/sistema/whatsapp", native: true },
-  { icon: "science", label: "Testes", href: "/admin#testes" },
+  { icon: "science", label: "Testes", href: "/admin-v2/sistema/testes", native: true },
 ];
 
 const DISABLED_CARDS = [
@@ -34,8 +34,7 @@ export function SistemaHubView() {
       <div>
         <h1 className="text-3xl font-bold text-forest">Sistema</h1>
         <p className="text-base text-stone-600 dark:text-stone-400">
-          Acesso às telas de configuração — algumas já nativas do Admin V2 (`PLAN-0026`), outras
-          ainda apontando pro Admin legado enquanto sua onda não chega.
+          Acesso às telas de configuração — todas já nativas do Admin V2 (`PLAN-0026`).
         </p>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

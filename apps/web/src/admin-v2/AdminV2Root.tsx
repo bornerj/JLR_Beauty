@@ -28,6 +28,7 @@ import { PageTextsView } from "./sistema/pageTexts/PageTextsView";
 import { SectionTogglesView } from "./sistema/sectionToggles/SectionTogglesView";
 import { MediaGalleryView } from "./sistema/mediaGallery/MediaGalleryView";
 import { WhatsappIntegrationsView } from "./sistema/whatsapp/WhatsappIntegrationsView";
+import { TestsView } from "./sistema/tests/TestsView";
 
 /**
  * Admin V2 (PLAN-0022) — raiz da árvore nova, isolada do shell legado (AdminContent.tsx).
@@ -187,6 +188,7 @@ function AdminV2Shell() {
     secoes: "Seções Telas",
     "galeria-midias": "Galeria de Mídias",
     whatsapp: "WhatsApp / Integrações",
+    testes: "Testes e Validação",
   };
   const sistemaSubRoute = location.pathname.match(/\/sistema\/([^/]+)/)?.[1] ?? null;
   const sistemaSubRouteLabel = sistemaSubRoute ? SISTEMA_SUBROUTE_LABELS[sistemaSubRoute] : undefined;
@@ -307,6 +309,7 @@ function AdminV2Shell() {
         <Route path="sistema/secoes" element={<SectionTogglesView />} />
         <Route path="sistema/galeria-midias" element={<MediaGalleryView />} />
         <Route path="sistema/whatsapp" element={<WhatsappIntegrationsView />} />
+        <Route path="sistema/testes" element={<TestsView />} />
       </Routes>
     </AdminShell>
   );
