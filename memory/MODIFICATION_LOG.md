@@ -2,6 +2,40 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 6 (Seções Telas): gate MASTER preservado, 1 bug de CSS achado e corrigido
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Seções Telas
+  (liga/desliga), tier P, já era React puro no legado (276 linhas).
+- **RAG confirmado**: `admin.ts` já tinha `/admin/section-toggles` completo, 32 chaves
+  `page.section`. **Restrição preservada exatamente**: só `role === "MASTER"` edita — checado
+  no `GET` e no `PUT`, em cima do `requireAdmin` padrão (ADMIN comum recebe 403 até pra ver).
+- **Entregue**: `shared/api.ts` ganhou `fetchSectionToggles`/`updateSectionToggles`;
+  `sistema/sectionToggles/SectionTogglesView.tsx` (3 colunas, ordem fixa não-alfabética
+  igual ao legado, switch customizado em Tailwind puro, gate `canEdit` client-side
+  preservado); rota `sistema/secoes`; card no hub vira `native: true`.
+- **Bug real achado na validação visual (`ERR-0051`, mesma causa raiz do `ERR-0049`/
+  `ERR-0040`, não no E2E via curl)**: todos os 32 toggles renderizavam brancos/sem cor,
+  círculo sempre à esquerda, mesmo com `enabled: true` no banco. Causa: `tailwind.generated
+  .css` é um snapshot estático — o switch customizado introduziu classes nunca usadas antes
+  (`border-state-healthy` bare, `w-[52px]`, `left-[26px]`), ausentes do CSS servido.
+  Corrigido regenerando o arquivo por completo (comando já documentado no cabeçalho do
+  próprio arquivo) — a regeneração rescaneia todo o código atual, cobrindo também as Ondas
+  1-5 de brinde. Nota de processo registrada: telas futuras com padrão visual genuinamente
+  novo devem regenerar esse arquivo como parte padrão da validação.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS (2x); `docker
+  compose build web` + redeploy `--force-recreate` (2x). **E2E real contra Postgres**:
+  baseline de 32 chaves capturado (produção já tinha as 32 em `true`); toggle + `PUT`
+  completo confirmado; revertido ao mapa original exato. **Validação visual real**
+  (Playwright, 8 checks, todos PASS só após o fix de CSS): **pixel-sampling confirmou
+  `rgb(0,150,127)` exato no estado ligado e cinza claro no desligado**, persistência
+  confirmada com reload, banco revertido ao original ao final.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 6).
+- **Status**: Onda 6 concluída, validada de verdade, **commitada** (push acumulado pro final
+  do plano, per autorização em pé). Onda 7 (Galeria de Mídias) inicia em seguida sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 5 (Textos das Páginas): 331 campos, achado crítico de contrato
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Textos das Páginas,

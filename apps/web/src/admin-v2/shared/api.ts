@@ -563,6 +563,42 @@ export const restorePreviousPageTexts = async (args: { token: string }): Promise
   return payload.texts;
 };
 
+export type SectionToggleMap = Record<string, Record<string, boolean>>;
+
+/**
+ * Admin V2 (PLAN-0026, Onda 6) — Seções Telas (liga/desliga), reusa `/api/admin/section-
+ * toggles` sem alteração. **Só usuário `MASTER` edita** — o backend checa isso além do
+ * `requireAdmin` padrão (403 pra ADMIN comum, inclusive no `GET`) — preservado exatamente,
+ * mesmo gate client-side do legado (`getUser()?.role === "MASTER"`, checado antes até de
+ * chamar a API, pra não gerar erro 403 desnecessário pra quem não pode editar mesmo).
+ */
+export const fetchSectionToggles = async (args: { token: string }): Promise<SectionToggleMap> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/section-toggles`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { toggles: SectionToggleMap };
+  return payload.toggles;
+};
+
+export const updateSectionToggles = async (args: {
+  token: string;
+  toggles: SectionToggleMap;
+}): Promise<SectionToggleMap> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/section-toggles`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ toggles: args.toggles }),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { toggles: SectionToggleMap };
+  return payload.toggles;
+};
+
 /**
  * Cliente genérico de upload (`/api/uploads`), reusado por qualquer tela que precise subir
  * imagem (Branding nesta onda; Galeria de Mídias na Onda 7). Mesmo endpoint do legado.

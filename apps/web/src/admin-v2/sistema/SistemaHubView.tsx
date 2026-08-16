@@ -17,7 +17,7 @@ import { HubCard } from "../shell/HubCard";
 const CARDS = [
   { icon: "palette", label: "Branding", href: "/admin-v2/sistema/branding", native: true },
   { icon: "article", label: "Textos das Páginas", href: "/admin-v2/sistema/textos-paginas", native: true },
-  { icon: "view_agenda", label: "Seções", href: "/admin#site-sections" },
+  { icon: "view_agenda", label: "Seções", href: "/admin-v2/sistema/secoes", native: true },
   { icon: "photo_library", label: "Galeria de Mídias", href: "/admin#galeria-midias" },
   { icon: "chat", label: "WhatsApp / Integrações", href: "/admin#whatsapp-contatos" },
   { icon: "science", label: "Testes", href: "/admin#testes" },

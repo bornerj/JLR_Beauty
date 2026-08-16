@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1 (Planos), 2 (Entrega), 3 (Branding), 4 (Cupons) e 5 (Textos das Páginas) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. Ondas 6-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1 (Planos), 2 (Entrega), 3 (Branding), 4 (Cupons), 5 (Textos das Páginas) e 6 (Seções Telas) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. Ondas 7-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -31,7 +31,7 @@
 | 3 | 3 | **Branding** | P | `admin.ts` (`/admin/branding`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; rota dedicada, não o `/settings/:key` genérico |
 | 4 | 4 | **Cupons** (discount-coupons) | P | `admin.ts` (CRUD completo) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real |
 | 5 | 5 | **Textos das Páginas** | P | `admin.ts` (`/admin/page-texts` + `/previous` + `/restore`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; 331 campos, undo de 1 nível preservado |
-| 6 | 6 | **Seções Telas** (liga/desliga) | P | `admin.ts` (`/admin/section-toggles`) | 32 chaves `page.section`; **só MASTER edita** (checagem além do `requireAdmin` padrão) — preservar exatamente |
+| 6 | 6 | **Seções Telas** (liga/desliga) | P | `admin.ts` (`/admin/section-toggles`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; gate MASTER preservado; achado `ERR-0051` (CSS) corrigido |
 | 7 | 7 | **Galeria de Mídias** | P | `admin.ts` (`/admin/media-slots` + `/uploads` genérico) | 78 slots, fallback em cascata (banco → catálogo → cache local) — preservar |
 | 8 | 8 | **Serviços** | M | `catalog.ts` (`/services` CRUD) | Legado tem `behavior.ts` (416 linhas) — reescrever como React |
 | 9 | 9 | **WhatsApp / Integrações** | M | a confirmar na onda (RAG não fez o levantamento fino do backend ainda) | Legado tem `behavior.ts` (361 linhas) |
@@ -145,7 +145,27 @@
 
 ---
 
-## Ondas 6 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 6 — Seções Telas (liga/desliga) ✅ CONCLUÍDA 2026-08-16
+
+**Pergunta que a tela fecha:** *quais seções das páginas públicas estão ligadas/desligadas, e como um MASTER muda isso sem deploy?*
+
+**RAG feito:** `admin.ts` já tinha `GET/PUT /admin/section-toggles`, 32 chaves `page.section` (Home 8, Franquias 19, Assinaturas 5), gravadas em `Setting` (`public.sectionToggles`). **Restrição de papel preservada exatamente**: `canEditSectionToggles(userId)` exige `role === "MASTER"` — checada em cima do `requireAdmin` padrão, no `GET` **e** no `PUT` (um ADMIN comum recebe 403 até pra *ver* os toggles, não só editar). Legado (`admin-section-toggles/AdminSectionTogglesView.tsx`, 276 linhas) já tinha gate client-side espelhando isso (`getUser()?.role === "MASTER"`, checado antes de chamar a API), replicado 1:1.
+
+**Backend:** nenhuma mudança — reusa `/api/admin/section-toggles` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchSectionToggles`/`updateSectionToggles`, tipo `SectionToggleMap`.
+- [x] `apps/web/src/admin-v2/sistema/sectionToggles/SectionTogglesView.tsx` — 3 colunas (Home/Franquias/Assinaturas), ordem fixa de página e seção (não alfabética, mesma do legado — reflete a ordem real nas páginas públicas), switch customizado (Tailwind, sem CSS inline como o legado), gate `canEdit` client-side preservado.
+- [x] `AdminV2Root.tsx` — rota `sistema/secoes`; entrada em `SISTEMA_SUBROUTE_LABELS`.
+- [x] `SistemaHubView.tsx` — card "Seções" vira `native: true`.
+
+**Bug real achado na validação visual, não no E2E via curl (`ERR-0051`, mesma causa raiz do `ERR-0049`/`ERR-0040`)**: todos os 32 toggles renderizavam brancos/sem cor, círculo sempre à esquerda, mesmo com `enabled: true` no banco. Causa: `tailwind.generated.css` é um snapshot estático (gerado na Onda 5 do `PLAN-0025`) — o switch customizado introduziu classes nunca usadas antes no código (`border-state-healthy` na forma bare, `w-[52px]`, `left-[26px]`), ausentes do CSS servido. Corrigido regenerando o arquivo por completo (mesmo comando documentado no cabeçalho do próprio arquivo) — a regeneração rescaneia todo o código atual, então automaticamente cobre também as Ondas 1-5. Documentado como `ERR-0051`, com nota de processo: telas futuras que introduzam padrão visual genuinamente novo devem regenerar esse arquivo como parte padrão da validação, não só reativamente.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `eslint` nos arquivos tocados limpo; `npm run build` (web) PASS (2x — antes e depois do fix de CSS); `docker compose build web` + redeploy `--force-recreate` (2x). **E2E real contra Postgres**: baseline de 32 chaves capturado (confirmado: produção já tinha todas as 32 seções em `true`, diferente dos defaults do código que têm várias `false` — dado real, não bug); toggle de 1 chave + `PUT` completo confirmado; revertido ao mapa original exato. **Validação visual real** (Playwright, 8 checks, todos PASS — só depois do fix de CSS): hub mostra "Seções" com "Abrir →"; total de 32 seções confirmado; toggle muda `aria-pressed` e reflete na tela; **persistência confirmada com reload**; **pixel-sampling confirmou `rgb(0,150,127)` exato no estado ligado e cinza claro no desligado** (não só "parece verde"); banco confirmado revertido ao original ao final.
+
+---
+
+## Ondas 7 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 

@@ -17,7 +17,11 @@
  *   npx tailwindcss@3.4.17 -c tailwind.config.js -i /tmp/tw-input.css \
  *     -o apps/web/src/styles/tailwind.generated.css
  * Confirmado nesta sessão: `npx tailwindcss@3.4.17` funciona neste ambiente sem instalação
- * prévia (fetch on-demand). Gerado em 2026-08-15.
+ * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado em 2026-08-16 (PLAN-0026 Onda
+ * 6 — achado o mesmo sintoma de novo: classes arbitrárias novas (`w-[52px]`, `left-[26px]`)
+ * e `border-state-healthy` bare usadas no toggle switch de Seções Telas não estavam nesta
+ * versão do arquivo, mesma causa raiz do ERR-0049 — regeneração completa resolve porque o
+ * comando reescaneia TODO o código-fonte atual, não só o que motivou a Onda 5 do PLAN-0025).
  */
 
 .pointer-events-none {
@@ -137,6 +141,10 @@
   left: 0px
 }
 
+.left-0\.5 {
+  left: 0.125rem
+}
+
 .left-1\/2 {
   left: 50%
 }
@@ -151,6 +159,10 @@
 
 .left-5 {
   left: 1.25rem
+}
+
+.left-\[26px\] {
+  left: 26px
 }
 
 .right-0 {
@@ -609,6 +621,10 @@
   height: 16rem
 }
 
+.h-7 {
+  height: 1.75rem
+}
+
 .h-72 {
   height: 18rem
 }
@@ -925,6 +941,10 @@
   width: 42px
 }
 
+.w-\[52px\] {
+  width: 52px
+}
+
 .w-\[92\%\] {
   width: 92%
 }
@@ -1000,6 +1020,10 @@
 
 .min-w-\[640px\] {
   min-width: 640px
+}
+
+.min-w-\[820px\] {
+  min-width: 820px
 }
 
 .min-w-full {
@@ -1965,8 +1989,17 @@
   border-color: rgb(220 38 38 / 0.3)
 }
 
+.border-state-critical\/50 {
+  border-color: rgb(220 38 38 / 0.5)
+}
+
 .border-state-critical\/60 {
   border-color: rgb(220 38 38 / 0.6)
+}
+
+.border-state-healthy {
+  --tw-border-opacity: 1;
+  border-color: rgb(0 150 127 / var(--tw-border-opacity, 1))
 }
 
 .border-state-healthy\/30 {
@@ -2210,6 +2243,10 @@
   background-color: rgb(197 160 89 / 0.1)
 }
 
+.bg-gold\/15 {
+  background-color: rgb(197 160 89 / 0.15)
+}
+
 .bg-gold\/5 {
   background-color: rgb(197 160 89 / 0.05)
 }
@@ -2355,6 +2392,10 @@
 .bg-state-healthy {
   --tw-bg-opacity: 1;
   background-color: rgb(0 150 127 / var(--tw-bg-opacity, 1))
+}
+
+.bg-state-healthy\/15 {
+  background-color: rgb(0 150 127 / 0.15)
 }
 
 .bg-state-healthy\/45 {
@@ -4006,6 +4047,10 @@
   background-color: rgb(220 38 38 / 0.5)
 }
 
+.hover\:bg-state-critical\/90:hover {
+  background-color: rgb(220 38 38 / 0.9)
+}
+
 .hover\:bg-state-healthy\/55:hover {
   background-color: rgb(0 150 127 / 0.55)
 }
@@ -4285,6 +4330,10 @@
   border-color: rgb(16 34 22 / var(--tw-divide-opacity, 1))
 }
 
+.dark\:divide-forest-green\/40:is(.dark *) > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(16 34 22 / 0.4)
+}
+
 .dark\:divide-white\/10:is(.dark *) > :not([hidden]) ~ :not([hidden]) {
   border-color: rgb(255 255 255 / 0.1)
 }
@@ -4315,6 +4364,11 @@
 
 .dark\:border-forest-green\/40:is(.dark *) {
   border-color: rgb(16 34 22 / 0.4)
+}
+
+.dark\:border-stone-600:is(.dark *) {
+  --tw-border-opacity: 1;
+  border-color: rgb(87 83 78 / var(--tw-border-opacity, 1))
 }
 
 .dark\:border-white\/10:is(.dark *) {
@@ -4443,6 +4497,16 @@
   background-color: rgb(127 29 29 / 0.2)
 }
 
+.dark\:bg-stone-700:is(.dark *) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(68 64 60 / var(--tw-bg-opacity, 1))
+}
+
+.dark\:bg-stone-800:is(.dark *) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(41 37 36 / var(--tw-bg-opacity, 1))
+}
+
 .dark\:bg-white\/10:is(.dark *) {
   background-color: rgb(255 255 255 / 0.1)
 }
@@ -4509,6 +4573,11 @@
 .dark\:text-red-400:is(.dark *) {
   --tw-text-opacity: 1;
   color: rgb(248 113 113 / var(--tw-text-opacity, 1))
+}
+
+.dark\:text-stone-200:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(231 229 228 / var(--tw-text-opacity, 1))
 }
 
 .dark\:text-stone-300:is(.dark *) {
@@ -5185,6 +5254,10 @@
 
   .xl\:grid-cols-\[2fr_1fr\] {
     grid-template-columns: 2fr 1fr
+  }
+
+  .xl\:grid-cols-\[minmax\(0\2c 1\.1fr\)_minmax\(340px\2c 0\.9fr\)\] {
+    grid-template-columns: minmax(0,1.1fr) minmax(340px,0.9fr)
   }
 
   .xl\:grid-cols-\[minmax\(0\2c 1\.1fr\)_minmax\(360px\2c 0\.9fr\)\] {
