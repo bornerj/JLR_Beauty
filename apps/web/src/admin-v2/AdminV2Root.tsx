@@ -22,6 +22,7 @@ import { PlansListView } from "./cadastros/plans/PlansListView";
 import { DeliverySettingsView } from "./cadastros/delivery/DeliverySettingsView";
 import { CouponsListView } from "./cadastros/coupons/CouponsListView";
 import { ServicesListView } from "./cadastros/services/ServicesListView";
+import { ProductsListView } from "./cadastros/products/ProductsListView";
 import { SistemaHubView } from "./sistema/SistemaHubView";
 import { BrandingSettingsView } from "./sistema/branding/BrandingSettingsView";
 import { PageTextsView } from "./sistema/pageTexts/PageTextsView";
@@ -178,6 +179,7 @@ function AdminV2Shell() {
     entrega: "Entrega",
     cupons: "Cupons",
     servicos: "Serviços",
+    produtos: "Produtos",
   };
   const cadastrosSubRoute = location.pathname.match(/\/cadastros\/([^/]+)/)?.[1] ?? null;
   const cadastrosSubRouteLabel = cadastrosSubRoute ? CADASTROS_SUBROUTE_LABELS[cadastrosSubRoute] : undefined;
@@ -303,6 +305,7 @@ function AdminV2Shell() {
         <Route path="cadastros/entrega" element={<DeliverySettingsView />} />
         <Route path="cadastros/cupons" element={<CouponsListView />} />
         <Route path="cadastros/servicos" element={<ServicesListView />} />
+        <Route path="cadastros/produtos" element={<ProductsListView />} />
         <Route path="sistema" element={<SistemaHubView />} />
         <Route path="sistema/branding" element={<BrandingSettingsView />} />
         <Route path="sistema/textos-paginas" element={<PageTextsView />} />

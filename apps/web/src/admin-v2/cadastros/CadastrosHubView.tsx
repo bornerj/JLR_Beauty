@@ -12,7 +12,7 @@ import { HubCard } from "../shell/HubCard";
  */
 
 const CARDS = [
-  { icon: "inventory_2", label: "Produtos", href: "/admin#produtos" },
+  { icon: "inventory_2", label: "Produtos", href: "/admin-v2/cadastros/produtos", native: true },
   { icon: "content_cut", label: "Serviços", href: "/admin-v2/cadastros/servicos", native: true },
   { icon: "card_membership", label: "Planos", href: "/admin-v2/cadastros/planos", native: true },
   { icon: "sell", label: "Cupons", href: "/admin-v2/cadastros/cupons", native: true },

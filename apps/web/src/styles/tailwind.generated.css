@@ -17,12 +17,10 @@
  *   npx tailwindcss@3.4.17 -c tailwind.config.js -i /tmp/tw-input.css \
  *     -o apps/web/src/styles/tailwind.generated.css
  * Confirmado nesta sessão: `npx tailwindcss@3.4.17` funciona neste ambiente sem instalação
- * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado em 2026-08-16 (Onda 6 do
- * PLAN-0026 — ERR-0051 — e de novo proativamente na Onda 7, antes do primeiro rebuild
- * Docker, já que a tela introduziu classes arbitrárias novas: `h-[140px]`, `z-[80]`,
- * `h-[260px]`, `max-w-[640px]`, `md:h-[320px]`. Regenerar antes de validar visualmente
- * quando a tela tiver um padrão de layout genuinamente novo evita todo um ciclo de rebuild
- * Docker só pra descobrir a classe ausente depois — lição da Onda 6).
+ * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado nas Ondas 6/7 do PLAN-0026
+ * (ERR-0051) e de novo na Onda 11 (Produtos) — checagem proativa antes do rebuild Docker
+ * virou padrão desde a Onda 7: `min-w-[880px]`, `min-w-[540px]`, `max-h-[92vh]` usados no
+ * form/modais de Produtos não estavam nesta versão do arquivo.
  */
 
 .pointer-events-none {
@@ -770,6 +768,10 @@
   max-height: 90vh
 }
 
+.max-h-\[92vh\] {
+  max-height: 92vh
+}
+
 .max-h-full {
   max-height: 100%
 }
@@ -926,6 +928,10 @@
   width: 16rem
 }
 
+.w-7 {
+  width: 1.75rem
+}
+
 .w-8 {
   width: 2rem
 }
@@ -1019,6 +1025,10 @@
   min-width: 480px
 }
 
+.min-w-\[540px\] {
+  min-width: 540px
+}
+
 .min-w-\[560px\] {
   min-width: 560px
 }
@@ -1029,6 +1039,18 @@
 
 .min-w-\[820px\] {
   min-width: 820px
+}
+
+.min-w-\[880px\] {
+  min-width: 880px
+}
+
+.min-w-\[920px\] {
+  min-width: 920px
+}
+
+.min-w-\[980px\] {
+  min-width: 980px
 }
 
 .min-w-full {
@@ -1308,6 +1330,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr))
 }
 
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr))
+}
+
 .grid-cols-7 {
   grid-template-columns: repeat(7, minmax(0, 1fr))
 }
@@ -1565,6 +1591,10 @@
 
 .self-start {
   align-self: flex-start
+}
+
+.self-end {
+  align-self: flex-end
 }
 
 .overflow-auto {
@@ -2416,6 +2446,10 @@
   background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1))
 }
 
+.bg-state-info\/15 {
+  background-color: rgb(37 99 235 / 0.15)
+}
+
 .bg-state-info\/5 {
   background-color: rgb(37 99 235 / 0.05)
 }
@@ -2833,6 +2867,10 @@
 
 .pb-4 {
   padding-bottom: 1rem
+}
+
+.pb-5 {
+  padding-bottom: 1.25rem
 }
 
 .pb-6 {
@@ -5096,6 +5134,10 @@
 
   .lg\:grid-cols-6 {
     grid-template-columns: repeat(6, minmax(0, 1fr))
+  }
+
+  .lg\:grid-cols-\[minmax\(0\2c 1fr\)_240px\] {
+    grid-template-columns: minmax(0,1fr) 240px
   }
 
   .lg\:grid-cols-\[minmax\(0\2c 1fr\)_320px\] {

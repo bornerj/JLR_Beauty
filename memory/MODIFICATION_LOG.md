@@ -2,6 +2,54 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 11 (Produtos): a mais pesada do plano, 1 achado de RAG corrigido por E2E + 1 achado de backend
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Produtos, tier G,
+  primeira onda mais pesada — legado tinha `behavior.ts` imperativo (973 linhas) + 450 de
+  markup, a maior tela do legado inteiro.
+- **RAG confirmado**: `catalog.ts` já tinha CRUD completo de `/products` +
+  `/product-categories` + `/product-statuses`; `inventory.ts` (`PLAN-0020`) já tinha os 4
+  endpoints de movimento, cross-unit, histórico e lista de unidades.
+- **Achado de RAG corrigido depois de um E2E real (lição de processo importante)**: a
+  varredura inicial (grep por `.product.update(`, padrão ORM) concluiu que `Product.stock`
+  nunca era atualizado após a criação — **errado**. `applyStockMovement` recalcula o campo
+  via `$executeRaw` (SQL bruto), que o grep não pegou. Só descoberto criando um produto de
+  teste real, movimentando estoque de verdade e conferindo que o campo refletia a soma
+  correta. Corrigido: tabela de Produtos agora **mostra** "Estoque total" (real, confiável),
+  antes ia excluir a coluna por engano. Lição: grep prova ausência de um padrão específico,
+  não de comportamento — só teste real prova comportamento real.
+- **Achado de backend confirmado (`ERR-0053`, fora de escopo — sem mudança de schema)**:
+  `DELETE /products/:id` responde `500` (não 404/409) pra produto com histórico de estoque
+  — `StockMovement.product` não tem `onDelete: Cascade`. Confirmado com teste real, produto
+  de teste removido via SQL direto (API não oferece caminho pra esse caso).
+- **Entregue**: `cadastros/products/types.ts`; `shared/api.ts` ganhou CRUD de produtos +
+  categorias/status de produto + 4 funções de estoque multi-unidade;
+  `CategoryStatusManagerModal.tsx` **generalizado** (`entity?: "service" | "product"`, não
+  quebra a Onda 8); `components/StockMoveModal.tsx` e `StockHistoryModal.tsx` (novos);
+  `components/ProductFormModal.tsx` (catálogo completo + painel de estoque por unidade, só
+  na edição); `ProductsListView.tsx` (tabela + busca + filtros + coluna "Estoque total");
+  rota `cadastros/produtos`; card no hub vira `native: true`.
+- **Decisões de modernização**: coluna "Patrimônio" do legado não reproduzida; os 4 cards
+  de resumo do topo (números fabricados no JSX, nunca calculados por `behavior.ts`) não
+  portados; paginação numerada não reproduzida (mesmo padrão das Ondas 4/8/9).
+- **Validações executadas**: `tsc -b`/`eslint`/`build` limpos (2x); **CSS regenerado
+  proativamente** antes do rebuild (3 classes arbitrárias ausentes, corrigidas antes de
+  gastar um ciclo Docker); `docker compose build web` + redeploy `--force-recreate` (2x).
+  **E2E real contra Postgres**: baseline de 9 produtos; criado produto com estoque inicial,
+  `entry`+`adjust` confirmados via histórico (3 linhas corretas), `Product.stock` confirmado
+  refletindo a soma real; `DELETE` de produto com movimento confirmado 500 (`ERR-0053`);
+  limpeza via SQL direto. **Validação visual real** (Playwright, 8/9 automatizados PASS + 1
+  falso-negativo de timing confirmado correto por screenshot): criar produto, **persistência
+  confirmada com reload**, gerenciador de categoria generalizado funciona pra produto,
+  painel de estoque registra movimento real e histórico mostra o registro certo.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 11).
+- **Status**: Onda 11 concluída, validada de verdade, **commitada** (push acumulado pro
+  final do plano, per autorização em pé). Onda 12 (Clientes, tier G — desmembramento de
+  "Pessoas") inicia em seguida sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 10 (Testes e Validação): fecha tier M e o hub de Sistema (6/6 nativo)
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Testes e Validação,

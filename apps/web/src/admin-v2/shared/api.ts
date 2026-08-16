@@ -19,6 +19,17 @@ import type { PageTextCatalogEntry, PageTextsMap } from "../sistema/pageTexts/ty
 import type { PublicMediaSlotsSnapshot } from "../../modules/public-site/mediaSlots";
 import type { ConciergeSession } from "../sistema/whatsapp/types";
 import type {
+  Product,
+  ProductInput,
+  ProductCategory,
+  ProductStatusOption,
+  InventoryUnit,
+  CrossUnitStockRow,
+  StockMovementRow,
+  StockMovementKind,
+  StockMovementInput,
+} from "../cadastros/products/types";
+import type {
   Service,
   ServiceInput,
   ServiceCategory,
@@ -822,6 +833,178 @@ export const apiRequest = async (args: {
   });
   const json = await response.json().catch(() => null);
   return { status: response.status, json };
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 11) — Produtos, reusa `/api/products` (+ `/product-categories` +
+ * `/product-statuses`, mesmo desenho de endpoint das categorias/status de serviço, Onda 8) +
+ * `/api/inventory/*` (`PLAN-0020`, estoque multi-unidade) sem alteração.
+ */
+export const fetchProducts = async (args: { token: string }): Promise<Product[]> => {
+  const response = await fetch(`${getApiUrl()}/api/products`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Product[];
+};
+
+export const createProduct = async (args: { token: string; input: ProductInput }): Promise<Product> => {
+  const response = await fetch(`${getApiUrl()}/api/products`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Product;
+};
+
+export const updateProduct = async (args: { token: string; id: number; input: ProductInput }): Promise<Product> => {
+  const response = await fetch(`${getApiUrl()}/api/products/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Product;
+};
+
+export const deleteProduct = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/products/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+export const fetchProductCategories = async (args: { token: string }): Promise<ProductCategory[]> => {
+  const response = await fetch(`${getApiUrl()}/api/product-categories`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProductCategory[];
+};
+
+export const createProductCategory = async (args: { token: string; input: CategoryOrStatusInput }): Promise<ProductCategory> => {
+  const response = await fetch(`${getApiUrl()}/api/product-categories`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProductCategory;
+};
+
+export const updateProductCategory = async (args: {
+  token: string;
+  id: number;
+  input: CategoryOrStatusInput;
+}): Promise<ProductCategory> => {
+  const response = await fetch(`${getApiUrl()}/api/product-categories/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProductCategory;
+};
+
+export const deleteProductCategory = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/product-categories/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+export const fetchProductStatuses = async (args: { token: string }): Promise<ProductStatusOption[]> => {
+  const response = await fetch(`${getApiUrl()}/api/product-statuses`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProductStatusOption[];
+};
+
+export const createProductStatus = async (args: { token: string; input: CategoryOrStatusInput }): Promise<ProductStatusOption> => {
+  const response = await fetch(`${getApiUrl()}/api/product-statuses`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProductStatusOption;
+};
+
+export const updateProductStatus = async (args: {
+  token: string;
+  id: number;
+  input: CategoryOrStatusInput;
+}): Promise<ProductStatusOption> => {
+  const response = await fetch(`${getApiUrl()}/api/product-statuses/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProductStatusOption;
+};
+
+export const deleteProductStatus = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/product-statuses/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+export const fetchInventoryUnits = async (args: { token: string }): Promise<InventoryUnit[]> => {
+  const response = await fetch(`${getApiUrl()}/api/inventory/units`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  const payload = (await response.json()) as { units: InventoryUnit[] };
+  return payload.units;
+};
+
+export const fetchCrossUnitStock = async (args: { token: string; productId: number }): Promise<CrossUnitStockRow[]> => {
+  const response = await fetch(`${getApiUrl()}/api/inventory/cross-unit?productId=${args.productId}`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as CrossUnitStockRow[];
+};
+
+export const fetchStockMovements = async (args: {
+  token: string;
+  unitId: number;
+  productId: number;
+}): Promise<StockMovementRow[]> => {
+  const response = await fetch(`${getApiUrl()}/api/units/${args.unitId}/products/${args.productId}/movements`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as StockMovementRow[];
+};
+
+export const postStockMovement = async (args: {
+  token: string;
+  unitId: number;
+  productId: number;
+  kind: StockMovementKind;
+  input: StockMovementInput;
+}): Promise<{ ok: boolean; balanceAfter: number }> => {
+  const path =
+    args.kind === "adjust"
+      ? `/units/${args.unitId}/products/${args.productId}/stock/adjust`
+      : `/units/${args.unitId}/products/${args.productId}/stock/${args.kind}`;
+  const body: Record<string, unknown> = { ...args.input };
+  delete body.kind;
+  const response = await fetch(`${getApiUrl()}/api${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as { ok: boolean; balanceAfter: number };
 };
 
 /**

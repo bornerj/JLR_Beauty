@@ -10,20 +10,32 @@ import {
   createServiceStatus,
   updateServiceStatus,
   deleteServiceStatus,
+  fetchProductCategories,
+  createProductCategory,
+  updateProductCategory,
+  deleteProductCategory,
+  fetchProductStatuses,
+  createProductStatus,
+  updateProductStatus,
+  deleteProductStatus,
 } from "../../../shared/api";
 import type { ServiceCategory, ServiceStatusOption, ServiceCategoryStatus, ServiceStatusColor } from "../types";
 
 /**
- * Admin V2 (PLAN-0026, Onda 8) — gerenciador rápido de Categorias/Status de Serviço, aberto
- * a partir do form de Serviço (botão "+" junto do dropdown, mesmo padrão do legado). Reusa
- * `/api/service-categories`/`/api/service-statuses` sem alteração. Genérico por `kind` —
- * mesmo componente serve os dois, e fica pronto pra Produtos reusar na Onda 11 (categorias/
- * status de produto usam o mesmo desenho de endpoint no backend).
+ * Admin V2 (PLAN-0026, Onda 8; generalizado na Onda 11) — gerenciador rápido de Categorias/
+ * Status de Serviço **ou** Produto, aberto a partir do form correspondente (botão "+" junto
+ * do dropdown, mesmo padrão do legado). Reusa `/api/service-categories`/`/service-statuses`
+ * ou `/api/product-categories`/`/product-statuses` sem alteração — mesmo desenho de
+ * endpoint nos dois casos no backend, só o prefixo muda. Genérico por `kind` (categoria vs
+ * status) **e** `entity` (serviço vs produto, default `service` pra não quebrar os call
+ * sites da Onda 8).
  *
  * "Em uso, não pode excluir" é decidido pelo **backend** (409 no DELETE) — não recalculado
- * no cliente cruzando com a lista de serviços; o erro do backend já é a fonte da verdade,
- * simplifica o componente e evita replicar a regra em dois lugares.
+ * no cliente cruzando com a lista de serviços/produtos; o erro do backend já é a fonte da
+ * verdade, simplifica o componente e evita replicar a regra em dois lugares.
  */
+
+type Entity = "service" | "product";
 
 const CATEGORY_STATUS_OPTIONS: { value: ServiceCategoryStatus; label: string }[] = [
   { value: "ACTIVE", label: "Ativo" },
@@ -47,10 +59,12 @@ type Item = ServiceCategory | ServiceStatusOption;
 
 export function CategoryStatusManagerModal({
   kind,
+  entity = "service",
   onClose,
   onChanged,
 }: {
   kind: "category" | "status";
+  entity?: Entity;
   onClose: () => void;
   /** disparado após qualquer criação/edição/exclusão bem-sucedida, pra recarregar os dropdowns do form. */
   onChanged: () => void;
@@ -64,7 +78,8 @@ export function CategoryStatusManagerModal({
   const [statusValue, setStatusValue] = useState<ServiceCategoryStatus>("ACTIVE");
   const [colorValue, setColorValue] = useState<ServiceStatusColor>("VERDE");
 
-  const title = kind === "category" ? "Categorias de Serviço" : "Status de Serviço";
+  const entityLabel = entity === "product" ? "Produto" : "Serviço";
+  const title = kind === "category" ? `Categorias de ${entityLabel}` : `Status de ${entityLabel}`;
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -76,16 +91,23 @@ export function CategoryStatusManagerModal({
     setLoading(true);
     setError(null);
     try {
-      const data = kind === "category" ? await fetchServiceCategories({ token }) : await fetchServiceStatuses({ token });
+      const data =
+        kind === "category"
+          ? entity === "product"
+            ? await fetchProductCategories({ token })
+            : await fetchServiceCategories({ token })
+          : entity === "product"
+            ? await fetchProductStatuses({ token })
+            : await fetchServiceStatuses({ token });
       setItems(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao carregar.";
-      logger.warn("Falha ao carregar categorias/status de serviço (Admin V2)", { error: message, kind });
+      logger.warn("Falha ao carregar categorias/status (Admin V2)", { error: message, kind, entity });
       setError(message);
     } finally {
       setLoading(false);
     }
-  }, [kind]);
+  }, [kind, entity]);
 
   useEffect(() => {
     void load();
@@ -113,18 +135,28 @@ export function CategoryStatusManagerModal({
     try {
       const input = kind === "category" ? { name: name.trim(), status: statusValue } : { name: name.trim(), color: colorValue };
       if (editingId) {
-        if (kind === "category") await updateServiceCategory({ token, id: editingId, input });
-        else await updateServiceStatus({ token, id: editingId, input });
+        if (kind === "category") {
+          if (entity === "product") await updateProductCategory({ token, id: editingId, input });
+          else await updateServiceCategory({ token, id: editingId, input });
+        } else {
+          if (entity === "product") await updateProductStatus({ token, id: editingId, input });
+          else await updateServiceStatus({ token, id: editingId, input });
+        }
       } else {
-        if (kind === "category") await createServiceCategory({ token, input });
-        else await createServiceStatus({ token, input });
+        if (kind === "category") {
+          if (entity === "product") await createProductCategory({ token, input });
+          else await createServiceCategory({ token, input });
+        } else {
+          if (entity === "product") await createProductStatus({ token, input });
+          else await createServiceStatus({ token, input });
+        }
       }
       resetForm();
       await load();
       onChanged();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao salvar.";
-      logger.warn("Falha ao salvar categoria/status de serviço (Admin V2)", { error: message, kind });
+      logger.warn("Falha ao salvar categoria/status (Admin V2)", { error: message, kind, entity });
       setError(message);
     } finally {
       setSubmitting(false);
@@ -137,14 +169,19 @@ export function CategoryStatusManagerModal({
     setSubmitting(true);
     setError(null);
     try {
-      if (kind === "category") await deleteServiceCategory({ token, id });
-      else await deleteServiceStatus({ token, id });
+      if (kind === "category") {
+        if (entity === "product") await deleteProductCategory({ token, id });
+        else await deleteServiceCategory({ token, id });
+      } else {
+        if (entity === "product") await deleteProductStatus({ token, id });
+        else await deleteServiceStatus({ token, id });
+      }
       if (editingId === id) resetForm();
       await load();
       onChanged();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao excluir.";
-      logger.warn("Falha ao excluir categoria/status de serviço (Admin V2)", { error: message, kind });
+      logger.warn("Falha ao excluir categoria/status (Admin V2)", { error: message, kind, entity });
       setError(message);
     } finally {
       setSubmitting(false);

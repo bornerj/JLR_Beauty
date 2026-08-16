@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-10 ✅ CONCLUÍDAS 2026-08-16. **Tier P e tier M inteiros fechados** — hub de Sistema 100% nativo (6/6 telas). Ondas 11-14 (tier G, Cadastros: Produtos/Clientes/Profissionais/Usuários) aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-11 ✅ CONCLUÍDAS 2026-08-16. **Tier P e tier M inteiros fechados**; Onda 11 (Produtos, a mais pesada do plano) também concluída. Ondas 12-14 (Clientes/Profissionais/Usuários, desmembramento de "Pessoas") aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -36,7 +36,7 @@
 | 8 | 8 | **Serviços** | M | `catalog.ts` (`/services` CRUD) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; `behavior.ts` reescrito como React |
 | 9 | 9 | **WhatsApp / Integrações** | M | `schedule.ts` (`/concierge/sessions`, leitura) + `/api/settings/:key` genérico | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; `behavior.ts` (361 linhas) reescrito como React |
 | 10 | 10 | **Testes** | M | 13 endpoints já existentes (smoke-check) | ✅ CONCLUÍDA 2026-08-16 — escopo reduzido deliberadamente (checks de DOM do shell legado descartados, ver seção da onda) |
-| 11 | 11 | **Produtos** | G | `catalog.ts` (`/products` CRUD) + `inventory.ts`/estoque multi-unidade (PLAN-0020) | A mais pesada de Cadastros — upload de imagem, min/max de estoque, estoque por unidade real (não só campo solto) |
+| 11 | 11 | **Produtos** | G | `catalog.ts` (`/products` CRUD) + `inventory.ts`/estoque multi-unidade (PLAN-0020) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; achado `ERR-0053` (backend, fora de escopo) documentado |
 | 12 | 12 | **Clientes** | G | `schedule.ts` (`/customers` CRUD) | Desmembrado de "Pessoas" |
 | 13 | 13 | **Profissionais** | G | `schedule.ts` (`/professionals`, `/professional-work-profiles`, `/professional-commission-profiles`, `/professional-shifts`) | Desmembrado de "Pessoas" — a mais relacional (perfis de trabalho/comissão, escalas) |
 | 14 | 14 | **Usuários** | G | `users.ts` (`/users` CRUD + `/users/:id/role`) | Desmembrado de "Pessoas" — sensível (gestão de permissão/role), revisar escopo por papel com atenção redobrada |
@@ -248,7 +248,36 @@
 
 ---
 
-## Ondas 11 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 11 — Produtos ✅ CONCLUÍDA 2026-08-16 (a mais pesada do plano, primeira do tier G)
+
+**Pergunta que a tela fecha:** *quais produtos o catálogo tem, com que categoria/status/preço/estoque, e como criar/editar/excluir um e movimentar seu estoque por unidade?*
+
+**RAG feito:** `catalog.ts` já tinha CRUD completo de `/products` + `/product-categories` + `/product-statuses` (mesmo desenho de endpoint de Serviços, Onda 8). `inventory.ts` (`PLAN-0020`) já tinha os 4 endpoints de movimento (`/units/:unitId/products/:id/stock/{entry,consumption,loss,adjust}`), leitura cross-unit (`/inventory/cross-unit?productId=`), histórico (`/units/:unitId/products/:id/movements`) e lista de unidades (`/inventory/units`). Legado (`admin-products/behavior.ts`, 973 linhas + `AdminProductsView.tsx`, 450 linhas) — a tela mais pesada do legado inteiro, confirmando a estimativa do roadmap.
+
+**Achado de RAG corrigido depois de um E2E real (lição de processo)**: a varredura inicial concluiu que `Product.stock` nunca era atualizado após a criação (só grep por `.product.update(`, padrão ORM) — **errado**. `applyStockMovement` (`lib/stockLedger.ts`) recalcula o campo via `$executeRaw` (SQL bruto, `syncProductGlobalStock`), que o grep por padrão ORM não pegou. Só descobri o erro criando um produto de teste de verdade, registrando movimentos reais e conferindo que `product.stock` refletia a soma correta. Corrigido: `types.ts` documenta o achado certo, e a tabela de Produtos **mostra** "Estoque total" (antes ia excluir a coluna por achar que seria sempre 0). **Lição geral**: `grep` por um padrão de código específico prova ausência só daquele padrão, não do comportamento — só E2E real prova comportamento real.
+
+**Achado de backend confirmado (fora de escopo, `ERR-0053`)**: `DELETE /products/:id` responde `500` (não 404/409) pra qualquer produto que já teve 1+ movimento de estoque — `StockMovement.product` não tem `onDelete: Cascade` no schema. Confirmado com teste real (criar produto, mover estoque, tentar excluir → 500); produto de teste removido via SQL direto (não pela API, que não oferece caminho). Documentado, não corrigido (mudança de schema/backend, fora do escopo desta onda de frontend).
+
+**Backend:** nenhuma mudança — reusa `/api/products` + `/api/product-categories` + `/api/product-statuses` + `/api/inventory/*` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/cadastros/products/types.ts` — `Product`, `ProductInput`, `ProductCategory`, `ProductStatusOption`, `InventoryUnit`, `CrossUnitStockRow`, `StockMovementRow`, `StockMovementKind`/`Input`.
+- [x] `apps/web/src/admin-v2/shared/api.ts` — CRUD de produtos + categorias/status de produto + `fetchInventoryUnits`/`fetchCrossUnitStock`/`fetchStockMovements`/`postStockMovement`.
+- [x] `apps/web/src/admin-v2/cadastros/services/components/CategoryStatusManagerModal.tsx` — **generalizado** com prop `entity?: "service" | "product"` (default `service`, não quebra a Onda 8) — mesmo componente serve categorias/status de Serviço **e** Produto agora, sem duplicar.
+- [x] `apps/web/src/admin-v2/cadastros/products/components/StockMoveModal.tsx` (novo) — as 4 modalidades de movimento (entrada/uso/perda/ajuste), mesma validação do legado (ajuste exige razão ≥3 chars).
+- [x] `apps/web/src/admin-v2/cadastros/products/components/StockHistoryModal.tsx` (novo) — histórico por unidade, sinal +/−/± por tipo de movimento.
+- [x] `apps/web/src/admin-v2/cadastros/products/components/ProductFormModal.tsx` (novo) — catálogo completo (nome/categoria/SKU/preço/custo/estoque mínimo/status/destaque/descrição/benefícios até 5/imagem com upload), estoque inicial só na criação (regra do backend), painel "Estoque por unidade" só na edição (saldo real via `/inventory/cross-unit`, abre os modais de Movimentar/Histórico).
+- [x] `apps/web/src/admin-v2/cadastros/products/ProductsListView.tsx` — tabela com busca + filtro categoria/status + coluna "Estoque total" (destacada em vermelho quando ≤ mínimo); `DeleteConfirmModal` reusado.
+- [x] `AdminV2Root.tsx` — rota `cadastros/produtos`; entrada em `CADASTROS_SUBROUTE_LABELS`.
+- [x] `CadastrosHubView.tsx` — card "Produtos" vira `native: true`.
+
+**Decisões de modernização documentadas**: (1) coluna "Patrimônio" do legado (preço × estoque) não reproduzida — estoque em si já é suficiente na lista, patrimônio por linha não agrega muito; (2) os 4 cards de resumo do topo do legado ("Produtos ativos: 128" etc.) eram números **estáticos fabricados no JSX**, nunca calculados por `behavior.ts` — não portados (dado fake, nunca existiu de verdade); (3) paginação numerada não reproduzida, mesmo padrão das Ondas 4/8/9.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `eslint` nos arquivos tocados limpo (mesmo padrão tolerado de fetch-on-mount); `npm run build` (web) PASS (2x); **CSS regenerado proativamente** antes do rebuild (`min-w-[880px]`, `min-w-[540px]`, `max-h-[92vh]` ausentes, confirmado e corrigido antes de gastar um ciclo Docker); `docker compose build web` + redeploy `--force-recreate` (2x — 1ª pro código, 2ª pro fix do achado `Product.stock`). **E2E real contra Postgres**: baseline de 9 produtos; criado produto com estoque inicial (unidade real); `cross-unit` confirmou saldo; `entry` (+5) e `adjust` (→20) confirmados via `movements` (histórico com 3 linhas corretas); `Product.stock` confirmado refletindo a soma real (20) — achado que corrigiu o RAG inicial; `DELETE` de produto com movimento confirmado falhando com 500 (`ERR-0053`); limpeza de dados de teste via SQL direto (não pela API, que não oferece caminho pra esse caso). **Validação visual real** (Playwright, 8/9 checks automatizados PASS + 1 falso-negativo de timing confirmado correto por screenshot): hub mostra "Produtos" com "Abrir →"; criar produto via modal, **persistência confirmada com reload**; gerenciador de categoria de produto (modal generalizado) cria e exclui categoria de teste; painel de estoque abre "Movimentar", registra entrada real, painel atualiza; "Histórico" mostra o movimento real (`Entrada +5 saldo 5 razão "entrada de compra" por master`) — confirmado pela screenshot mesmo com o check automatizado marcando falso-negativo por timing; produto de teste removido via SQL, banco confirmado de volta a 9.
+
+---
+
+## Ondas 12 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 
