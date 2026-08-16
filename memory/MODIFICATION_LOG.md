@@ -2,6 +2,35 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 9 (WhatsApp/Integrações): auditoria + config do bot
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. WhatsApp/Integrações,
+  tier M, legado tinha `behavior.ts` imperativo (361 linhas + 96 de markup).
+- **RAG confirmado**: `GET /concierge/sessions` (`schedule.ts`) já suporta filtro
+  **server-side** de `search`/`status`/`from`/`to` — melhor que o legado, que buscava 500
+  registros de uma vez e filtrava em memória. As 3 configs do bot (categorias-primeiro +
+  2 saudações) já viviam em `/api/settings/:key` genérico — zero cliente HTTP novo pra elas,
+  só reuso de `fetchSetting`/`updateSetting` da Onda 2.
+- **Entregue**: `sistema/whatsapp/types.ts`; `shared/api.ts` ganhou só `fetchConciergeSessions`
+  (única função nova); `shared/format.ts` ganhou `formatDateTimeBR` (reusável); `sistema/
+  whatsapp/WhatsappIntegrationsView.tsx` (bloco de config com save otimista + rollback,
+  bloco de filtros server-side, tabela de auditoria com badges de status em tokens
+  semânticos — melhor que o legado, que não tinha cor pra `ACTIVE`); rota `sistema/
+  whatsapp`; card no hub vira `native: true`.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS; CSS conferido
+  sem precisar regenerar; `docker compose build web` + redeploy `--force-recreate`. **E2E
+  real contra Postgres**: baseline confirmado (settings ainda não existiam, 404 esperado; 0
+  sessões de concierge); `PUT` das 3 configs confirmado, revertido aos defaults.
+  **Validação visual real** (Playwright, 8 checks, todos PASS): estado vazio renderiza
+  correto, toggle liga/desliga e salva, **persistência confirmada com reload**, saudações
+  editadas/salvas/revertidas, busca+filtro não quebram a tela.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 9).
+- **Status**: Onda 9 concluída, validada de verdade, **commitada** (push acumulado pro final
+  do plano, per autorização em pé). Onda 10 (Testes, tier M) inicia em seguida sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 8 (Serviços): primeiro `behavior.ts` reescrito como React (tier M)
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Serviços, tier M,

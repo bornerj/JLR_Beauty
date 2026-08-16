@@ -19,7 +19,7 @@ const CARDS = [
   { icon: "article", label: "Textos das Páginas", href: "/admin-v2/sistema/textos-paginas", native: true },
   { icon: "view_agenda", label: "Seções", href: "/admin-v2/sistema/secoes", native: true },
   { icon: "photo_library", label: "Galeria de Mídias", href: "/admin-v2/sistema/galeria-midias", native: true },
-  { icon: "chat", label: "WhatsApp / Integrações", href: "/admin#whatsapp-contatos" },
+  { icon: "chat", label: "WhatsApp / Integrações", href: "/admin-v2/sistema/whatsapp", native: true },
   { icon: "science", label: "Testes", href: "/admin#testes" },
 ];
 

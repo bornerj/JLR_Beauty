@@ -17,6 +17,7 @@ import type { DiscountCoupon, DiscountCouponInput } from "../cadastros/coupons/t
 import type { PublicBranding } from "../../modules/public-site/branding";
 import type { PageTextCatalogEntry, PageTextsMap } from "../sistema/pageTexts/types";
 import type { PublicMediaSlotsSnapshot } from "../../modules/public-site/mediaSlots";
+import type { ConciergeSession } from "../sistema/whatsapp/types";
 import type {
   Service,
   ServiceInput,
@@ -764,6 +765,35 @@ export const deleteServiceStatus = async (args: { token: string; id: number }): 
     headers: { Authorization: `Bearer ${args.token}` },
   });
   if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 9) — WhatsApp/Integrações, reusa `GET /concierge/sessions`
+ * (`schedule.ts`) sem alteração. Filtro **server-side** (`search`/`status`/`from`/`to`) —
+ * o legado buscava até 500 registros de uma vez e filtrava no cliente; a rota já suporta os
+ * mesmos filtros no backend, então a tela nativa manda os filtros na querystring em vez de
+ * reimplementar client-side (mesmo resultado, menos payload, mais alinhado com
+ * `DECISION-013` regra #4 — cálculo/filtro de negócio no backend).
+ */
+export const fetchConciergeSessions = async (args: {
+  token: string;
+  search?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+}): Promise<ConciergeSession[]> => {
+  const params = new URLSearchParams();
+  params.set("limit", "500");
+  if (args.search) params.set("search", args.search);
+  if (args.status) params.set("status", args.status);
+  if (args.from) params.set("from", args.from);
+  if (args.to) params.set("to", args.to);
+  const response = await fetch(`${getApiUrl()}/api/concierge/sessions?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  const payload = (await response.json()) as { items: ConciergeSession[] };
+  return payload.items;
 };
 
 /**

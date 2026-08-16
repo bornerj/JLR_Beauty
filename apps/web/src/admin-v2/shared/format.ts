@@ -36,3 +36,11 @@ export const WEEKDAY_LABELS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]
 
 /** Rótulo de hora curto ("9h" / "14h") usado nas linhas do heatmap de capacidade. */
 export const formatHour = (hour: number): string => `${hour}h`;
+
+/** ISO datetime -> "dd/mm/aaaa HH:MM" (pt-BR), "—" para vazio/inválido. Onda 9 (WhatsApp/Integrações). */
+export const formatDateTimeBR = (value?: string | null): string => {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+};

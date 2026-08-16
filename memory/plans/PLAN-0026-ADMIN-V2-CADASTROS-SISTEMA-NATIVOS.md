@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-8 ✅ CONCLUÍDAS 2026-08-16 (tier P completo + Onda 8/Serviços, primeira do tier M), todas validadas por E2E real + visual real. Ondas 9-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-9 ✅ CONCLUÍDAS 2026-08-16 (tier P completo + Ondas 8/Serviços e 9/WhatsApp do tier M), todas validadas por E2E real + visual real. Ondas 10-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -34,7 +34,7 @@
 | 6 | 6 | **Seções Telas** (liga/desliga) | P | `admin.ts` (`/admin/section-toggles`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; gate MASTER preservado; achado `ERR-0051` (CSS) corrigido |
 | 7 | 7 | **Galeria de Mídias** | P | `admin.ts` (`/admin/media-slots` + `/uploads` genérico) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; achado `ERR-0052` (z-index) corrigido |
 | 8 | 8 | **Serviços** | M | `catalog.ts` (`/services` CRUD) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; `behavior.ts` reescrito como React |
-| 9 | 9 | **WhatsApp / Integrações** | M | a confirmar na onda (RAG não fez o levantamento fino do backend ainda) | Legado tem `behavior.ts` (361 linhas) |
+| 9 | 9 | **WhatsApp / Integrações** | M | `schedule.ts` (`/concierge/sessions`, leitura) + `/api/settings/:key` genérico | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; `behavior.ts` (361 linhas) reescrito como React |
 | 10 | 10 | **Testes** | M | a confirmar na onda | Legado tem `behavior.ts` (385 linhas); confirmar o que a tela realmente testa antes de desenhar a nativa |
 | 11 | 11 | **Produtos** | G | `catalog.ts` (`/products` CRUD) + `inventory.ts`/estoque multi-unidade (PLAN-0020) | A mais pesada de Cadastros — upload de imagem, min/max de estoque, estoque por unidade real (não só campo solto) |
 | 12 | 12 | **Clientes** | G | `schedule.ts` (`/customers` CRUD) | Desmembrado de "Pessoas" |
@@ -208,7 +208,27 @@
 
 ---
 
-## Ondas 9 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 9 — WhatsApp / Integrações ✅ CONCLUÍDA 2026-08-16
+
+**Pergunta que a tela fecha:** *quais contatos/agendamentos o bot do WhatsApp registrou, e como configurar o fluxo de saudações e apresentação de serviços?*
+
+**RAG feito:** `schedule.ts` já tinha `GET /concierge/sessions` (leitura, com filtro **server-side** de `search`/`status`/`from`/`to` — melhor que o legado, que buscava até 500 registros de uma vez e filtrava no cliente). As 3 configs do fluxo do bot (categorias-primeiro boolean + 2 textos de saudação) já viviam em `/api/settings/:key` genérico, mesmo padrão da Onda 2 (Entrega) — **zero cliente HTTP novo pra elas**, só reuso de `fetchSetting`/`updateSetting`. Legado (`admin-whatsapp-contacts/behavior.ts`, 361 linhas + 96 de markup) buscava tudo de uma vez e filtrava em memória — tela nativa manda os filtros na querystring, aproveitando o suporte que a rota já tinha.
+
+**Backend:** nenhuma mudança — reusa `/api/concierge/sessions` + `/api/settings/:key` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/sistema/whatsapp/types.ts` — `ConciergeSession`, `ConciergeSessionStatus`.
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchConciergeSessions` (única função nova; configs reusam `fetchSetting`/`updateSetting` da Onda 2 sem alteração).
+- [x] `apps/web/src/admin-v2/shared/format.ts` — `formatDateTimeBR` (novo formatador reusável, primeira tela que precisa de data+hora juntos).
+- [x] `apps/web/src/admin-v2/sistema/whatsapp/WhatsappIntegrationsView.tsx` — bloco de config (toggle categorias-primeiro com save otimista + rollback em erro, 2 textareas de saudação com botão salvar), bloco de filtros (busca/status/período + botão Atualizar, filtro server-side em vez de client-side), tabela de auditoria (badges de status com tokens semânticos: `state-info`/`state-healthy`/`state-critical`, melhor que o legado, que não tinha cor definida pra `ACTIVE`).
+- [x] `AdminV2Root.tsx` — rota `sistema/whatsapp`; entrada em `SISTEMA_SUBROUTE_LABELS`.
+- [x] `SistemaHubView.tsx` — card "WhatsApp / Integrações" vira `native: true`.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `eslint` nos arquivos tocados limpo; `npm run build` (web) PASS; CSS conferido sem precisar regenerar; `docker compose build web` + redeploy `--force-recreate`. **E2E real contra Postgres**: baseline confirmado (settings ainda não existiam, 404 — comportamento esperado, tratado como "usa default"; 0 sessões de concierge, ambiente sem dado de teste de WhatsApp); `PUT` das 3 configs confirmado, revertido aos valores default. **Validação visual real** (Playwright, 8 checks, todos PASS): hub mostra "WhatsApp / Integrações" com "Abrir →"; estado vazio da tabela renderiza corretamente; toggle liga/desliga e salva; **persistência confirmada com reload**; saudações editadas e salvas, revertidas ao final; busca+filtro não quebram a tela.
+
+---
+
+## Ondas 10 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 
