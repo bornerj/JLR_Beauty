@@ -31,6 +31,14 @@ import type {
 } from "../cadastros/products/types";
 import type { Customer, CustomerInput } from "../cadastros/customers/types";
 import type {
+  Professional,
+  ProfessionalUpdateInput,
+  ProfessionalWorkProfile,
+  ProfessionalWorkProfileInput,
+  ProfessionalCommissionProfile,
+  ProfessionalCommissionProfileInput,
+} from "../cadastros/professionals/types";
+import type {
   Service,
   ServiceInput,
   ServiceCategory,
@@ -1039,6 +1047,137 @@ export const updateCustomer = async (args: { token: string; id: number; input: C
   });
   if (!response.ok) throw new Error(await parseApiError(response));
   return (await response.json()) as Customer;
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 13) — Profissionais, reusa `/api/professionals` +
+ * `/api/professional-work-profiles` + `/api/professional-commission-profiles`
+ * (`apps/api/src/routes/schedule.ts`) sem alteração. **Sem `createProfessional`** — o
+ * backend não expõe `POST /professionals` (confirmado no RAG, não fabricado). Segunda das 3
+ * telas do desmembramento de "Pessoas" (`DECISION-014` regra #3).
+ */
+export const fetchProfessionals = async (args: { token: string }): Promise<Professional[]> => {
+  const response = await fetch(`${getApiUrl()}/api/professionals`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Professional[];
+};
+
+export const updateProfessional = async (args: {
+  token: string;
+  id: number;
+  input: ProfessionalUpdateInput;
+}): Promise<Professional> => {
+  const response = await fetch(`${getApiUrl()}/api/professionals/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Professional;
+};
+
+export const linkProfessionalUser = async (args: {
+  token: string;
+  id: number;
+  professionalUserId: number;
+}): Promise<Professional> => {
+  const response = await fetch(`${getApiUrl()}/api/professionals/${args.id}/link-user`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ professionalUserId: args.professionalUserId }),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Professional;
+};
+
+export const fetchProfessionalWorkProfiles = async (args: { token: string }): Promise<ProfessionalWorkProfile[]> => {
+  const response = await fetch(`${getApiUrl()}/api/professional-work-profiles`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProfessionalWorkProfile[];
+};
+
+export const createProfessionalWorkProfile = async (args: {
+  token: string;
+  input: ProfessionalWorkProfileInput;
+}): Promise<ProfessionalWorkProfile> => {
+  const response = await fetch(`${getApiUrl()}/api/professional-work-profiles`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProfessionalWorkProfile;
+};
+
+export const updateProfessionalWorkProfile = async (args: {
+  token: string;
+  id: number;
+  input: ProfessionalWorkProfileInput;
+}): Promise<ProfessionalWorkProfile> => {
+  const response = await fetch(`${getApiUrl()}/api/professional-work-profiles/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProfessionalWorkProfile;
+};
+
+export const deleteProfessionalWorkProfile = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/professional-work-profiles/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+export const fetchProfessionalCommissionProfiles = async (args: {
+  token: string;
+}): Promise<ProfessionalCommissionProfile[]> => {
+  const response = await fetch(`${getApiUrl()}/api/professional-commission-profiles`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProfessionalCommissionProfile[];
+};
+
+export const createProfessionalCommissionProfile = async (args: {
+  token: string;
+  input: ProfessionalCommissionProfileInput;
+}): Promise<ProfessionalCommissionProfile> => {
+  const response = await fetch(`${getApiUrl()}/api/professional-commission-profiles`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProfessionalCommissionProfile;
+};
+
+export const updateProfessionalCommissionProfile = async (args: {
+  token: string;
+  id: number;
+  input: ProfessionalCommissionProfileInput;
+}): Promise<ProfessionalCommissionProfile> => {
+  const response = await fetch(`${getApiUrl()}/api/professional-commission-profiles/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ProfessionalCommissionProfile;
+};
+
+export const deleteProfessionalCommissionProfile = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/professional-commission-profiles/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
 };
 
 /**

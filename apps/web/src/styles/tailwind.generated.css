@@ -17,10 +17,13 @@
  *   npx tailwindcss@3.4.17 -c tailwind.config.js -i /tmp/tw-input.css \
  *     -o apps/web/src/styles/tailwind.generated.css
  * Confirmado nesta sessão: `npx tailwindcss@3.4.17` funciona neste ambiente sem instalação
- * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado nas Ondas 6/7/11 do PLAN-0026 e
- * de novo na Onda 12 (Clientes) — checagem proativa antes do rebuild Docker virou padrão
- * desde a Onda 7: `grid-cols-[1fr_80px_1fr]`, `min-w-[900px]` usados no form/tabela de
- * Clientes não estavam nesta versão do arquivo.
+ * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado nas Ondas 6/7/11/12 e de novo
+ * na Onda 13 (Profissionais) do `PLAN-0026` — checagem proativa antes do rebuild Docker
+ * virou padrão desde a Onda 7: `min-w-[1080px]`, `grid-cols-[1fr_100px_100px]`,
+ * `grid-cols-[1fr_140px]` usados nesta onda não estavam nesta versão do arquivo. **Nota de
+ * processo**: o próprio comando de regeneração sobrescreve este cabeçalho (o Tailwind CLI
+ * substitui o arquivo inteiro, comentário incluso) — reescrever este bloco é parte
+ * obrigatória do passo de regeneração, não opcional.
  */
 
 .pointer-events-none {
@@ -463,6 +466,10 @@
 
 .inline-block {
   display: inline-block
+}
+
+.inline {
+  display: inline
 }
 
 .flex {
@@ -1001,6 +1008,10 @@
   min-width: 1.5rem
 }
 
+.min-w-\[1080px\] {
+  min-width: 1080px
+}
+
 .min-w-\[1250px\] {
   min-width: 1250px
 }
@@ -1340,6 +1351,14 @@
 
 .grid-cols-7 {
   grid-template-columns: repeat(7, minmax(0, 1fr))
+}
+
+.grid-cols-\[1fr_100px_100px\] {
+  grid-template-columns: 1fr 100px 100px
+}
+
+.grid-cols-\[1fr_140px\] {
+  grid-template-columns: 1fr 140px
 }
 
 .grid-cols-\[1fr_80px_1fr\] {

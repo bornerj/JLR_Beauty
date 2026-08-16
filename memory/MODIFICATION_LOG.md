@@ -2,6 +2,55 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 13 (Profissionais): segunda do desmembramento de "Pessoas", 1 bug de fuso horário achado e corrigido
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Profissionais, tier G,
+  segunda das 3 telas do desmembramento de "Pessoas" (`DECISION-014` regra #3).
+- **RAG confirmado**: `schedule.ts` tem `GET/PATCH /professionals` + `PATCH .../link-user` —
+  **sem `POST /professionals`** (confirmado varrendo `schedule.ts`/`users.ts`/`admin.ts`
+  inteiros por `.professional.create(`; só existe em `prisma/seed.ts` e
+  `scripts/seedAdminV2TestData.ts`, nunca numa rota HTTP — criar usuário com
+  `role: "PROFESSIONAL"` não cria o `Professional` correspondente). CRUD completo de
+  `/professional-work-profiles` e `/professional-commission-profiles` (catálogos). Confirmado
+  que `/professional-shifts` e `/professionals/:id/services` são domínio de
+  `admin-schedule` (Agenda), não de `admin-people` — preservado, tela só mostra as contagens.
+- **Entregue**: `cadastros/professionals/types.ts` (+ `WORK_PROFILE_PERMISSION_GROUPS`, 14
+  permissões em 3 grupos); `shared/api.ts` ganhou `fetchProfessionals`/`updateProfessional`/
+  `linkProfessionalUser` + CRUD completo dos 2 catálogos (**sem `createProfessional`**);
+  `components/WorkProfileManagerModal.tsx` e `CommissionProfileManagerModal.tsx` (novos,
+  padrão form inline + lista + exclusão direta, backend decide "em uso" via 409);
+  `components/ProfessionalFormModal.tsx` (sempre edição, nunca criação); `ProfessionalsListView.tsx`
+  (11 colunas iguais ao legado + busca + filtro de unidade/status + toolbar dos 2 gerenciadores);
+  rota `cadastros/profissionais`; `CadastrosHubView.tsx` — card "Profissionais" vira nativo
+  (7/8 cards do hub já nativos, só falta Usuários).
+- **Bug real achado na validação visual (`ERR-0055`, não no E2E via curl)**: colunas
+  Início/Fim da tabela exibiam o dia anterior — `formatDateOnly` usava `toLocaleDateString("pt-BR")`
+  sem fixar fuso sobre uma data armazenada como meia-noite UTC; convertia pro fuso local antes
+  de formatar. Corrigido com `timeZone: "UTC"`.
+- **Validações executadas**: `tsc -b`/`eslint`/`build` (web) limpos (2-3x, incluindo o fix de
+  data); `npm run test` (api) 134/134 PASS; CSS regenerado proativamente (`min-w-[1080px]`,
+  `grid-cols-[1fr_100px_100px]`, `grid-cols-[1fr_140px]`) — achado de processo: o próprio
+  comando de regeneração sobrescreve o comentário de cabeçalho do arquivo, precisa ser
+  reescrito manualmente toda vez; `docker compose build web` + redeploy `--force-recreate`
+  (2x). **E2E real contra Postgres** (dados reais de produção, cuidado redobrado): baseline
+  9 profissionais/0 perfis de trabalho/3 perfis de comissão; PATCH+revert de comissão;
+  link-user no-op confirmado; ciclo completo de perfil de trabalho (criar/atualizar/atribuir/
+  `409` em uso/desatribuir/excluir); ciclo completo de perfil de comissão; banco confirmado
+  de volta ao original em todos os 3 recursos. **Validação visual real** (Chrome real via
+  `claude-in-chrome`, login MASTER, 13 checks, todos PASS — 1ª rodada achou o `ERR-0055`):
+  hub mostra "Profissionais" nativo; navegação real; breadcrumb correto; tabela com as 9
+  linhas reais; busca e filtro de unidade funcionam; modal de edição pré-preenchido, salvar
+  reflete e **persiste com reload** (datas corretas após o fix); os 2 gerenciadores de
+  catálogo funcionam ponta a ponta (incluindo o `409` de "em uso" reproduzido de verdade via
+  UI).
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 13).
+- **Status**: Onda 13 concluída, validada de verdade, commit pendente (push acumulado pro
+  final do plano, per autorização em pé). Onda 14 (Usuários, tier G) fecha o desmembramento
+  de "Pessoas" e o plano inteiro.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 12 (Clientes): primeira do desmembramento de "Pessoas", 1 bug de breadcrumb achado e corrigido
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Clientes, tier G,
