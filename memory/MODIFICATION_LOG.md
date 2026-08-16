@@ -2,6 +2,42 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 8 (Serviços): primeiro `behavior.ts` reescrito como React (tier M)
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Serviços, tier M,
+  primeira onda com `behavior.ts` imperativo no legado (416 linhas + 250 de markup
+  `data-*`) — reescrita completa como React declarativo.
+- **RAG confirmado**: `catalog.ts` já tinha CRUD completo de `/services` +
+  `/service-categories` + `/service-statuses` (endpoints genéricos, compartilhados com
+  Produtos via `admin-core/behavior.ts`). Achado: `<option>` de categoria/status no JSX
+  legado eram hardcoded (4 valores fixos), mas sobrescritos em runtime pelo
+  `admin-core/behavior.ts` com dados reais — a tela nativa busca os dados reais desde o
+  primeiro render, sem depender de sobrescritor externo.
+- **Entregue**: `cadastros/services/types.ts`; `shared/api.ts` ganhou CRUD de serviços +
+  CRUD completo de categorias/status de serviço (**desenhado reusável pra Onda 11**);
+  `components/CategoryStatusManagerModal.tsx` (novo, genérico por `kind`, "em uso" decidido
+  pelo backend via 409, não recalculado no cliente); `components/ServiceFormModal.tsx`
+  (dropdowns reais, upload de imagem reusando `uploadAsset`); `ServicesListView.tsx`
+  (tabela + busca + filtro categoria/status; paginação numerada do legado **não**
+  reproduzida — decisão de modernização documentada, não é regra de negócio); rota
+  `cadastros/servicos`; card no hub vira `native: true`.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS; CSS conferido
+  sem precisar regenerar; `docker compose build web` + redeploy `--force-recreate`. **E2E
+  real contra Postgres**: baseline de 75 serviços; criado serviço+categoria+status de
+  teste; `DELETE` de categoria em uso confirmado bloqueado (409, regra do backend);
+  cleanup completo, banco de volta a 75. **Validação visual real** (Playwright, 10 checks,
+  todos PASS): criar serviço via modal, **persistência confirmada com reload**, gerenciador
+  de categoria aberto de dentro do form (modal aninhado, mesmo padrão das Ondas 5/7), cria
+  e exclui categoria de teste, exclui serviço via `DeleteConfirmModal`, volta a 75/75
+  confirmado por reload.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 8).
+- **Status**: Onda 8 concluída, validada de verdade, **commitada** (push acumulado pro final
+  do plano, per autorização em pé). Onda 9 (WhatsApp/Integrações, tier M) inicia em seguida
+  sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 7 (Galeria de Mídias): fecha o tier P, 1 bug de z-index achado e corrigido
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Galeria de Mídias,

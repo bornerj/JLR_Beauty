@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-7 (Planos, Entrega, Branding, Cupons, Textos das Páginas, Seções Telas, Galeria de Mídias) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. **Tier P completo** — Ondas 8-14 (tier M/G) aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-8 ✅ CONCLUÍDAS 2026-08-16 (tier P completo + Onda 8/Serviços, primeira do tier M), todas validadas por E2E real + visual real. Ondas 9-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -33,7 +33,7 @@
 | 5 | 5 | **Textos das Páginas** | P | `admin.ts` (`/admin/page-texts` + `/previous` + `/restore`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; 331 campos, undo de 1 nível preservado |
 | 6 | 6 | **Seções Telas** (liga/desliga) | P | `admin.ts` (`/admin/section-toggles`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; gate MASTER preservado; achado `ERR-0051` (CSS) corrigido |
 | 7 | 7 | **Galeria de Mídias** | P | `admin.ts` (`/admin/media-slots` + `/uploads` genérico) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; achado `ERR-0052` (z-index) corrigido |
-| 8 | 8 | **Serviços** | M | `catalog.ts` (`/services` CRUD) | Legado tem `behavior.ts` (416 linhas) — reescrever como React |
+| 8 | 8 | **Serviços** | M | `catalog.ts` (`/services` CRUD) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; `behavior.ts` reescrito como React |
 | 9 | 9 | **WhatsApp / Integrações** | M | a confirmar na onda (RAG não fez o levantamento fino do backend ainda) | Legado tem `behavior.ts` (361 linhas) |
 | 10 | 10 | **Testes** | M | a confirmar na onda | Legado tem `behavior.ts` (385 linhas); confirmar o que a tela realmente testa antes de desenhar a nativa |
 | 11 | 11 | **Produtos** | G | `catalog.ts` (`/products` CRUD) + `inventory.ts`/estoque multi-unidade (PLAN-0020) | A mais pesada de Cadastros — upload de imagem, min/max de estoque, estoque por unidade real (não só campo solto) |
@@ -187,7 +187,28 @@
 
 ---
 
-## Ondas 8 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 8 — Serviços ✅ CONCLUÍDA 2026-08-16 (primeira do tier M)
+
+**Pergunta que a tela fecha:** *quais serviços o salão oferece, com que categoria/status/preço/comissão, e como criar/editar/excluir um?*
+
+**RAG feito:** `catalog.ts` já tinha CRUD completo (`GET/POST/PATCH/DELETE /services`) + CRUD de `/service-categories` e `/service-statuses` (endpoints compartilhados, também usados por Produtos — confirmado em `admin-core/behavior.ts`, que já tem um gerenciador genérico de catálogo por `kind`). Legado (`admin-services/behavior.ts`, 416 linhas imperativas + `AdminServicesView.tsx`, 250 linhas de markup com `data-*` hooks) — primeira tela do plano com esse padrão a reescrever. **Achado**: os `<select>` de categoria/status no JSX legado tinham `<option>` **hardcoded** (Cabelos/Estética/Sobrancelhas/Unhas fixos) — na prática irrelevante porque `admin-core/behavior.ts` sobrescrevia essas opções dinamicamente via `/service-categories`/`/service-statuses` reais em tempo de execução; a tela nativa busca as opções reais desde o primeiro render, sem depender de um sobrescritor externo.
+
+**Backend:** nenhuma mudança — reusa `/api/services` + `/api/service-categories` + `/api/service-statuses` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/cadastros/services/types.ts` — `Service`, `ServiceInput`, `ServiceCategory`, `ServiceStatusOption`, `CategoryOrStatusInput`.
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchServices`/`createService`/`updateService`/`deleteService` + CRUD completo de categorias/status de serviço (**desenhado reusável pra Onda 11/Produtos**, que usa o mesmo padrão de endpoint no backend).
+- [x] `apps/web/src/admin-v2/cadastros/services/components/CategoryStatusManagerModal.tsx` (novo, reusável) — modal genérico por `kind` (categoria/status), lista + criar/editar/excluir. "Em uso, não pode excluir" decidido pelo **backend** (409), não recalculado no cliente — simplifica o componente.
+- [x] `apps/web/src/admin-v2/cadastros/services/components/ServiceFormModal.tsx` — criar/editar, dropdowns de categoria/status carregados de verdade da API (não hardcoded), botão "+"/"tune" abre o gerenciador, upload de imagem reusando `uploadAsset` (Onda 3).
+- [x] `apps/web/src/admin-v2/cadastros/services/ServicesListView.tsx` — tabela com busca + filtro de categoria + filtro de status (regra de negócio real, necessária com 75 serviços); `DeleteConfirmModal` reusado. **Decisão de modernização documentada**: paginação numerada do legado não reproduzida (tabela rolável, mesmo padrão do resto do Admin V2, que não usa paginação em lugar nenhum) — não é regra de negócio, é escolha de UX do legado.
+- [x] `AdminV2Root.tsx` — rota `cadastros/servicos`; entrada em `CADASTROS_SUBROUTE_LABELS`.
+- [x] `CadastrosHubView.tsx` — card "Serviços" vira `native: true`.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `eslint` nos arquivos tocados limpo; `npm run build` (web) PASS; CSS conferido sem precisar regenerar (classes usadas já existiam no `tailwind.generated.css` das ondas anteriores); `docker compose build web` + redeploy `--force-recreate`. **E2E real contra Postgres**: baseline de 75 serviços; criado serviço de teste, categoria e status de teste; atribuídos ao serviço; `DELETE` de categoria em uso confirmado bloqueado (`409`, regra do backend); serviço excluído; categoria/status de teste excluídos (agora sem uso); banco confirmado de volta a 75. **Validação visual real** (Playwright, 10 checks, todos PASS): hub mostra "Serviços" com "Abrir →"; lista com filtro de busca funcional; criar serviço via modal; **persistência confirmada com reload**; gerenciador de categoria aberto de dentro do form de edição (modal aninhado, mesmo padrão de nesting já usado nas Ondas 5/7), cria e exclui categoria de teste; excluir serviço via `DeleteConfirmModal`; volta a 75/75 confirmado por reload — nenhum dado de teste deixado pra trás.
+
+---
+
+## Ondas 9 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 

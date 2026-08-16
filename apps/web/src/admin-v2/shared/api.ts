@@ -17,6 +17,13 @@ import type { DiscountCoupon, DiscountCouponInput } from "../cadastros/coupons/t
 import type { PublicBranding } from "../../modules/public-site/branding";
 import type { PageTextCatalogEntry, PageTextsMap } from "../sistema/pageTexts/types";
 import type { PublicMediaSlotsSnapshot } from "../../modules/public-site/mediaSlots";
+import type {
+  Service,
+  ServiceInput,
+  ServiceCategory,
+  ServiceStatusOption,
+  CategoryOrStatusInput,
+} from "../cadastros/services/types";
 
 /** Admin V2 (PLAN-0022) — cliente HTTP para /api/admin-v2/*, mesmo padrão de apps/web/src/modules/admin-kpis/api/client.ts. */
 
@@ -631,6 +638,132 @@ export const saveMediaSlots = async (args: {
   }
   const payload = (await response.json()) as { slots: PublicMediaSlotsSnapshot };
   return payload.slots;
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 8) — Serviços, reusa `/api/services` (+ `/service-categories` +
+ * `/service-statuses`) sem alteração. Legado (`admin-services`) tinha `behavior.ts`
+ * imperativo (416 linhas) — reescrito como React declarativo, mesma regra de negócio.
+ */
+export const fetchServices = async (args: { token: string }): Promise<Service[]> => {
+  const response = await fetch(`${getApiUrl()}/api/services`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Service[];
+};
+
+export const createService = async (args: { token: string; input: ServiceInput }): Promise<Service> => {
+  const response = await fetch(`${getApiUrl()}/api/services`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Service;
+};
+
+export const updateService = async (args: { token: string; id: number; input: ServiceInput }): Promise<Service> => {
+  const response = await fetch(`${getApiUrl()}/api/services/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Service;
+};
+
+export const deleteService = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/services/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+/**
+ * Categorias/Status de Serviço — CRUD genérico compartilhado (mesmo padrão do legado em
+ * `admin-core/behavior.ts`, que também reusa pra Produtos). `kind` seleciona o endpoint;
+ * reusável pela Onda 11 (Produtos) sem duplicar.
+ */
+export const fetchServiceCategories = async (args: { token: string }): Promise<ServiceCategory[]> => {
+  const response = await fetch(`${getApiUrl()}/api/service-categories`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ServiceCategory[];
+};
+
+export const createServiceCategory = async (args: { token: string; input: CategoryOrStatusInput }): Promise<ServiceCategory> => {
+  const response = await fetch(`${getApiUrl()}/api/service-categories`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ServiceCategory;
+};
+
+export const updateServiceCategory = async (args: {
+  token: string;
+  id: number;
+  input: CategoryOrStatusInput;
+}): Promise<ServiceCategory> => {
+  const response = await fetch(`${getApiUrl()}/api/service-categories/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ServiceCategory;
+};
+
+export const deleteServiceCategory = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/service-categories/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+export const fetchServiceStatuses = async (args: { token: string }): Promise<ServiceStatusOption[]> => {
+  const response = await fetch(`${getApiUrl()}/api/service-statuses`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ServiceStatusOption[];
+};
+
+export const createServiceStatus = async (args: { token: string; input: CategoryOrStatusInput }): Promise<ServiceStatusOption> => {
+  const response = await fetch(`${getApiUrl()}/api/service-statuses`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ServiceStatusOption;
+};
+
+export const updateServiceStatus = async (args: {
+  token: string;
+  id: number;
+  input: CategoryOrStatusInput;
+}): Promise<ServiceStatusOption> => {
+  const response = await fetch(`${getApiUrl()}/api/service-statuses/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as ServiceStatusOption;
+};
+
+export const deleteServiceStatus = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/service-statuses/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
 };
 
 /**

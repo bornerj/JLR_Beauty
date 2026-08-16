@@ -21,6 +21,7 @@ import { CadastrosHubView } from "./cadastros/CadastrosHubView";
 import { PlansListView } from "./cadastros/plans/PlansListView";
 import { DeliverySettingsView } from "./cadastros/delivery/DeliverySettingsView";
 import { CouponsListView } from "./cadastros/coupons/CouponsListView";
+import { ServicesListView } from "./cadastros/services/ServicesListView";
 import { SistemaHubView } from "./sistema/SistemaHubView";
 import { BrandingSettingsView } from "./sistema/branding/BrandingSettingsView";
 import { PageTextsView } from "./sistema/pageTexts/PageTextsView";
@@ -170,7 +171,12 @@ function AdminV2Shell() {
    * `cadastros/<slug>` -> label do breadcrumb), em vez de 1 `isXArea` + 1 `if` cada, pra não
    * inflar este arquivo a cada uma das 14 ondas do plano.
    */
-  const CADASTROS_SUBROUTE_LABELS: Record<string, string> = { planos: "Planos", entrega: "Entrega", cupons: "Cupons" };
+  const CADASTROS_SUBROUTE_LABELS: Record<string, string> = {
+    planos: "Planos",
+    entrega: "Entrega",
+    cupons: "Cupons",
+    servicos: "Serviços",
+  };
   const cadastrosSubRoute = location.pathname.match(/\/cadastros\/([^/]+)/)?.[1] ?? null;
   const cadastrosSubRouteLabel = cadastrosSubRoute ? CADASTROS_SUBROUTE_LABELS[cadastrosSubRoute] : undefined;
   /** Mesmo padrão acima, agora pro hub de Sistema (Onda 3 em diante). */
@@ -292,6 +298,7 @@ function AdminV2Shell() {
         <Route path="cadastros/planos" element={<PlansListView />} />
         <Route path="cadastros/entrega" element={<DeliverySettingsView />} />
         <Route path="cadastros/cupons" element={<CouponsListView />} />
+        <Route path="cadastros/servicos" element={<ServicesListView />} />
         <Route path="sistema" element={<SistemaHubView />} />
         <Route path="sistema/branding" element={<BrandingSettingsView />} />
         <Route path="sistema/textos-paginas" element={<PageTextsView />} />
