@@ -27,7 +27,7 @@
 |---|---|---|---|---|---|
 | 0 | — | `DECISION-014` | — | — | ✅ feita — ver decisão acima |
 | 1 | 1 | **Planos** (memberships) | P | `subscriptions.ts` (`/memberships` CRUD) | ✅ CONCLUÍDA 2026-08-16 — onda-modelo, validada E2E real + visual real |
-| 2 | 2 | **Entrega** (checkout/frete) | P | `/api/settings/:key` (genérico) | Config-form, não list-CRUD — mesmo padrão de Branding |
+| 2 | 2 | **Entrega** (checkout/frete) | P | `/api/settings/:key` (genérico) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real |
 | 3 | 3 | **Branding** | P | `admin.ts` (`/admin/branding`) | Config-form; já é React puro no legado (496 linhas, sem `behavior.ts`) |
 | 4 | 4 | **Cupons** (discount-coupons) | P | `admin.ts` (CRUD completo) | Já é React puro no legado (538 linhas) |
 | 5 | 5 | **Textos das Páginas** | P | `admin.ts` (`/admin/page-texts` + `/previous` + `/restore`) | 331 campos, catálogo já mapeado no RAG (`pageTexts/catalog.ts`); preservar undo de 1 nível |
@@ -68,7 +68,25 @@
 
 ---
 
-## Ondas 2 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 2 — Entrega no Checkout ✅ CONCLUÍDA 2026-08-16
+
+**Pergunta que a tela fecha:** *quanto cobrar de entrega local, e a partir de qual valor o frete fica grátis?*
+
+**RAG feito:** legado `admin-checkout-delivery` (308 linhas, `AdminCheckoutDeliveryView.tsx`, React puro). 2 chaves genéricas via `/api/settings/:key` (`admin.ts`): `checkout.localDeliveryFee` (default R$ 10) e `checkout.freeShippingThreshold` (default R$ 150). `GET` devolve `404` quando a chave nunca foi salva (tratado como "sem valor, usa default", não erro); `PUT` faz upsert e devolve o registro completo.
+
+**Backend:** nenhuma mudança — reusa `/api/settings/:key` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/shared/api.ts` — cliente genérico `fetchSetting`/`updateSetting` (**reutilizável pelas próximas ondas de config-form**, ex.: Branding).
+- [x] `apps/web/src/admin-v2/cadastros/delivery/DeliverySettingsView.tsx` — form com as 2 chaves, resumo aplicado no checkout, mesmos textos/defaults do legado.
+- [x] `AdminV2Root.tsx` — rota `cadastros/entrega`; **refatorado o padrão de breadcrumb** das sub-telas de Cadastros pra uma tabela de lookup (`CADASTROS_SUBROUTE_LABELS`) em vez de 1 `isXArea` + 1 `if` por onda — decisão tomada nesta onda pra não inflar o arquivo a cada uma das 14 ondas do plano (aplica-se retroativamente a Planos também, sem mudar comportamento).
+- [x] `CadastrosHubView.tsx` — card "Entrega" vira `native: true`.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `npm run build` (web) PASS; `docker compose build web` + redeploy. **E2E real contra Postgres**: `GET` inicial `404` (chaves nunca setadas); `PUT` das 2 chaves → `200`; revertido pros defaults originais (10/150) ao final. **Validação visual real** (Playwright, 5 checks): título/breadcrumb corretos; valores iniciais = defaults; salvar reflete no resumo aplicado; **persistência real confirmada com reload de página** (não só estado local em memória); banco conferido de volta aos defaults ao final via UI mesmo (não só API).
+
+---
+
+## Ondas 3 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 

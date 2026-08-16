@@ -19,6 +19,7 @@ import { ComparatorView } from "./comparator/ComparatorView";
 import { InsightsView } from "./insights/InsightsView";
 import { CadastrosHubView } from "./cadastros/CadastrosHubView";
 import { PlansListView } from "./cadastros/plans/PlansListView";
+import { DeliverySettingsView } from "./cadastros/delivery/DeliverySettingsView";
 import { SistemaHubView } from "./sistema/SistemaHubView";
 
 /**
@@ -159,7 +160,14 @@ function AdminV2Shell() {
   const isIntelligenceArea = isRadarArea || isGargalosArea || isMoneyArea || isComparatorArea || isInsightsArea;
   const isCadastrosArea = location.pathname.includes("/cadastros");
   const isSistemaArea = location.pathname.includes("/sistema");
-  const isPlanosArea = location.pathname.includes("/cadastros/planos");
+  /**
+   * Admin V2 (PLAN-0026) — telas nativas de Cadastros ganham 1 entrada aqui por onda (rota
+   * `cadastros/<slug>` -> label do breadcrumb), em vez de 1 `isXArea` + 1 `if` cada, pra não
+   * inflar este arquivo a cada uma das 14 ondas do plano.
+   */
+  const CADASTROS_SUBROUTE_LABELS: Record<string, string> = { planos: "Planos", entrega: "Entrega" };
+  const cadastrosSubRoute = location.pathname.match(/\/cadastros\/([^/]+)/)?.[1] ?? null;
+  const cadastrosSubRouteLabel = cadastrosSubRoute ? CADASTROS_SUBROUTE_LABELS[cadastrosSubRoute] : undefined;
   const intelligenceTab: IntelligenceTabKey = isGargalosArea
     ? "gargalos"
     : isMoneyArea
@@ -222,11 +230,11 @@ function AdminV2Shell() {
   if (isCadastrosArea) {
     breadcrumb.push({
       label: "Cadastros",
-      onNavigate: isPlanosArea ? () => navigate("/admin-v2/cadastros") : undefined,
+      onNavigate: cadastrosSubRouteLabel ? () => navigate("/admin-v2/cadastros") : undefined,
     });
   }
-  if (isPlanosArea) {
-    breadcrumb.push({ label: "Planos" });
+  if (cadastrosSubRouteLabel) {
+    breadcrumb.push({ label: cadastrosSubRouteLabel });
   }
   if (isSistemaArea) {
     breadcrumb.push({ label: "Sistema" });
@@ -262,6 +270,7 @@ function AdminV2Shell() {
         <Route path="insights" element={<InsightsView />} />
         <Route path="cadastros" element={<CadastrosHubView />} />
         <Route path="cadastros/planos" element={<PlansListView />} />
+        <Route path="cadastros/entrega" element={<DeliverySettingsView />} />
         <Route path="sistema" element={<SistemaHubView />} />
       </Routes>
     </AdminShell>

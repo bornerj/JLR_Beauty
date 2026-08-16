@@ -2,6 +2,34 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 2 (Entrega): segunda tela nativa de Cadastros
+
+- **Contexto/objetivo**: usuário autorizou execução autônoma do restante do `PLAN-0026`
+  ("commit pode fazer sem me perguntar, e deixe o push só para o final. quando acabar pode
+  começar a nova onda sem me perguntar também"). A partir desta onda: commit direto após
+  validação, push acumulado pro final, próxima onda inicia sem pausa pra aprovação.
+- **RAG confirmado**: 2 chaves genéricas via `/api/settings/:key` (`admin.ts`) —
+  `checkout.localDeliveryFee` (default R$ 10) e `checkout.freeShippingThreshold` (default
+  R$ 150). `GET` devolve `404` quando a chave nunca foi salva (tratado como "sem valor,
+  usa default"); `PUT` faz upsert.
+- **Entregue**: `shared/api.ts` ganhou um cliente genérico `fetchSetting`/`updateSetting`
+  (reutilizável pelas próximas ondas de config-form, ex.: Branding);
+  `cadastros/delivery/DeliverySettingsView.tsx`; rota `cadastros/entrega`; card "Entrega" no
+  hub vira `native: true`. **Refatoração feita nesta onda**: o padrão de breadcrumb das
+  sub-telas de Cadastros virou uma tabela de lookup (`CADASTROS_SUBROUTE_LABELS`) em vez de
+  1 `isXArea` + 1 `if` por onda em `AdminV2Root.tsx` — decisão pra não inflar o arquivo a
+  cada uma das 14 ondas do plano, aplica-se retroativamente a Planos sem mudar comportamento.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS; `docker compose
+  build web` + redeploy. **E2E real contra Postgres**: `GET` inicial `404`, `PUT` das 2
+  chaves `200`, revertido pros defaults originais ao final. **Validação visual real**
+  (Playwright, 5 checks): valores iniciais = defaults, salvar reflete no resumo,
+  **persistência confirmada com reload de página** (não só estado local), banco revertido aos
+  defaults via UI ao final.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 2).
+- **Status**: Onda 2 concluída, validada de verdade, **commitada** (push acumulado pro final
+  do plano, por instrução do usuário). Seguindo direto pra Onda 3 (Branding).
+
 ## 2026-08-16 — `PLAN-0026` Onda 1 (Planos): primeira tela nativa de Cadastros
 
 - **Contexto/objetivo**: usuário aprovou a execução do `PLAN-0026` e pediu pra começar.

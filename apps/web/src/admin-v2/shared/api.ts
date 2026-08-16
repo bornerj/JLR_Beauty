@@ -382,3 +382,33 @@ export const deleteMembership = async (args: { token: string; id: number }): Pro
     throw new Error(await parseApiError(response));
   }
 };
+
+export type GenericSetting = { key: string; value: unknown; updatedAt?: string };
+
+/**
+ * Admin V2 (PLAN-0026) — cliente genérico pra `/api/settings/:key` (`admin.ts`), reusado por
+ * várias telas de config (Entrega nesta onda; Branding provavelmente na próxima). `GET` 404
+ * quando a chave nunca foi salva — tratado como "sem valor ainda", não erro.
+ */
+export const fetchSetting = async (args: { token: string; key: string }): Promise<GenericSetting | null> => {
+  const response = await fetch(`${getApiUrl()}/api/settings/${args.key}`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as GenericSetting;
+};
+
+export const updateSetting = async (args: { token: string; key: string; value: unknown }): Promise<GenericSetting> => {
+  const response = await fetch(`${getApiUrl()}/api/settings/${args.key}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ value: args.value }),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as GenericSetting;
+};
