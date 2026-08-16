@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** ✅ 14/14 ONDAS CONCLUÍDAS 2026-08-16 — plano inteiro entregue e validado de verdade (E2E real + visual real em todas as ondas). Hub de Cadastros e hub de Sistema 100% nativos. Falta só o fechamento formal de Git (push acumulado, per autorização em pé) antes de renomear este arquivo pra `-DONE-`.
+**Status:** ✅ DONE — 14/14 ONDAS CONCLUÍDAS 2026-08-16, commitadas e pushadas pra `main` (`3961a1c..efd1f45`). Hub de Cadastros e hub de Sistema 100% nativos. Plano encerrado.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -373,8 +373,8 @@ Todo o roadmap do `PLAN-0026` foi entregue: tier P (7 ondas) + tier M (3 ondas) 
 
 ## Git Record of Delivery
 
-- Step 1 (Pre-commit review): feito onda a onda (arquivos + validações listados em cada seção acima). Ondas 1-13 já commitadas individualmente (`531270b`, `4ea3066`, `7b84f6e`, `907f2d6`, ..., `74fe308`); Onda 14 é o commit pendente desta rodada.
-- Step 2 (Commit authorization): autorização em pé do usuário (2026-08-16) — "commit sem perguntar por onda" — cobre todas as 14 ondas, incluindo esta.
-- Step 3 (Commit confirmation): pendente (commit da Onda 14 a ser feito nesta sessão).
-- Step 4 (Push authorization and result): pendente — autorização em pé cobre só o commit por onda; push exige uma segunda aprovação explícita do usuário, própria pro final do plano (ainda não pedida).
-- Push status: PENDING
+- Step 1 (Pre-commit review): feito onda a onda (arquivos + validações listados em cada seção acima). 14 commits, um por onda, de `3961a1c` (Onda 1) a `efd1f45` (Onda 14).
+- Step 2 (Commit authorization): autorização em pé do usuário (2026-08-16) — "commit sem perguntar por onda" — cobriu as 14 ondas.
+- Step 3 (Commit confirmation): todas as 14 ondas commitadas em `main`. Último commit: `efd1f45` (Onda 14) — 9 arquivos, +865/-16.
+- Step 4 (Push authorization and result): segunda aprovação explícita do usuário recebida em 2026-08-16 ("Sim, pode dar push"). `git push origin main` executado com sucesso: `3961a1c..efd1f45 → main` (remote `git@github.com:bornerj/JLR_Beauty.git`).
+- Push status: COMPLETED
