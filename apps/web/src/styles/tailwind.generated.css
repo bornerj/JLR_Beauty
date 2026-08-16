@@ -17,10 +17,10 @@
  *   npx tailwindcss@3.4.17 -c tailwind.config.js -i /tmp/tw-input.css \
  *     -o apps/web/src/styles/tailwind.generated.css
  * Confirmado nesta sessão: `npx tailwindcss@3.4.17` funciona neste ambiente sem instalação
- * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado nas Ondas 6/7 do PLAN-0026
- * (ERR-0051) e de novo na Onda 11 (Produtos) — checagem proativa antes do rebuild Docker
- * virou padrão desde a Onda 7: `min-w-[880px]`, `min-w-[540px]`, `max-h-[92vh]` usados no
- * form/modais de Produtos não estavam nesta versão do arquivo.
+ * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado nas Ondas 6/7/11 do PLAN-0026 e
+ * de novo na Onda 12 (Clientes) — checagem proativa antes do rebuild Docker virou padrão
+ * desde a Onda 7: `grid-cols-[1fr_80px_1fr]`, `min-w-[900px]` usados no form/tabela de
+ * Clientes não estavam nesta versão do arquivo.
  */
 
 .pointer-events-none {
@@ -1045,6 +1045,10 @@
   min-width: 880px
 }
 
+.min-w-\[900px\] {
+  min-width: 900px
+}
+
 .min-w-\[920px\] {
   min-width: 920px
 }
@@ -1336,6 +1340,10 @@
 
 .grid-cols-7 {
   grid-template-columns: repeat(7, minmax(0, 1fr))
+}
+
+.grid-cols-\[1fr_80px_1fr\] {
+  grid-template-columns: 1fr 80px 1fr
 }
 
 .grid-cols-\[minmax\(0\2c 1fr\)_90px_auto\] {

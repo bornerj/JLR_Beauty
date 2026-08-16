@@ -7,6 +7,12 @@ import { HubCard } from "../shell/HubCard";
  * rota interna do V2 (`native: true`) só quando a tela correspondente é entregue. As duas
  * formas convivem até a lista inteira migrar.
  *
+ * **Desmembramento de "Pessoas" (`DECISION-014` regra #3, Ondas 12-14)**: o legado tinha
+ * Clientes/Profissionais/Usuários numa mega-tela só (`admin-people`, 1 card no hub). Onda 12
+ * entregou Clientes nativo — os 3 viram cards próprios aqui, cada um migrando pra rota
+ * interna na sua onda. Profissionais/Usuários ainda apontam pro mesmo `/admin#usuarios`
+ * legado (destino real, só não deep-linkado pra sub-aba específica — a página é a mesma).
+ *
  * "Unidades" não entra: não existe `data-view` correspondente no Admin legado hoje
  * (unidades são geridas via seed/migration, não tela) — não fabricado link falso.
  */
@@ -17,7 +23,9 @@ const CARDS = [
   { icon: "card_membership", label: "Planos", href: "/admin-v2/cadastros/planos", native: true },
   { icon: "sell", label: "Cupons", href: "/admin-v2/cadastros/cupons", native: true },
   { icon: "local_shipping", label: "Entrega", href: "/admin-v2/cadastros/entrega", native: true },
-  { icon: "groups", label: "Pessoas (Clientes/Profissionais/Usuários)", href: "/admin#usuarios" },
+  { icon: "person", label: "Clientes", href: "/admin-v2/cadastros/clientes", native: true },
+  { icon: "badge", label: "Profissionais", href: "/admin#usuarios" },
+  { icon: "manage_accounts", label: "Usuários", href: "/admin#usuarios" },
 ];
 
 export function CadastrosHubView() {

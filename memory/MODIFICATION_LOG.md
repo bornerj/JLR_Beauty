@@ -2,6 +2,42 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 12 (Clientes): primeira do desmembramento de "Pessoas", 1 bug de breadcrumb achado e corrigido
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Clientes, tier G,
+  primeira das 3 telas do desmembramento de "Pessoas" (`DECISION-014` regra #3) — legado
+  tinha Clientes/Profissionais/Usuários numa mega-tela só (`admin-people`, 1728 linhas de
+  `behavior.ts` + 967 de markup).
+- **RAG confirmado**: `schedule.ts` já tinha `GET/POST/PATCH /customers` — **sem `DELETE`**,
+  confirmado e não fabricado; a tela nativa também não tem botão de excluir.
+- **Entregue**: `cadastros/customers/types.ts`; `shared/api.ts` ganhou
+  `fetchCustomers`/`createCustomer`/`updateCustomer` (sem delete); `components/
+  CustomerFormModal.tsx`; `CustomersListView.tsx` (busca + filtro de UF dinâmico, sem
+  coluna de excluir); rota `cadastros/clientes`; `CadastrosHubView.tsx` — card único
+  "Pessoas" **desmembrado em 3 cards** (Clientes nativo, Profissionais/Usuários ainda
+  legado).
+- **Bug real achado na validação visual (`ERR-0054`, não no E2E)**: breadcrumb/sidebar
+  quebrados — `isCustomersArea` (mundo de nível superior "Clientes", analytics) usava
+  `.includes("/clientes")`, que também casava a nova rota `cadastros/clientes` (mesma
+  substring). Corrigido ancorando ao início do path
+  (`/^\/admin-v2\/clientes(\/|$)/`). Nota de processo: checar colisão de slug com mundos
+  existentes antes de nomear uma sub-rota nova.
+- **Validações executadas**: `tsc -b`/`eslint`/`build` limpos (2x); CSS regenerado
+  proativamente; `docker compose build web` + redeploy `--force-recreate` (2x). **E2E real
+  contra Postgres**: baseline 0 clientes; criado+atualizado via curl; cleanup via SQL direto
+  (sem `DELETE` na API, aceitável só por ser dado de teste próprio, mesma situação da Onda
+  11). **Validação visual real** (Playwright, 10 checks, todos PASS, rodado 2x — 1ª achou o
+  `ERR-0054`): hub mostra os 3 cards separados; criar cliente via UI, **persistência
+  confirmada com reload**; editar sem erro; busca filtra; confirmado que nenhum botão de
+  excluir é renderizado; breadcrumb correto na 2ª rodada.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 12).
+- **Status**: Onda 12 concluída, validada de verdade, **commitada** (push acumulado pro
+  final do plano, per autorização em pé). Onda 13 (Profissionais, tier G) inicia em seguida
+  sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 11 (Produtos): a mais pesada do plano, 1 achado de RAG corrigido por E2E + 1 achado de backend
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Produtos, tier G,

@@ -29,6 +29,7 @@ import type {
   StockMovementKind,
   StockMovementInput,
 } from "../cadastros/products/types";
+import type { Customer, CustomerInput } from "../cadastros/customers/types";
 import type {
   Service,
   ServiceInput,
@@ -1005,6 +1006,39 @@ export const postStockMovement = async (args: {
   });
   if (!response.ok) throw new Error(await parseApiError(response));
   return (await response.json()) as { ok: boolean; balanceAfter: number };
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 12) — Clientes, reusa `/api/customers` sem alteração. **Sem
+ * `deleteCustomer`** — o backend não expõe `DELETE /customers/:id` (confirmado no RAG, não
+ * fabricado). Primeira das 3 telas do desmembramento de "Pessoas" (`DECISION-014` regra #3).
+ */
+export const fetchCustomers = async (args: { token: string }): Promise<Customer[]> => {
+  const response = await fetch(`${getApiUrl()}/api/customers`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Customer[];
+};
+
+export const createCustomer = async (args: { token: string; input: CustomerInput }): Promise<Customer> => {
+  const response = await fetch(`${getApiUrl()}/api/customers`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Customer;
+};
+
+export const updateCustomer = async (args: { token: string; id: number; input: CustomerInput }): Promise<Customer> => {
+  const response = await fetch(`${getApiUrl()}/api/customers/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as Customer;
 };
 
 /**

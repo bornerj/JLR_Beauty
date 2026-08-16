@@ -23,6 +23,7 @@ import { DeliverySettingsView } from "./cadastros/delivery/DeliverySettingsView"
 import { CouponsListView } from "./cadastros/coupons/CouponsListView";
 import { ServicesListView } from "./cadastros/services/ServicesListView";
 import { ProductsListView } from "./cadastros/products/ProductsListView";
+import { CustomersListView } from "./cadastros/customers/CustomersListView";
 import { SistemaHubView } from "./sistema/SistemaHubView";
 import { BrandingSettingsView } from "./sistema/branding/BrandingSettingsView";
 import { PageTextsView } from "./sistema/pageTexts/PageTextsView";
@@ -158,8 +159,11 @@ function AdminV2Shell() {
   const isAgendaArea = location.pathname.includes("/operacao/agenda");
   const isProdutosArea = location.pathname.includes("/operacao/produtos");
   const isServicosArea = location.pathname.includes("/operacao/servicos");
-  const isCustomersArea = location.pathname.includes("/clientes");
-  const isSubscriptionsArea = location.pathname.includes("/clientes/assinaturas");
+  // Onda 12 (PLAN-0026) criou `cadastros/clientes` (Cadastro de Clientes) — mesmo segmento
+  // final do mundo "Clientes" (fluxo/assinaturas, PLAN-0022/0023). `.includes("/clientes")`
+  // batia nos dois; ancorado ao início do path pra só casar o mundo de nível superior.
+  const isCustomersArea = /^\/admin-v2\/clientes(\/|$)/.test(location.pathname);
+  const isSubscriptionsArea = location.pathname.includes("/clientes/assinaturas") && isCustomersArea;
   const isGrowthArea = location.pathname.includes("/crescimento");
   const isRadarArea = location.pathname.includes("/radar");
   const isGargalosArea = location.pathname.includes("/gargalos");
@@ -180,6 +184,7 @@ function AdminV2Shell() {
     cupons: "Cupons",
     servicos: "Serviços",
     produtos: "Produtos",
+    clientes: "Clientes",
   };
   const cadastrosSubRoute = location.pathname.match(/\/cadastros\/([^/]+)/)?.[1] ?? null;
   const cadastrosSubRouteLabel = cadastrosSubRoute ? CADASTROS_SUBROUTE_LABELS[cadastrosSubRoute] : undefined;
@@ -306,6 +311,7 @@ function AdminV2Shell() {
         <Route path="cadastros/cupons" element={<CouponsListView />} />
         <Route path="cadastros/servicos" element={<ServicesListView />} />
         <Route path="cadastros/produtos" element={<ProductsListView />} />
+        <Route path="cadastros/clientes" element={<CustomersListView />} />
         <Route path="sistema" element={<SistemaHubView />} />
         <Route path="sistema/branding" element={<BrandingSettingsView />} />
         <Route path="sistema/textos-paginas" element={<PageTextsView />} />

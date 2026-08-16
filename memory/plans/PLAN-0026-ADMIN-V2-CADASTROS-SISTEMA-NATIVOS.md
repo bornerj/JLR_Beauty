@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-11 ✅ CONCLUÍDAS 2026-08-16. **Tier P e tier M inteiros fechados**; Onda 11 (Produtos, a mais pesada do plano) também concluída. Ondas 12-14 (Clientes/Profissionais/Usuários, desmembramento de "Pessoas") aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-12 ✅ CONCLUÍDAS 2026-08-16. **Tier P e tier M inteiros fechados**; Onda 11 (Produtos, a mais pesada) e Onda 12 (Clientes, primeira do desmembramento de "Pessoas") também concluídas. Ondas 13-14 (Profissionais/Usuários) aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -37,7 +37,7 @@
 | 9 | 9 | **WhatsApp / Integrações** | M | `schedule.ts` (`/concierge/sessions`, leitura) + `/api/settings/:key` genérico | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; `behavior.ts` (361 linhas) reescrito como React |
 | 10 | 10 | **Testes** | M | 13 endpoints já existentes (smoke-check) | ✅ CONCLUÍDA 2026-08-16 — escopo reduzido deliberadamente (checks de DOM do shell legado descartados, ver seção da onda) |
 | 11 | 11 | **Produtos** | G | `catalog.ts` (`/products` CRUD) + `inventory.ts`/estoque multi-unidade (PLAN-0020) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; achado `ERR-0053` (backend, fora de escopo) documentado |
-| 12 | 12 | **Clientes** | G | `schedule.ts` (`/customers` CRUD) | Desmembrado de "Pessoas" |
+| 12 | 12 | **Clientes** | G | `schedule.ts` (`/customers`, sem DELETE) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; achado `ERR-0054` (breadcrumb) corrigido |
 | 13 | 13 | **Profissionais** | G | `schedule.ts` (`/professionals`, `/professional-work-profiles`, `/professional-commission-profiles`, `/professional-shifts`) | Desmembrado de "Pessoas" — a mais relacional (perfis de trabalho/comissão, escalas) |
 | 14 | 14 | **Usuários** | G | `users.ts` (`/users` CRUD + `/users/:id/role`) | Desmembrado de "Pessoas" — sensível (gestão de permissão/role), revisar escopo por papel com atenção redobrada |
 
@@ -277,7 +277,29 @@
 
 ---
 
-## Ondas 12 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 12 — Clientes ✅ CONCLUÍDA 2026-08-16 (primeira do desmembramento de "Pessoas")
+
+**Pergunta que a tela fecha:** *quais clientes existem, com que contato/endereço/conta vinculada, e como cadastrar/editar um?*
+
+**RAG feito:** `schedule.ts` já tinha `GET/POST/PATCH /customers` — **sem `DELETE`** (confirmado, não fabricado; a tela nativa também não tem botão de excluir, mesma limitação do legado). Legado (`admin-people/behavior.ts`, 1728 linhas + `AdminPeopleView.tsx`, 967 linhas) é uma mega-tela com 3 abas (Clientes/Profissionais/Usuários) — desmembrada em 3 ondas nativas independentes por `DECISION-014` regra #3. Campos: nome, telefone (único), telefone alternativo, email, cidade, UF, bairro, notas, vínculo opcional com conta de usuário via ID numérico bruto (sem busca/autocomplete no legado — preservado, não modernizado, pois a tela de Usuários nativa ainda não existe pra oferecer um seletor melhor sem inventar dependência cruzada precoce).
+
+**Backend:** nenhuma mudança — reusa `/api/customers` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/cadastros/customers/types.ts` — `Customer`, `CustomerInput`.
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchCustomers`/`createCustomer`/`updateCustomer` (sem `deleteCustomer` — não existe no backend).
+- [x] `apps/web/src/admin-v2/cadastros/customers/components/CustomerFormModal.tsx` — criar/editar, mesmos campos do legado.
+- [x] `apps/web/src/admin-v2/cadastros/customers/CustomersListView.tsx` — tabela + busca multi-campo + filtro de UF (populado dinamicamente dos dados reais, não hardcoded); **sem coluna/botão de excluir** (capacidade que o backend não tem).
+- [x] `AdminV2Root.tsx` — rota `cadastros/clientes`; entrada em `CADASTROS_SUBROUTE_LABELS`.
+- [x] `CadastrosHubView.tsx` — card único "Pessoas (Clientes/Profissionais/Usuários)" **desmembrado em 3 cards**: "Clientes" (`native: true`), "Profissionais" e "Usuários" (ainda apontando pro legado, mesma URL `/admin#usuarios` — destino real, só não deep-linkado pra sub-aba específica).
+
+**Bug real achado na validação visual (`ERR-0054`, não no E2E)**: breadcrumb e sidebar quebrados ao abrir a tela nova — `isCustomersArea` (mundo de nível superior "Clientes", analytics do `PLAN-0022`/`PLAN-0023`) usava `.includes("/clientes")`, que também casava a nova rota `/admin-v2/cadastros/clientes` (mesma substring). Corrigido ancorando a checagem ao início do path (`/^\/admin-v2\/clientes(\/|$)/`) — só casa o mundo de nível superior de verdade. Nota de processo registrada: checar colisão de slug com mundos existentes antes de nomear uma sub-rota nova.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `eslint` nos arquivos tocados limpo; `npm run build` (web) PASS (2x — 1ª pro código, 2ª pro fix do breadcrumb); **CSS regenerado proativamente** (`grid-cols-[1fr_80px_1fr]`, `min-w-[900px]` ausentes, corrigidos antes do rebuild); `docker compose build web` + redeploy `--force-recreate` (2x). **E2E real contra Postgres**: baseline 0 clientes (ambiente limpo); criado + atualizado via `curl`, confirmado; **cleanup via SQL direto** (mesma situação da Onda 11 — sem `DELETE` na API, aceitável só por ser dado de teste próprio). **Validação visual real** (Playwright, 10 checks, todos PASS — rodado 2x, 1ª rodada achou o `ERR-0054`): hub mostra os 3 cards separados (Clientes nativo, Profissionais/Usuários legado); criar cliente via UI, **persistência confirmada com reload**; editar sem erro; busca filtra corretamente; confirmado que **nenhum botão de excluir é renderizado** (capacidade real do backend, não fabricada); breadcrumb correto na 2ª rodada.
+
+---
+
+## Ondas 13 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 
