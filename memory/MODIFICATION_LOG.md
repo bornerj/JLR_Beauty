@@ -2,6 +2,42 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 3 (Branding): primeira tela nativa de Sistema
+
+- **Contexto/objetivo**: continuação direta da execução autônoma autorizada (commit sem
+  perguntar por onda, push acumulado pro final, próxima onda sem pausa pra aprovação).
+  Primeira onda a entregar no hub **Sistema** (Ondas 1-2 foram Cadastros).
+- **RAG confirmado**: Branding usa rota **dedicada** (`GET/PUT /admin/branding` em
+  `admin.ts`), não o genérico `/api/settings/:key` usado na Onda 2 — por baixo lê/grava a
+  mesma tabela `Setting` (chave `public.branding`) via `modules/branding/service.ts`, mas
+  com schema Zod próprio (`brandingPayloadSchema`) e cache in-memory de 5min. Legado
+  (`admin-branding/components/AdminBrandingView.tsx`, 496 linhas) já era React puro, sem
+  `behavior.ts` — tier P confirmado.
+- **Entregue**: `shared/api.ts` ganhou `fetchBranding`/`updateBranding` (rota dedicada) +
+  `uploadAsset` (cliente genérico de `/api/uploads`, já reutilizável pra Galeria de Mídias
+  na Onda 7); `sistema/branding/BrandingSettingsView.tsx` (form + upload + histórico local
+  de logos + preview ao vivo, chama `updateBrandingSnapshot` pra refletir no site público
+  igual ao legado); rota `sistema/branding`; card "Branding" no hub de Sistema vira
+  `native: true`. **Generalização feita nesta onda**: o padrão de breadcrumb por lookup
+  (`CADASTROS_SUBROUTE_LABELS`, da Onda 2) ganhou o equivalente pro hub de Sistema
+  (`SISTEMA_SUBROUTE_LABELS`), mesmo mecanismo.
+- **Validações executadas**: `tsc -b` (web) limpo; `eslint` nos arquivos tocados limpo;
+  `npm run build` (web) PASS; `docker compose build web` + redeploy `--force-recreate`.
+  **E2E real contra Postgres** (login MASTER via `/api/auth/login`, campo `identifier`, não
+  `email`): `GET` inicial confirma valores de produção, `PUT` de teste `200`, `GET` confirma
+  persistência, revertido ao original ao final. **Validação visual real** (Playwright, 7
+  checks, todos PASS): hub de Sistema mostra "Branding" com "Abrir →" (as outras 5 telas
+  seguem "Abrir no Admin →"); breadcrumb `Panorama > Sistema > Branding`; campos
+  pré-preenchidos com dados reais; editar+salvar via UI com **persistência confirmada por
+  reload de página**; revertido ao valor original via UI ao final — nenhum dado de teste
+  deixado pra trás.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 3).
+- **Status**: Onda 3 concluída, validada de verdade, **commitada** (push acumulado pro final
+  do plano, per autorização em pé). Onda 4 (Cupons) inicia em seguida sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 2 (Entrega): segunda tela nativa de Cadastros
 
 - **Contexto/objetivo**: usuário autorizou execução autônoma do restante do `PLAN-0026`

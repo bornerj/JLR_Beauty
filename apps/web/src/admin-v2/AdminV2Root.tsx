@@ -21,6 +21,7 @@ import { CadastrosHubView } from "./cadastros/CadastrosHubView";
 import { PlansListView } from "./cadastros/plans/PlansListView";
 import { DeliverySettingsView } from "./cadastros/delivery/DeliverySettingsView";
 import { SistemaHubView } from "./sistema/SistemaHubView";
+import { BrandingSettingsView } from "./sistema/branding/BrandingSettingsView";
 
 /**
  * Admin V2 (PLAN-0022) — raiz da árvore nova, isolada do shell legado (AdminContent.tsx).
@@ -168,6 +169,10 @@ function AdminV2Shell() {
   const CADASTROS_SUBROUTE_LABELS: Record<string, string> = { planos: "Planos", entrega: "Entrega" };
   const cadastrosSubRoute = location.pathname.match(/\/cadastros\/([^/]+)/)?.[1] ?? null;
   const cadastrosSubRouteLabel = cadastrosSubRoute ? CADASTROS_SUBROUTE_LABELS[cadastrosSubRoute] : undefined;
+  /** Mesmo padrão acima, agora pro hub de Sistema (Onda 3 em diante). */
+  const SISTEMA_SUBROUTE_LABELS: Record<string, string> = { branding: "Branding" };
+  const sistemaSubRoute = location.pathname.match(/\/sistema\/([^/]+)/)?.[1] ?? null;
+  const sistemaSubRouteLabel = sistemaSubRoute ? SISTEMA_SUBROUTE_LABELS[sistemaSubRoute] : undefined;
   const intelligenceTab: IntelligenceTabKey = isGargalosArea
     ? "gargalos"
     : isMoneyArea
@@ -237,7 +242,13 @@ function AdminV2Shell() {
     breadcrumb.push({ label: cadastrosSubRouteLabel });
   }
   if (isSistemaArea) {
-    breadcrumb.push({ label: "Sistema" });
+    breadcrumb.push({
+      label: "Sistema",
+      onNavigate: sistemaSubRouteLabel ? () => navigate("/admin-v2/sistema") : undefined,
+    });
+  }
+  if (sistemaSubRouteLabel) {
+    breadcrumb.push({ label: sistemaSubRouteLabel });
   }
   if (isIntelligenceArea) {
     breadcrumb.push({
@@ -272,6 +283,7 @@ function AdminV2Shell() {
         <Route path="cadastros/planos" element={<PlansListView />} />
         <Route path="cadastros/entrega" element={<DeliverySettingsView />} />
         <Route path="sistema" element={<SistemaHubView />} />
+        <Route path="sistema/branding" element={<BrandingSettingsView />} />
       </Routes>
     </AdminShell>
   );

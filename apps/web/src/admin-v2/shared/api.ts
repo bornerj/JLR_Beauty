@@ -13,6 +13,7 @@ import type { MoneyOverview } from "../money/types";
 import type { UnitComparator } from "../comparator/types";
 import type { InsightFeed } from "../insights/types";
 import type { Membership, MembershipInput } from "../cadastros/plans/types";
+import type { PublicBranding } from "../../modules/public-site/branding";
 
 /** Admin V2 (PLAN-0022) — cliente HTTP para /api/admin-v2/*, mesmo padrão de apps/web/src/modules/admin-kpis/api/client.ts. */
 
@@ -411,4 +412,59 @@ export const updateSetting = async (args: { token: string; key: string; value: u
     throw new Error(await parseApiError(response));
   }
   return (await response.json()) as GenericSetting;
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 3) — Branding usa rota dedicada (`/api/admin/branding`), não o
+ * genérico `/api/settings/:key` — `admin.ts` valida com `brandingPayloadSchema` e mantém
+ * cache in-memory no service (`modules/branding/service.ts`). Mesmo contrato do legado
+ * (`admin-branding/components/AdminBrandingView.tsx`).
+ */
+export const fetchBranding = async (args: { token: string }): Promise<PublicBranding> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/branding`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { branding?: PublicBranding };
+  if (!payload.branding) {
+    throw new Error("Resposta sem branding.");
+  }
+  return payload.branding;
+};
+
+export const updateBranding = async (args: { token: string; input: PublicBranding }): Promise<PublicBranding> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/branding`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { branding?: PublicBranding };
+  return payload.branding ?? args.input;
+};
+
+/**
+ * Cliente genérico de upload (`/api/uploads`), reusado por qualquer tela que precise subir
+ * imagem (Branding nesta onda; Galeria de Mídias na Onda 7). Mesmo endpoint do legado.
+ */
+export const uploadAsset = async (args: { token: string; file: File }): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", args.file);
+  const response = await fetch(`${getApiUrl()}/api/uploads`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}` },
+    body: formData,
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { url?: string };
+  if (!payload.url) {
+    throw new Error("Upload concluído sem URL retornada pela API.");
+  }
+  return payload.url;
 };

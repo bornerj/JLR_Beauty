@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Onda 1 (Planos) ✅ CONCLUÍDA 2026-08-16, validada por E2E real + visual real. Ondas 2-14 aguardando execução.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1 (Planos), 2 (Entrega) e 3 (Branding) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. Ondas 4-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -28,7 +28,7 @@
 | 0 | — | `DECISION-014` | — | — | ✅ feita — ver decisão acima |
 | 1 | 1 | **Planos** (memberships) | P | `subscriptions.ts` (`/memberships` CRUD) | ✅ CONCLUÍDA 2026-08-16 — onda-modelo, validada E2E real + visual real |
 | 2 | 2 | **Entrega** (checkout/frete) | P | `/api/settings/:key` (genérico) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real |
-| 3 | 3 | **Branding** | P | `admin.ts` (`/admin/branding`) | Config-form; já é React puro no legado (496 linhas, sem `behavior.ts`) |
+| 3 | 3 | **Branding** | P | `admin.ts` (`/admin/branding`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; rota dedicada, não o `/settings/:key` genérico |
 | 4 | 4 | **Cupons** (discount-coupons) | P | `admin.ts` (CRUD completo) | Já é React puro no legado (538 linhas) |
 | 5 | 5 | **Textos das Páginas** | P | `admin.ts` (`/admin/page-texts` + `/previous` + `/restore`) | 331 campos, catálogo já mapeado no RAG (`pageTexts/catalog.ts`); preservar undo de 1 nível |
 | 6 | 6 | **Seções Telas** (liga/desliga) | P | `admin.ts` (`/admin/section-toggles`) | 32 chaves `page.section`; **só MASTER edita** (checagem além do `requireAdmin` padrão) — preservar exatamente |
@@ -83,6 +83,24 @@
 - [x] `CadastrosHubView.tsx` — card "Entrega" vira `native: true`.
 
 **Validações executadas (todas reais):** `tsc -b` (web) limpo; `npm run build` (web) PASS; `docker compose build web` + redeploy. **E2E real contra Postgres**: `GET` inicial `404` (chaves nunca setadas); `PUT` das 2 chaves → `200`; revertido pros defaults originais (10/150) ao final. **Validação visual real** (Playwright, 5 checks): título/breadcrumb corretos; valores iniciais = defaults; salvar reflete no resumo aplicado; **persistência real confirmada com reload de página** (não só estado local em memória); banco conferido de volta aos defaults ao final via UI mesmo (não só API).
+
+---
+
+## Onda 3 — Branding Global ✅ CONCLUÍDA 2026-08-16
+
+**Pergunta que a tela fecha:** *qual é o nome completo, nome curto e logo atuais da marca, e como trocá-los?*
+
+**RAG feito:** ao contrário de Entrega (Onda 2), Branding **não** usa o genérico `/api/settings/:key` — tem rota dedicada em `admin.ts` (`GET/PUT /admin/branding`), que por baixo lê/grava a mesma tabela `Setting` (chave `public.branding`, `PUBLIC_BRANDING_SETTING_KEY`) via `modules/branding/service.ts`, mas com schema Zod próprio (`brandingPayloadSchema`: `fullName`/`shortName`/`logoUrl`) e cache in-memory de 5min no service. Legado (`admin-branding/components/AdminBrandingView.tsx`, 496 linhas) já era React puro, sem `behavior.ts` — confirmado o tier P do roadmap. Achado de posicionamento: Branding pertence ao hub **Sistema**, não Cadastros (conferido na tabela de roadmap do plano e em `SistemaHubView.tsx`), diferente de Planos/Entrega que foram Cadastros — é a primeira onda que usa `sistema/*`.
+
+**Backend:** nenhuma mudança — reusa `/api/admin/branding` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchBranding`/`updateBranding` (rota dedicada, não o genérico `fetchSetting`/`updateSetting`) + `uploadAsset` (cliente genérico de `/api/uploads`, reusável desde já pra Galeria de Mídias na Onda 7).
+- [x] `apps/web/src/admin-v2/sistema/branding/BrandingSettingsView.tsx` (novo) — form com os 3 campos, upload de logo com preview, histórico local de logos (localStorage, mesma lógica do legado) com botão "Reverter", painel de pré-visualização ao vivo. Chama `updateBrandingSnapshot` (de `modules/public-site/branding.runtime`, módulo utilitário compartilhado, não editado) após salvar, pra refletir instantaneamente no site público — mesmo comportamento do legado.
+- [x] `AdminV2Root.tsx` — rota `sistema/branding`; **generalizado o padrão de breadcrumb por lookup** (`CADASTROS_SUBROUTE_LABELS`, da Onda 2) também pro hub de Sistema (`SISTEMA_SUBROUTE_LABELS`), mesmo mecanismo, evita duplicar a lógica de novo.
+- [x] `SistemaHubView.tsx` — card "Branding" vira `native: true`; comentário de topo e texto do header atualizados (deixam de dizer "sem reescrita estética nesta fase").
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `npx eslint` nos arquivos tocados limpo; `npm run build` (web) PASS; `docker compose build web` + redeploy `--force-recreate`. **E2E real contra Postgres** (login MASTER via `/api/auth/login`, campo `identifier`): `GET /admin/branding` inicial confirma valores de produção (`JLR Beauty`/`JLR`/`/images/JLRLOGO.webp`); `PUT` com valores de teste → `200`; `GET` confirma persistência; `PUT` revertendo pro original → `200`; `GET` final confirma banco de volta ao estado original. **Validação visual real** (Playwright, 7 checks, todos PASS): hub de Sistema mostra "Branding" com "Abrir →" (as demais 5 telas do hub seguem "Abrir no Admin →"); navegação real pro `/admin-v2/sistema/branding`; breadcrumb `Panorama > Sistema > Branding`; campos pré-preenchidos com os valores reais do banco; editar + salvar via UI mostra mensagem de sucesso; **persistência confirmada com reload de página real**; revertido ao valor original via UI ao final, confirmado por reload — nenhum dado de teste deixado pra trás. Screenshots conferem visualmente: cards do hub, tela de config com preview do logo real renderizando corretamente.
 
 ---
 
