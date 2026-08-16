@@ -15,7 +15,7 @@ const CARDS = [
   { icon: "inventory_2", label: "Produtos", href: "/admin#produtos" },
   { icon: "content_cut", label: "Serviços", href: "/admin#servicos" },
   { icon: "card_membership", label: "Planos", href: "/admin-v2/cadastros/planos", native: true },
-  { icon: "sell", label: "Cupons", href: "/admin#cupons-desconto" },
+  { icon: "sell", label: "Cupons", href: "/admin-v2/cadastros/cupons", native: true },
   { icon: "local_shipping", label: "Entrega", href: "/admin-v2/cadastros/entrega", native: true },
   { icon: "groups", label: "Pessoas (Clientes/Profissionais/Usuários)", href: "/admin#usuarios" },
 ];

@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1 (Planos), 2 (Entrega) e 3 (Branding) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. Ondas 4-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1 (Planos), 2 (Entrega), 3 (Branding) e 4 (Cupons) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. Ondas 5-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -29,7 +29,7 @@
 | 1 | 1 | **Planos** (memberships) | P | `subscriptions.ts` (`/memberships` CRUD) | ✅ CONCLUÍDA 2026-08-16 — onda-modelo, validada E2E real + visual real |
 | 2 | 2 | **Entrega** (checkout/frete) | P | `/api/settings/:key` (genérico) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real |
 | 3 | 3 | **Branding** | P | `admin.ts` (`/admin/branding`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; rota dedicada, não o `/settings/:key` genérico |
-| 4 | 4 | **Cupons** (discount-coupons) | P | `admin.ts` (CRUD completo) | Já é React puro no legado (538 linhas) |
+| 4 | 4 | **Cupons** (discount-coupons) | P | `admin.ts` (CRUD completo) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real |
 | 5 | 5 | **Textos das Páginas** | P | `admin.ts` (`/admin/page-texts` + `/previous` + `/restore`) | 331 campos, catálogo já mapeado no RAG (`pageTexts/catalog.ts`); preservar undo de 1 nível |
 | 6 | 6 | **Seções Telas** (liga/desliga) | P | `admin.ts` (`/admin/section-toggles`) | 32 chaves `page.section`; **só MASTER edita** (checagem além do `requireAdmin` padrão) — preservar exatamente |
 | 7 | 7 | **Galeria de Mídias** | P | `admin.ts` (`/admin/media-slots` + `/uploads` genérico) | 78 slots, fallback em cascata (banco → catálogo → cache local) — preservar |
@@ -104,7 +104,27 @@
 
 ---
 
-## Ondas 3 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 4 — Cupons de Desconto ✅ CONCLUÍDA 2026-08-16
+
+**Pergunta que a tela fecha:** *quais cupons existem, com que regra de desconto e validade, e como criar/editar/excluir um?*
+
+**RAG feito:** `admin.ts` já tinha CRUD completo (`GET/POST/PATCH/DELETE /discount-coupons`) reusando `DiscountCoupon` (`schema.prisma`: `percentOff`/`amountOff`/`minSubtotal` como `Decimal?`, mesma pegadinha de serialização `string | null` das Ondas 1/3). Legado (`admin-discount-coupons/AdminDiscountCouponsView.tsx`, 538 linhas) já era React puro. **Achado importante descoberto só na validação E2E via UI** (não no RAG estático): o schema Zod de **criação** (`discountCouponSchema`) só aceita `number | undefined` em `percentOff`/`amountOff`/`minSubtotal` — `null` explícito falha a coerção (`z.coerce.number()` transforma `null` em `0`, que reprova `min(0.01)`). Só o schema de **atualização** (`discountCouponUpdateSchema`) aceita `null` explícito (pra permitir limpar um campo já setado). O form nativo inicialmente mandava `null` pro campo de desconto não usado em ambos os casos — quebrava toda criação de cupom com "dados invalidos". Corrigido enviando `undefined` (chave omitida) ao criar e `null` explícito ao editar, mesma distinção que o form legado já fazia (`payload.amountOff = isUpdate ? null : undefined`), só que replicada corretamente desta vez.
+
+**Backend:** nenhuma mudança — reusa `/api/discount-coupons` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/cadastros/coupons/types.ts` — `DiscountCoupon`, `DiscountCouponInput`, `DiscountType`.
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchDiscountCoupons`/`createDiscountCoupon`/`updateDiscountCoupon`/`deleteDiscountCoupon`.
+- [x] `apps/web/src/admin-v2/cadastros/coupons/components/CouponFormModal.tsx` — criar/editar, mesmas regras de validação client-side do legado (percentual xor valor fixo, fim >= início).
+- [x] `apps/web/src/admin-v2/cadastros/coupons/CouponsListView.tsx` — **tabela** (não cards, diferente da Onda 1) — 8 colunas, mesmo padrão de tabela já usado em outras telas do Admin V2 (`money/MoneyView.tsx`); reusa `DeleteConfirmModal` (Onda 1).
+- [x] `AdminV2Root.tsx` — rota `cadastros/cupons`; entrada em `CADASTROS_SUBROUTE_LABELS`.
+- [x] `CadastrosHubView.tsx` — card "Cupons" vira `native: true`.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `npm run build` (web) PASS; `docker compose build web` + redeploy `--force-recreate` (2x — a primeira rodada de validação visual pegou o bug de `null` vs `undefined` acima, corrigido e revalidado do zero). **E2E real contra Postgres**: baseline vazio (`[]`); `POST` cria cupom `PERCENT` → `201`; `PATCH` troca pra `FIXED` (testa a troca de tipo, campo antigo zerado corretamente) → `200`; `DELETE` → `204`; banco confirmado de volta a `[]`. **Validação visual real** (Playwright, 8 checks, todos PASS — só depois da correção do bug de criação): hub mostra "Cupons" com "Abrir →"; criar cupom via UI (achou o bug real, não um falso-negativo de teste); cupom aparece na tabela e **persiste após reload**; editar nome reflete na tabela; excluir abre `DeleteConfirmModal` (não `window.confirm()`) e remove da lista; estado vazio final confirmado por reload — nenhum dado de teste deixado pra trás.
+
+---
+
+## Ondas 5 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 

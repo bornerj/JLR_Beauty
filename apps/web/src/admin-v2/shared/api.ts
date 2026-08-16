@@ -13,6 +13,7 @@ import type { MoneyOverview } from "../money/types";
 import type { UnitComparator } from "../comparator/types";
 import type { InsightFeed } from "../insights/types";
 import type { Membership, MembershipInput } from "../cadastros/plans/types";
+import type { DiscountCoupon, DiscountCouponInput } from "../cadastros/coupons/types";
 import type { PublicBranding } from "../../modules/public-site/branding";
 
 /** Admin V2 (PLAN-0022) — cliente HTTP para /api/admin-v2/*, mesmo padrão de apps/web/src/modules/admin-kpis/api/client.ts. */
@@ -445,6 +446,63 @@ export const updateBranding = async (args: { token: string; input: PublicBrandin
   }
   const payload = (await response.json()) as { branding?: PublicBranding };
   return payload.branding ?? args.input;
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 4) — Cupons de Desconto, reusa `/api/discount-coupons`
+ * (`admin.ts`) sem alteração (`DECISION-014` regra #2). Mesmo contrato do legado
+ * (`admin-discount-coupons/components/AdminDiscountCouponsView.tsx`, 538 linhas, já era
+ * React puro).
+ */
+export const fetchDiscountCoupons = async (args: { token: string }): Promise<DiscountCoupon[]> => {
+  const response = await fetch(`${getApiUrl()}/api/discount-coupons`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as DiscountCoupon[];
+};
+
+export const createDiscountCoupon = async (args: {
+  token: string;
+  input: DiscountCouponInput;
+}): Promise<DiscountCoupon> => {
+  const response = await fetch(`${getApiUrl()}/api/discount-coupons`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as DiscountCoupon;
+};
+
+export const updateDiscountCoupon = async (args: {
+  token: string;
+  id: number;
+  input: DiscountCouponInput;
+}): Promise<DiscountCoupon> => {
+  const response = await fetch(`${getApiUrl()}/api/discount-coupons/${args.id}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args.input),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as DiscountCoupon;
+};
+
+export const deleteDiscountCoupon = async (args: { token: string; id: number }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/discount-coupons/${args.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
 };
 
 /**

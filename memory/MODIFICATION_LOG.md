@@ -2,6 +2,39 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 4 (Cupons): quarta tela nativa, 1 bug real achado e corrigido
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Cupons de Desconto,
+  tier P, já era React puro no legado (538 linhas).
+- **RAG confirmado**: `admin.ts` já tinha CRUD completo (`/discount-coupons`), reusando
+  `DiscountCoupon` (`schema.prisma`). Mesma pegadinha de serialização Decimal->string das
+  Ondas 1/3 em `percentOff`/`amountOff`/`minSubtotal`.
+- **Entregue**: `cadastros/coupons/types.ts`; `shared/api.ts` ganhou
+  `fetchDiscountCoupons`/`createDiscountCoupon`/`updateDiscountCoupon`/`deleteDiscountCoupon`;
+  `components/CouponFormModal.tsx`; `CouponsListView.tsx` (**tabela**, não cards — melhor
+  encaixe pras 8 colunas de dado tabular, diferente do padrão de cards da Onda 1); rota
+  `cadastros/cupons`; card "Cupons" no hub vira `native: true`.
+- **Bug real achado na validação visual (não no RAG nem no E2E via curl)**: criar cupom pela
+  UI sempre falhava com "dados invalidos". Causa: o schema Zod de criação
+  (`discountCouponSchema`) só aceita `number | undefined` nos campos numéricos opcionais,
+  nunca `null` — só o de edição aceita `null` explícito. O modal mandava `null` pro campo de
+  desconto não usado em ambos os casos. Corrigido diferenciando `undefined` (criar) de `null`
+  (editar), mesma distinção que o form legado já fazia. Documentado como `ERR-0050` em
+  `memory/logs/DEBUG-HISTORY.md`.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS; `docker compose
+  build web` + redeploy `--force-recreate` **2x** (a primeira rodada de validação visual
+  pegou o bug acima; corrigido e revalidado do zero). **E2E real contra Postgres**: baseline
+  vazio, `POST` cria PERCENT `201`, `PATCH` troca pra FIXED `200` (testa a troca de tipo),
+  `DELETE` `204`, banco de volta a `[]`. **Validação visual real** (Playwright, 8 checks,
+  todos PASS só após o fix): criar/editar/excluir via UI, **persistência confirmada com
+  reload de página**, estado vazio final confirmado por reload.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 4).
+- **Status**: Onda 4 concluída, validada de verdade, **commitada** (push acumulado pro final
+  do plano, per autorização em pé). Onda 5 (Textos das Páginas) inicia em seguida sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 3 (Branding): primeira tela nativa de Sistema
 
 - **Contexto/objetivo**: continuação direta da execução autônoma autorizada (commit sem
