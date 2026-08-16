@@ -2,6 +2,45 @@
 
 This log tracks changes applied to the project from 2026-01-27 onward.
 
+## 2026-08-16 — `PLAN-0026` Onda 7 (Galeria de Mídias): fecha o tier P, 1 bug de z-index achado e corrigido
+
+- **Contexto/objetivo**: continuação da execução autônoma autorizada. Galeria de Mídias,
+  tier P (último do tier), já era React puro no legado (519 linhas).
+- **RAG confirmado**: `admin.ts` já tinha `/admin/media-slots` completo + reuso de
+  `/api/uploads`. 78 slots institucionais, catálogo com `fallbackUrl` por slot (fallback em
+  cascata: banco → catálogo → fallback individual). Mesmo contrato "manda o mapa inteiro" da
+  Onda 5 (`savePublicMediaSlots` normaliza com fallback, não faz merge incremental).
+- **Entregue**: `shared/api.ts` ganhou `fetchMediaSlots`/`saveMediaSlots` (reusa `uploadAsset`
+  da Onda 3); `sistema/mediaGallery/MediaGalleryView.tsx` (grid de 78 thumbnails agrupados
+  por página, editor em modal com preview/URL/upload/reverter fallback, confirmação de
+  "fechar sem salvar" via `DeleteConfirmModal` neutro em vez de `window.confirm()`); rota
+  `sistema/galeria-midias`; card no hub vira `native: true`.
+- **Bug real achado na validação visual (`ERR-0052`, não no E2E via curl)**: o modal de
+  "fechar sem salvar" abria mas o clique nunca completava — herdado do legado com `z-[80]`,
+  ficava atrás do `DeleteConfirmModal` compartilhado (`z-50`, convenção de todo o resto do
+  Admin V2). Corrigido igualando pra `z-50`. Nota de processo: nunca copiar `z-[N]`
+  arbitrário do legado sem checar contra a convenção já estabelecida no V2.
+- **Prática nova desta onda**: CSS regenerado **proativamente antes do primeiro rebuild**
+  Docker (lição da Onda 6/`ERR-0051`) — confirmadas presentes as classes arbitrárias novas
+  (`h-[140px]`, `h-[260px]`, `max-w-[640px]`) antes de gastar um ciclo de build só pra
+  descobrir depois que faltava alguma.
+- **Validações executadas**: `tsc -b` (web) limpo; `npm run build` (web) PASS (2x); `docker
+  compose build web` + redeploy `--force-recreate` (2x — 1ª pro código, 2ª pro fix de
+  z-index). **E2E real contra Postgres**: baseline de 78 slots capturado; 1 slot alterado +
+  `PUT` completo confirmado; revertido ao mapa original exato. **Validação visual real**
+  (Playwright, 10 checks — 9/10 na 1ª rodada por causa do `ERR-0052`, 10/10 depois do fix):
+  editor abre com preview real, editar+salvar com sucesso, **persistência confirmada com
+  reload**, reverter fallback funciona, **modal de confirmação de fechar funciona de
+  verdade** (clique completa), banco revertido ao original ao final.
+- **Arquivos alterados**: ver checklist completo em
+  `memory/plans/PLAN-0026-ADMIN-V2-CADASTROS-SISTEMA-NATIVOS.md` (Onda 7).
+- **Status**: Onda 7 concluída, validada de verdade, **commitada** (push acumulado pro final
+  do plano, per autorização em pé). **Tier P do roadmap 100% fechado** (Ondas 1-7). Onda 8
+  (Serviços, tier M — primeira com `behavior.ts` imperativo a reescrever) inicia em seguida
+  sem pausa.
+
+---
+
 ## 2026-08-16 — `PLAN-0026` Onda 6 (Seções Telas): gate MASTER preservado, 1 bug de CSS achado e corrigido
 
 - **Contexto/objetivo**: continuação da execução autônoma autorizada. Seções Telas

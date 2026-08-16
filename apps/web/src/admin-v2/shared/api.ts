@@ -16,6 +16,7 @@ import type { Membership, MembershipInput } from "../cadastros/plans/types";
 import type { DiscountCoupon, DiscountCouponInput } from "../cadastros/coupons/types";
 import type { PublicBranding } from "../../modules/public-site/branding";
 import type { PageTextCatalogEntry, PageTextsMap } from "../sistema/pageTexts/types";
+import type { PublicMediaSlotsSnapshot } from "../../modules/public-site/mediaSlots";
 
 /** Admin V2 (PLAN-0022) — cliente HTTP para /api/admin-v2/*, mesmo padrão de apps/web/src/modules/admin-kpis/api/client.ts. */
 
@@ -597,6 +598,39 @@ export const updateSectionToggles = async (args: {
   }
   const payload = (await response.json()) as { toggles: SectionToggleMap };
   return payload.toggles;
+};
+
+/**
+ * Admin V2 (PLAN-0026, Onda 7) — Galeria de Mídias, reusa `/api/admin/media-slots` sem
+ * alteração. **78 slots, contrato "manda o mapa inteiro"** (mesma pegadinha da Onda 5 —
+ * `savePublicMediaSlots` normaliza usando fallback pra qualquer slot ausente do payload, não
+ * faz merge com o que já estava salvo).
+ */
+export const fetchMediaSlots = async (args: { token: string }): Promise<PublicMediaSlotsSnapshot> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/media-slots`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { slots: PublicMediaSlotsSnapshot };
+  return payload.slots;
+};
+
+export const saveMediaSlots = async (args: {
+  token: string;
+  slots: PublicMediaSlotsSnapshot;
+}): Promise<PublicMediaSlotsSnapshot> => {
+  const response = await fetch(`${getApiUrl()}/api/admin/media-slots`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ slots: args.slots }),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const payload = (await response.json()) as { slots: PublicMediaSlotsSnapshot };
+  return payload.slots;
 };
 
 /**

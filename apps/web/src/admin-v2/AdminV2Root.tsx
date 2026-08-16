@@ -25,6 +25,7 @@ import { SistemaHubView } from "./sistema/SistemaHubView";
 import { BrandingSettingsView } from "./sistema/branding/BrandingSettingsView";
 import { PageTextsView } from "./sistema/pageTexts/PageTextsView";
 import { SectionTogglesView } from "./sistema/sectionToggles/SectionTogglesView";
+import { MediaGalleryView } from "./sistema/mediaGallery/MediaGalleryView";
 
 /**
  * Admin V2 (PLAN-0022) — raiz da árvore nova, isolada do shell legado (AdminContent.tsx).
@@ -177,6 +178,7 @@ function AdminV2Shell() {
     branding: "Branding",
     "textos-paginas": "Textos das Páginas",
     secoes: "Seções Telas",
+    "galeria-midias": "Galeria de Mídias",
   };
   const sistemaSubRoute = location.pathname.match(/\/sistema\/([^/]+)/)?.[1] ?? null;
   const sistemaSubRouteLabel = sistemaSubRoute ? SISTEMA_SUBROUTE_LABELS[sistemaSubRoute] : undefined;
@@ -294,6 +296,7 @@ function AdminV2Shell() {
         <Route path="sistema/branding" element={<BrandingSettingsView />} />
         <Route path="sistema/textos-paginas" element={<PageTextsView />} />
         <Route path="sistema/secoes" element={<SectionTogglesView />} />
+        <Route path="sistema/galeria-midias" element={<MediaGalleryView />} />
       </Routes>
     </AdminShell>
   );

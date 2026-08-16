@@ -17,11 +17,12 @@
  *   npx tailwindcss@3.4.17 -c tailwind.config.js -i /tmp/tw-input.css \
  *     -o apps/web/src/styles/tailwind.generated.css
  * Confirmado nesta sessão: `npx tailwindcss@3.4.17` funciona neste ambiente sem instalação
- * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado em 2026-08-16 (PLAN-0026 Onda
- * 6 — achado o mesmo sintoma de novo: classes arbitrárias novas (`w-[52px]`, `left-[26px]`)
- * e `border-state-healthy` bare usadas no toggle switch de Seções Telas não estavam nesta
- * versão do arquivo, mesma causa raiz do ERR-0049 — regeneração completa resolve porque o
- * comando reescaneia TODO o código-fonte atual, não só o que motivou a Onda 5 do PLAN-0025).
+ * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado em 2026-08-16 (Onda 6 do
+ * PLAN-0026 — ERR-0051 — e de novo proativamente na Onda 7, antes do primeiro rebuild
+ * Docker, já que a tela introduziu classes arbitrárias novas: `h-[140px]`, `z-[80]`,
+ * `h-[260px]`, `max-w-[640px]`, `md:h-[320px]`. Regenerar antes de validar visualmente
+ * quando a tela tiver um padrão de layout genuinamente novo evita todo um ciclo de rebuild
+ * Docker só pra descobrir a classe ausente depois — lição da Onda 6).
  */
 
 .pointer-events-none {
@@ -639,6 +640,10 @@
 
 .h-\[10\%\] {
   height: 10%
+}
+
+.h-\[140px\] {
+  height: 140px
 }
 
 .h-\[14px\] {
@@ -5250,6 +5255,10 @@
 
   .xl\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr))
+  }
+
+  .xl\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr))
   }
 
   .xl\:grid-cols-\[2fr_1fr\] {

@@ -1,6 +1,6 @@
 # PLAN-0026 — Admin V2: Cadastros e Sistema nativos (reescrita, não reskin)
 
-**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1 (Planos), 2 (Entrega), 3 (Branding), 4 (Cupons), 5 (Textos das Páginas) e 6 (Seções Telas) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. Ondas 7-14 aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
+**Status:** 🔄 EXECUTING_WITH_PLAN — Ondas 1-7 (Planos, Entrega, Branding, Cupons, Textos das Páginas, Seções Telas, Galeria de Mídias) ✅ CONCLUÍDAS 2026-08-16, todas validadas por E2E real + visual real. **Tier P completo** — Ondas 8-14 (tier M/G) aguardando execução. Autorização em pé (usuário, 2026-08-16): commit sem aprovação por onda, push adiado pro final.
 **Origem:** continuação direta do `PLAN-0024` (RETROFIT-020/021, hubs de adapter/link) — usuário pediu a reescrita nativa dessas telas dentro do Admin V2. RAG feito nos 3 sistemas de conteúdo endereçável (Textos/Seções/Galeria) e no restante das telas de Cadastro/Sistema antes de planejar; gate socrático aplicado (autorização explícita pra alterar `DECISION-013`).
 **Decisão arquitetural:** `DECISION-014` (ACTIVE, 2026-08-16) — substitui a regra #5 da `DECISION-013`. 6 regras fixas, não revalidadas onda a onda (ver `DECISION-014` na íntegra). Resumo: componentes novos (nunca editar módulo legado), reuso obrigatório de backend já existente, telas monolíticas do legado desmembradas em telas nativas por entidade, sequenciamento por complexidade real (reskin primeiro, Produtos/Pessoas por último).
 **Escopo macro:** `apps/web/src/admin-v2/cadastros/*` e `apps/web/src/admin-v2/sistema/*` (14 módulos novos, um por tela/entidade), `apps/web/src/admin-v2/AdminV2Root.tsx` (14 rotas novas), `CadastrosHubView.tsx`/`SistemaHubView.tsx` (cards viram rotas internas em vez de links pro legado, um de cada vez conforme a onda entrega). **Sem endpoint de API novo previsto** — 100% do CRUD necessário já existe (`catalog.ts`, `users.ts`, `schedule.ts`, `subscriptions.ts`, `admin.ts`); gaps reais (paginação/filtro server-side) só se confirmados onda a onda, nunca assumidos a priori.
@@ -32,7 +32,7 @@
 | 4 | 4 | **Cupons** (discount-coupons) | P | `admin.ts` (CRUD completo) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real |
 | 5 | 5 | **Textos das Páginas** | P | `admin.ts` (`/admin/page-texts` + `/previous` + `/restore`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; 331 campos, undo de 1 nível preservado |
 | 6 | 6 | **Seções Telas** (liga/desliga) | P | `admin.ts` (`/admin/section-toggles`) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; gate MASTER preservado; achado `ERR-0051` (CSS) corrigido |
-| 7 | 7 | **Galeria de Mídias** | P | `admin.ts` (`/admin/media-slots` + `/uploads` genérico) | 78 slots, fallback em cascata (banco → catálogo → cache local) — preservar |
+| 7 | 7 | **Galeria de Mídias** | P | `admin.ts` (`/admin/media-slots` + `/uploads` genérico) | ✅ CONCLUÍDA 2026-08-16 — validada E2E real + visual real; achado `ERR-0052` (z-index) corrigido |
 | 8 | 8 | **Serviços** | M | `catalog.ts` (`/services` CRUD) | Legado tem `behavior.ts` (416 linhas) — reescrever como React |
 | 9 | 9 | **WhatsApp / Integrações** | M | a confirmar na onda (RAG não fez o levantamento fino do backend ainda) | Legado tem `behavior.ts` (361 linhas) |
 | 10 | 10 | **Testes** | M | a confirmar na onda | Legado tem `behavior.ts` (385 linhas); confirmar o que a tela realmente testa antes de desenhar a nativa |
@@ -165,7 +165,29 @@
 
 ---
 
-## Ondas 7 a 14 — roadmap resumido, a detalhar quando chegar a vez
+## Onda 7 — Galeria de Mídias ✅ CONCLUÍDA 2026-08-16 (fecha o tier P)
+
+**Pergunta que a tela fecha:** *quais imagens institucionais o site usa em cada slot, e como trocar qualquer uma sem deploy?*
+
+**RAG feito:** `admin.ts` já tinha `GET/PUT /admin/media-slots` + reuso de `/api/uploads` genérico. 78 slots (`MEDIA_SLOT_IDS`), cada um com `page`/`section`/`order`/`label`/`fallbackUrl` num catálogo hardcoded no backend (`mediaSlots/service.ts`, 606 linhas, majoritariamente dados) — e uma cópia local equivalente no frontend (`modules/public-site/mediaSlots.ts`, módulo utilitário compartilhado com o site público, reusado sem edição). **Mesmo contrato "manda o mapa inteiro" da Onda 5** (`savePublicMediaSlots` normaliza com fallback pra qualquer slot ausente, não faz merge incremental). Legado (`admin-media-gallery/AdminMediaGalleryView.tsx`, 519 linhas) já era React puro — grid de thumbnails agrupado por página, clique abre editor em modal (preview, URL manual, upload, reverter fallback).
+
+**Backend:** nenhuma mudança — reusa `/api/admin/media-slots` + `/api/uploads` sem alteração.
+
+**Frontend entregue:**
+- [x] `apps/web/src/admin-v2/shared/api.ts` — `fetchMediaSlots`/`saveMediaSlots` (reusa `uploadAsset` da Onda 3).
+- [x] `apps/web/src/admin-v2/sistema/mediaGallery/MediaGalleryView.tsx` — grid de 78 thumbnails agrupados por página (Home/Franquias/Assinaturas/Checkout/Global), modal de edição por slot (preview real, URL manual, upload, reverter fallback, salvar-e-fechar), confirmação de "fechar sem salvar" via `DeleteConfirmModal` (`tone="neutral"`) em vez de `window.confirm()` do legado.
+- [x] `AdminV2Root.tsx` — rota `sistema/galeria-midias`; entrada em `SISTEMA_SUBROUTE_LABELS`.
+- [x] `SistemaHubView.tsx` — card "Galeria de Mídias" vira `native: true`.
+
+**Bug real achado na validação visual (`ERR-0052`, não no E2E via curl)**: o modal de "fechar sem salvar" abria mas ficava impossível de clicar — herdado do legado com `z-[80]`, o modal do editor de slot ficava acima do `DeleteConfirmModal` compartilhado (`z-50`, convenção de todos os outros modais nativos do Admin V2). Corrigido igualando o editor a `z-50` — com z-index empatado, a ordem de renderização no DOM (confirmação depois do editor) já garante a pilha correta. Nota de processo: nunca copiar `z-[N]` arbitrário do legado sem checar contra a convenção já estabelecida.
+
+**Validações executadas (todas reais):** `tsc -b` (web) limpo; `eslint` nos arquivos tocados limpo; `npm run build` (web) PASS (2x — antes e depois do fix de z-index); **CSS regenerado proativamente antes do primeiro rebuild** (lição da Onda 6 — `h-[140px]`, `z-[80]`→depois removido, `h-[260px]`, `max-w-[640px]` confirmados presentes antes de gastar um ciclo de build); `docker compose build web` + redeploy `--force-recreate` (2x). **E2E real contra Postgres**: baseline de 78 slots capturado; 1 slot alterado + `PUT` completo confirmado; revertido ao mapa original exato. **Validação visual real** (Playwright, 10 checks, todos PASS — 9/10 na primeira rodada por causa do `ERR-0052`): hub mostra "Galeria de Mídias" com "Abrir →"; 78 slots confirmados; editor abre com preview real; editar+salvar com sucesso; **persistência confirmada com reload**; reverter fallback funciona; **modal de confirmação de fechar sem salvar funciona de verdade** (não só aparece — o clique completa); banco confirmado revertido ao original ao final.
+
+**Tier P do roadmap está 100% concluído** (Ondas 1-7). Ondas 8-14 são tier M/G — telas com `behavior.ts` imperativo pra reescrever como React (Serviços/WhatsApp/Testes) e as telas mais pesadas (Produtos/Clientes/Profissionais/Usuários).
+
+---
+
+## Ondas 8 a 14 — roadmap resumido, a detalhar quando chegar a vez
 
 Mesmo padrão de todo o programa (`PLAN-0022` §"Próximas ondas"): cada onda recebe RAG completo (schema, payload exato dos endpoints, campos reais do form legado) só quando é a vez dela — não fabricar detalhe de implementação de uma tela que ainda não foi investigada a fundo. A tabela do Roadmap acima já fixa tier, backend confirmado (quando já levantado) e prioridade; isso é suficiente pra aprovar o plano sem inflar o documento com suposições.
 
