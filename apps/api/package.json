@@ -8,6 +8,8 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "fix:avatar-urls": "tsx scripts/fixAvatarUploadUrls.ts",
+    "backfill:customers": "tsx scripts/backfillCustomersFromContacts.ts",
+    "seed:service-highlights": "tsx scripts/seedServiceHighlights.ts",
     "seed:admin-v2-test-data": "tsx scripts/seedAdminV2TestData.ts",
     "seed:franchise-pipeline-test-data": "tsx scripts/seedFranchisePipelineTestData.ts",
     "seed:subscription-health-test-data": "tsx scripts/seedSubscriptionHealthTestData.ts",

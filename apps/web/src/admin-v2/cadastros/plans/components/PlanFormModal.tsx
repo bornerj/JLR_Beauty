@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
+import { getToken } from "../../../../lib/auth";
+import { resolveUploadedAssetUrl } from "../../../../lib/assetUrls";
+import { uploadAsset } from "../../../shared/api";
 import { MEMBERSHIP_STATUS_OPTIONS } from "../types";
 import type { Membership, MembershipInput } from "../types";
 
@@ -7,7 +10,12 @@ import type { Membership, MembershipInput } from "../types";
  * espelham exatamente o form legado (`admin-plans/components/AdminPlansView.tsx` +
  * `admin-core/behavior.ts`), só a interação vira React declarativo em vez de
  * `querySelector`/`addEventListener` manual.
+ *
+ * PLAN-0027 Item 11 (`ERR-0061`): campo de imagem adicionado (upload real, mesmo padrão do
+ * `ServiceFormModal.tsx`) — antes deste item o plano não tinha imagem própria no cadastro.
  */
+
+const IMAGE_UPLOAD_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 const emptyForm = (): MembershipInput => ({
   name: "",
@@ -17,6 +25,7 @@ const emptyForm = (): MembershipInput => ({
   benefits: [""],
   isFeatured: false,
   status: "Ativo",
+  imageUrl: "",
 });
 
 const fromMembership = (membership: Membership): MembershipInput => ({
@@ -27,6 +36,7 @@ const fromMembership = (membership: Membership): MembershipInput => ({
   benefits: membership.benefits && membership.benefits.length > 0 ? membership.benefits : [""],
   isFeatured: membership.isFeatured,
   status: membership.status,
+  imageUrl: membership.imageUrl ?? "",
 });
 
 export function PlanFormModal({
@@ -44,6 +54,39 @@ export function PlanFormModal({
   onSubmit: (input: MembershipInput) => void;
 }) {
   const [form, setForm] = useState<MembershipInput>(editing ? fromMembership(editing) : emptyForm());
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleUpload = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0] ?? null;
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Selecione um arquivo de imagem válido (PNG, JPG, WEBP, etc).");
+      return;
+    }
+    if (file.size > IMAGE_UPLOAD_MAX_SIZE_BYTES) {
+      setUploadError("A imagem excede 5MB. Envie um arquivo menor.");
+      return;
+    }
+    const token = getToken();
+    if (!token) {
+      setUploadError("Sessão expirada. Faça login novamente.");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const uploadedUrl = await uploadAsset({ token, file });
+      const resolved = resolveUploadedAssetUrl(uploadedUrl) || uploadedUrl;
+      setForm((current) => ({ ...current, imageUrl: resolved }));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Falha ao enviar imagem.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const setBenefit = (index: number, value: string) => {
     const next = [...(form.benefits ?? [])];
@@ -64,6 +107,7 @@ export function PlanFormModal({
       title: form.title.trim(),
       description: form.description?.trim() || undefined,
       benefits: (form.benefits ?? []).map((b) => b.trim()).filter((b) => b.length > 0),
+      imageUrl: form.imageUrl?.trim() || undefined,
     });
   };
 
@@ -158,6 +202,37 @@ export function PlanFormModal({
               <span className="material-symbols-outlined text-base">add</span>
               Adicionar benefício
             </button>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+              Imagem do plano
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                value={form.imageUrl ?? ""}
+                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                placeholder="URL da imagem ou envie um arquivo"
+                className="w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  void handleUpload(event);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="h-9 flex-shrink-0 rounded-lg border border-primary/30 bg-primary/10 px-3 text-xs font-semibold text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {uploading ? "Enviando…" : "Upload"}
+              </button>
+            </div>
+            {uploadError && <p className="text-xs font-semibold text-state-critical">{uploadError}</p>}
           </div>
           <label className="flex items-center gap-2 rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest dark:bg-forest-green">
             <input

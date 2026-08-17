@@ -180,7 +180,7 @@ test("buildRadarFindings — todo achado sai com actionPath e actionLabel não v
   inputs.customerFlow.counts.EM_RISCO = 1;
   inputs.subscriptionHealth.churn = { count: 1, ratePercent: 5, explanation: "" };
   inputs.franchisePipeline.leads = [
-    { leadId: 1, name: "L", email: null, phone: null, city: null, stage: "INTERESSADO", estimatedValue: null, stageChangedAt: PERIOD.from, daysInStage: 30, isStalled: true },
+    { leadId: 1, name: "L", email: null, phone: null, city: null, stage: "INTERESSADO", estimatedValue: null, stageChangedAt: PERIOD.from, daysInStage: 30, isStalled: true, reason: null },
   ];
   const result = buildRadarFindings(inputs);
   assert.ok(result.length > 0);

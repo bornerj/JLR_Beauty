@@ -14,6 +14,13 @@ import type { Service, ServiceInput, ServiceStatusColor } from "./types";
  * filtro de categoria/status preservados (regra de negócio real, necessária com 70+
  * serviços); pilha de paginação numerada do legado não reproduzida — tabela rolável, mesmo
  * padrão já usado nas demais telas do Admin V2 (nenhuma outra tem paginação).
+ *
+ * PLAN-0027 Item 10 (`ERR-0060`): filtro "Destaque" adicionado (mesmo padrão de
+ * categoria/status) para achar rapidamente os serviços marcados como `isFeatured` — os que
+ * aparecem nos 9 flip-cards da Home pública (`HomeServicesSection.tsx`). Ver nota de
+ * arquitetura no `PLAN-0027`: os flip-cards em si são conteúdo estático (media slots +
+ * page texts), não leem `Service.isFeatured` em runtime — a flag aqui é só o registro
+ * administrativo de "quais serviços reais os 9 cards representam".
  */
 
 const COLOR_BADGE_CLASS: Record<ServiceStatusColor, string> = {
@@ -42,6 +49,7 @@ export function ServicesListView() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [featuredFilter, setFeaturedFilter] = useState<"" | "yes" | "no">("");
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -86,9 +94,10 @@ export function ServicesListView() {
       const matchesQuery = !query || s.name.toLowerCase().includes(query) || (s.description ?? "").toLowerCase().includes(query);
       const matchesCategory = !categoryFilter || String(s.serviceCategory?.id ?? "") === categoryFilter;
       const matchesStatus = !statusFilter || String(s.serviceStatus?.id ?? "") === statusFilter;
-      return matchesQuery && matchesCategory && matchesStatus;
+      const matchesFeatured = !featuredFilter || (featuredFilter === "yes" ? s.isFeatured : !s.isFeatured);
+      return matchesQuery && matchesCategory && matchesStatus && matchesFeatured;
     });
-  }, [state.data, search, categoryFilter, statusFilter]);
+  }, [state.data, search, categoryFilter, statusFilter, featuredFilter]);
 
   const handleSubmit = useCallback(
     async (input: ServiceInput) => {
@@ -172,7 +181,7 @@ export function ServicesListView() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -202,6 +211,16 @@ export function ServicesListView() {
               {s.name}
             </option>
           ))}
+        </select>
+        <select
+          value={featuredFilter}
+          onChange={(e) => setFeaturedFilter(e.target.value as "" | "yes" | "no")}
+          title="Filtra pelos serviços marcados como Destaque (os que aparecem nos flip-cards da Home)"
+          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+        >
+          <option value="">Destaque: todos</option>
+          <option value="yes">Destaque: sim</option>
+          <option value="no">Destaque: não</option>
         </select>
       </div>
 

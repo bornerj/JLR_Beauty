@@ -33,9 +33,22 @@ export const getFranchisePipeline = async (): Promise<FranchisePipeline> => {
       },
     }),
     prisma.franchiseLeadStageHistory.findMany({
-      select: { leadId: true, fromStage: true, toStage: true, changedAt: true },
+      select: { leadId: true, fromStage: true, toStage: true, changedAt: true, reason: true },
     }),
   ]);
+
+  // Item novo (achado do usuário, 2026-08-17): motivo/evento da última mudança de etapa
+  // não aparecia em lugar nenhum do card — só ficava gravado no histórico (PLAN-0025).
+  // `history` já vem ordenado por nenhuma garantia específica, então pegamos o registro
+  // mais recente (`changedAt` maior) por lead — corresponde ao motivo da transição que
+  // trouxe o lead pra etapa atual.
+  const latestReasonByLead = new Map<number, { changedAt: Date; reason: string | null }>();
+  for (const edge of history) {
+    const current = latestReasonByLead.get(edge.leadId);
+    if (!current || edge.changedAt > current.changedAt) {
+      latestReasonByLead.set(edge.leadId, { changedAt: edge.changedAt, reason: edge.reason });
+    }
+  }
 
   const leadSnapshots: LeadSnapshot[] = leads.map((lead) => ({
     leadId: lead.id,
@@ -51,6 +64,7 @@ export const getFranchisePipeline = async (): Promise<FranchisePipeline> => {
     // faria um lead parado há meses parecer "acabou de chegar").
     stageChangedAt: lead.stageChangedAt ?? lead.createdAt,
     createdAt: lead.createdAt,
+    reason: latestReasonByLead.get(lead.id)?.reason ?? null,
   }));
 
   const historyEdges: StageHistoryEdge[] = history.map((edge) => ({

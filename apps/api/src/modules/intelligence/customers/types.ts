@@ -6,8 +6,9 @@
  *
  * Identidade de cliente: não existe uma FK real ligando `Order`/`Appointment` a um
  * cadastro único de cliente (schema atual não tem esse relacionamento) — a identidade é
- * um proxy `email > telefone > nome`, mesma convenção já usada em
- * `unit-health/service.ts` (`calculateUnitRecurrenceRate`) e `dashboardSalesInsights.ts`.
+ * um proxy `telefone > email > nome` (`PLAN-0027` Item 4, `ERR-0058` — antes era
+ * `email > telefone > nome`, mesma convenção ainda usada de forma independente em
+ * `unit-health/service.ts` e `dashboardSalesInsights.ts`, não alterados neste fix).
  * Não é resolução de identidade de CRM completa.
  */
 export type CustomerState = "NOVO" | "ATIVO" | "RECORRENTE" | "EM_RISCO" | "INATIVO";

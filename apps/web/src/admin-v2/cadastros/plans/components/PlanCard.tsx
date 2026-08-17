@@ -14,6 +14,13 @@ export function PlanCard({
 }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-[#cfe7d1] bg-white p-5 dark:border-forest-green dark:bg-forest">
+      {membership.imageUrl && (
+        <img
+          src={membership.imageUrl}
+          alt={membership.name}
+          className="h-32 w-full rounded-lg object-cover"
+        />
+      )}
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-sm font-bold text-forest">{membership.name}</p>

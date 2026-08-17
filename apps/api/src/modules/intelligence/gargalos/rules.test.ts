@@ -137,8 +137,8 @@ test("rankBottlenecks — assinaturas: MRR em risco soma o preço do plano de Sa
 test("rankBottlenecks — franquias: soma o valor potencial só dos leads parados", () => {
   const inputs = baseInputs();
   inputs.franchisePipeline.leads = [
-    { leadId: 1, name: "A", email: null, phone: null, city: null, stage: "PROPOSTA", estimatedValue: 50000, stageChangedAt: PERIOD.from, daysInStage: 30, isStalled: true },
-    { leadId: 2, name: "B", email: null, phone: null, city: null, stage: "INTERESSADO", estimatedValue: 20000, stageChangedAt: PERIOD.from, daysInStage: 2, isStalled: false },
+    { leadId: 1, name: "A", email: null, phone: null, city: null, stage: "PROPOSTA", estimatedValue: 50000, stageChangedAt: PERIOD.from, daysInStage: 30, isStalled: true, reason: null },
+    { leadId: 2, name: "B", email: null, phone: null, city: null, stage: "INTERESSADO", estimatedValue: 20000, stageChangedAt: PERIOD.from, daysInStage: 2, isStalled: false, reason: null },
   ];
   const result = rankBottlenecks(inputs);
   assert.equal(result.length, 1);
@@ -148,7 +148,7 @@ test("rankBottlenecks — franquias: soma o valor potencial só dos leads parado
 test("rankBottlenecks — ordena por impacto decrescente, gargalos sem impacto conhecido vão pro fim (nunca escondidos)", () => {
   const inputs = baseInputs();
   inputs.ordersBoard.columns.atencao = { count: 1, totalValue: 100, orders: [] };
-  inputs.franchisePipeline.leads = [{ leadId: 1, name: "A", email: null, phone: null, city: null, stage: "PROPOSTA", estimatedValue: 9000, stageChangedAt: PERIOD.from, daysInStage: 30, isStalled: true }];
+  inputs.franchisePipeline.leads = [{ leadId: 1, name: "A", email: null, phone: null, city: null, stage: "PROPOSTA", estimatedValue: 9000, stageChangedAt: PERIOD.from, daysInStage: 30, isStalled: true, reason: null }];
   inputs.portfolioProducts.products = [
     { productId: 1, name: "A", quadrant: "ARMADILHA", quantitySold: 10, revenue: 100, cmv: 90, marginPercent: 10, capitalParked: 0, byUnit: [] },
   ];

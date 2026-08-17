@@ -31,11 +31,31 @@ const parseDecimal = (value: string | null): number | null => {
 
 const formatDate = (value: string | null): string => (value ? new Date(value).toLocaleDateString("pt-BR") : "—");
 
+// Vigência calculada a partir de startsAt/endsAt (independe do flag manual `isActive`).
+// Não existia nenhum filtro por data em nenhuma das duas telas (legado incluso) — feature nova.
+type ValidityFilter = "all" | "valid" | "scheduled" | "expired";
+
+const getCouponValidity = (coupon: DiscountCoupon, now: Date): Exclude<ValidityFilter, "all"> => {
+  const startsAt = coupon.startsAt ? new Date(coupon.startsAt) : null;
+  const endsAt = coupon.endsAt ? new Date(coupon.endsAt) : null;
+  if (startsAt && startsAt > now) return "scheduled";
+  if (endsAt && endsAt < now) return "expired";
+  return "valid";
+};
+
+const VALIDITY_FILTER_OPTIONS: { value: ValidityFilter; label: string }[] = [
+  { value: "all", label: "Todas as vigências" },
+  { value: "valid", label: "Vigentes agora" },
+  { value: "scheduled", label: "Agendados (ainda não começaram)" },
+  { value: "expired", label: "Expirados" },
+];
+
 export function CouponsListView() {
   const [state, setState] = useState<ListState>({ loading: true, data: null, error: null });
   const [formModal, setFormModal] = useState<FormModalState>(null);
   const [deleteModal, setDeleteModal] = useState<DeleteModalState>(null);
   const [mutation, setMutation] = useState<MutationState>({ submitting: false, error: null });
+  const [validityFilter, setValidityFilter] = useState<ValidityFilter>("all");
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -121,6 +141,9 @@ export function CouponsListView() {
 
   if (!state.data) return null;
   const coupons = state.data;
+  const now = new Date();
+  const filteredCoupons =
+    validityFilter === "all" ? coupons : coupons.filter((c) => getCouponValidity(c, now) === validityFilter);
 
   return (
     <div className="flex flex-col gap-5">
@@ -128,7 +151,8 @@ export function CouponsListView() {
         <div>
           <h1 className="text-3xl font-bold text-forest">Cupons de Desconto</h1>
           <p className="text-base text-stone-600 dark:text-stone-400">
-            código, tipo de desconto, validade e subtotal mínimo · {coupons.length} cupom(ns)
+            código, tipo de desconto, validade e subtotal mínimo · {filteredCoupons.length} de {coupons.length}{" "}
+            cupom(ns)
           </p>
         </div>
         <button
@@ -140,9 +164,27 @@ export function CouponsListView() {
         </button>
       </div>
 
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <select
+          value={validityFilter}
+          onChange={(e) => setValidityFilter(e.target.value as ValidityFilter)}
+          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+        >
+          {VALIDITY_FILTER_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {coupons.length === 0 ? (
         <p className="rounded-xl border border-dashed border-stone-200 p-6 text-center text-sm text-stone-500 dark:text-stone-400">
           Nenhum cupom cadastrado ainda.
+        </p>
+      ) : filteredCoupons.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-stone-200 p-6 text-center text-sm text-stone-500 dark:text-stone-400">
+          Nenhum cupom nessa vigência.
         </p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-[#cfe7d1] bg-white dark:border-forest-green dark:bg-forest">
@@ -160,7 +202,7 @@ export function CouponsListView() {
               </tr>
             </thead>
             <tbody>
-              {coupons.map((coupon) => {
+              {filteredCoupons.map((coupon) => {
                 const percentOff = parseDecimal(coupon.percentOff);
                 const amountOff = parseDecimal(coupon.amountOff);
                 const minSubtotal = parseDecimal(coupon.minSubtotal);
@@ -168,6 +210,15 @@ export function CouponsListView() {
                   coupon.discountType === "PERCENT"
                     ? `${(percentOff ?? 0).toFixed(2)}%`
                     : `R$ ${(amountOff ?? 0).toFixed(2)}`;
+                const validity = getCouponValidity(coupon, now);
+                const validityLabel =
+                  validity === "expired" ? "Expirado" : validity === "scheduled" ? "Agendado" : "Vigente";
+                const validityClass =
+                  validity === "expired"
+                    ? "bg-state-critical/15 text-state-critical"
+                    : validity === "scheduled"
+                      ? "bg-state-info/15 text-state-info"
+                      : "bg-state-healthy/15 text-state-healthy";
                 return (
                   <tr key={coupon.id} className="border-b border-stone-100 last:border-0 dark:border-forest-green/40">
                     <td className="px-4 py-3 font-semibold text-forest">{coupon.code}</td>
@@ -176,7 +227,16 @@ export function CouponsListView() {
                     <td className="px-4 py-3 text-forest">{discountLabel}</td>
                     <td className="px-4 py-3 text-forest">{minSubtotal !== null ? `R$ ${minSubtotal.toFixed(2)}` : "—"}</td>
                     <td className="px-4 py-3 text-forest">
-                      {formatDate(coupon.startsAt)} até {formatDate(coupon.endsAt)}
+                      <div className="flex flex-col gap-1">
+                        <span>
+                          {formatDate(coupon.startsAt)} até {formatDate(coupon.endsAt)}
+                        </span>
+                        <span
+                          className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${validityClass}`}
+                        >
+                          {validityLabel}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span

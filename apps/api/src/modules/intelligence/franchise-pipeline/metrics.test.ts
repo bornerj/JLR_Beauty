@@ -17,6 +17,7 @@ const lead = (overrides: Partial<LeadSnapshot> = {}): LeadSnapshot => ({
   estimatedValue: null,
   stageChangedAt: day(1),
   createdAt: day(1),
+  reason: null,
   ...overrides,
 });
 

@@ -1,6 +1,7 @@
 import { Prisma, type FulfillmentStatus, type OrderStatus } from "@prisma/client";
 import { applyStockMovement } from "./stockLedger";
 import { releaseOrderReservations, confirmOrderReservations } from "./stockReservation";
+import { syncCustomerFromContact } from "./customerSync";
 import { logger } from "../utils/logger";
 
 export const getNextFulfillmentStatus = (
@@ -188,6 +189,13 @@ export const markOrderAsPaid = async (
     toStatus: "PAGO",
     source: params.source,
     note: params.note,
+  });
+
+  // PLAN-0027 (Item 1): pedido pago confirma um cliente real — materializa em Customer.
+  await syncCustomerFromContact(tx, {
+    name: updated.customerName,
+    phone: updated.customerPhone,
+    email: updated.customerEmail,
   });
 
   return updated;

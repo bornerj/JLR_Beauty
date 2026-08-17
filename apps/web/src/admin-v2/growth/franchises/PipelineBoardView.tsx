@@ -4,6 +4,7 @@ import { logger } from "../../../utils/logger";
 import { fetchFranchisePipeline, moveFranchiseLeadStage } from "../../shared/api";
 import { formatCurrencyBRL } from "../../shared/format";
 import { KanbanColumnHeader } from "../../shell/KanbanColumnHeader";
+import { KanbanDndProvider, KanbanDroppableColumn, KanbanDraggableCard } from "../../shell/kanban/KanbanDndBoard";
 import { STAGE_LABELS } from "./state";
 import { LeadCard } from "./components/LeadCard";
 import { StageChangeReasonModal } from "./components/StageChangeReasonModal";
@@ -14,11 +15,16 @@ import type { FranchisePipeline, FranchiseStage } from "./types";
  * Admin V2 (PLAN-0022, Onda 9 + RETROFIT-010b; motivo obrigatório desde PLAN-0025) —
  * Pipeline de Franquias (RETROFIT-010). Pergunta que a tela fecha: "onde estão as
  * oportunidades comerciais de franquia?" Kanban comercial clássico, com alerta visual
- * quando uma etapa está mais lenta que o tempo médio histórico esperado. Movimentação de
- * etapa via seletor explícito no cartão (RETROFIT-010b) — nunca drag-and-drop, mesmo
- * padrão do Mapa da Rede da Onda 2 — seguida de um modal pequeno pedindo o motivo/evento
- * antes de confirmar de verdade (PLAN-0025, item 3). Distinto de "franquia em operação"
- * (`Unit`, Ondas 1-8) — este é o funil de VENDA, antes de virar unidade.
+ * quando uma etapa está mais lenta que o tempo médio histórico esperado. Distinto de
+ * "franquia em operação" (`Unit`, Ondas 1-8) — este é o funil de VENDA, antes de virar
+ * unidade.
+ *
+ * PLAN-0029 (`DECISION-015`) — reverte a decisão de RETROFIT-010b ("usuário nunca arrasta, mesmo padrão do
+ * Mapa da Rede"): movimentação de etapa passa a ser drag-and-drop entre qualquer par de
+ * colunas (movimento livre, mesma regra de negócio do `moveLeadStage` no backend, inalterada
+ * — nunca só a etapa adjacente). Arrastar e soltar só abre o mesmo modal de motivo
+ * obrigatório de antes (`StageChangeReasonModal`, PLAN-0025 item 3) — a escrita real só
+ * acontece se o usuário confirmar lá; soltar na própria coluna atual não faz nada.
  */
 
 type PipelineState = { loading: boolean; data: FranchisePipeline | null; error: string | null };
@@ -80,6 +86,17 @@ export function PipelineBoardView() {
     [pendingChange]
   );
 
+  const handleCardDrop = useCallback(
+    (cardId: string, columnId: string) => {
+      const leadId = Number(cardId);
+      const targetStage = columnId as FranchiseStage;
+      const lead = state.data?.leads.find((candidate) => candidate.leadId === leadId);
+      if (!lead || lead.stage === targetStage) return;
+      setPendingChange({ leadId, leadName: lead.name, targetStage });
+    },
+    [state.data]
+  );
+
   if (state.loading && !state.data) {
     return <p className="text-base text-stone-600 dark:text-stone-400">Carregando pipeline de franquias…</p>;
   }
@@ -112,6 +129,7 @@ export function PipelineBoardView() {
         <p className="text-base text-stone-600 dark:text-stone-400">onde estão as oportunidades comerciais de franquia</p>
       </div>
 
+      <KanbanDndProvider onCardDrop={handleCardDrop}>
       <div className="overflow-x-auto">
         <div className="flex gap-3" style={{ minWidth: `${FRANCHISE_STAGES.length * 260}px` }}>
           {pipeline.stages.map((stageSummary) => {
@@ -136,29 +154,30 @@ export function PipelineBoardView() {
                   )}
                 </KanbanColumnHeader>
 
-                <div className="flex flex-col gap-2">
+                <KanbanDroppableColumn columnId={stageSummary.stage} droppable className="flex flex-col gap-2 p-1">
                   {leads.length === 0 ? (
                     <p className="rounded-lg border border-dashed border-stone-200 p-3 text-center text-xs text-stone-500 dark:text-stone-400">
                       nenhum lead nesta etapa
                     </p>
                   ) : (
                     leads.map((lead) => (
-                      <LeadCard
+                      <KanbanDraggableCard
                         key={lead.leadId}
-                        lead={lead}
-                        moving={pendingChange?.leadId === lead.leadId}
-                        onStageSelected={(stage) =>
-                          setPendingChange({ leadId: lead.leadId, leadName: lead.name, targetStage: stage })
-                        }
-                      />
+                        cardId={String(lead.leadId)}
+                        draggable
+                        disabled={pendingChange !== null || moveState !== null}
+                      >
+                        <LeadCard lead={lead} moving={pendingChange?.leadId === lead.leadId} />
+                      </KanbanDraggableCard>
                     ))
                   )}
-                </div>
+                </KanbanDroppableColumn>
               </div>
             );
           })}
         </div>
       </div>
+      </KanbanDndProvider>
 
       {pendingChange && (
         <StageChangeReasonModal

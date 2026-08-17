@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import prisma from "./prisma";
+import { syncCustomerFromContact } from "./customerSync";
 
 export type AvailabilityPeriod = "MORNING" | "AFTERNOON" | "EVENING";
 
@@ -698,6 +699,12 @@ export const createRemoteAppointment = async (
           }
           throw error;
         }
+
+        // PLAN-0027 (Item 1): agendamento criado confirma um cliente real — materializa em Customer.
+        await syncCustomerFromContact(tx, {
+          name: appointment.clientName,
+          phone: appointment.clientPhone,
+        });
 
         return appointment;
       });

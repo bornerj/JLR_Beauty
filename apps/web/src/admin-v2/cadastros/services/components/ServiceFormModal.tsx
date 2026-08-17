@@ -13,6 +13,15 @@ import type { Service, ServiceInput, ServiceCategory, ServiceStatusOption } from
  * `querySelector`/`addEventListener` manual. Categoria/Status carregados de verdade da API
  * (`/service-categories`/`/service-statuses`), não hardcoded como o `<option>` estático que
  * aparecia no JSX legado (a lista real de opções nunca era só essas 4/3 fixas).
+ *
+ * PLAN-0027 Item 9 (`ERR-0059`): ID do serviço (`Service.id`, somente leitura) adicionado
+ * como primeiro campo do form — mesmo achado do Item 5 (Clientes), a grid mostrava `SRV-{id}`
+ * mas o form de edição não expunha o ID em lugar nenhum.
+ *
+ * PLAN-0028 Caso B (`ERR-0062`): bloco "Destaque na Home" adicionado — só aparece quando
+ * "Destaque (flip-cards)" está marcado, pra não poluir o form dos ~67 serviços sem Destaque.
+ * Alimenta `GET /public/services/featured`, que substitui os media slots/page texts
+ * estáticos que a Home usava antes pra esses 9 cards.
  */
 
 const IMAGE_UPLOAD_MAX_SIZE_BYTES = 5 * 1024 * 1024;
@@ -28,6 +37,11 @@ type FormState = {
   serviceStatusId: string;
   isFeatured: boolean;
   imageUrl: string;
+  highlightLabel: string;
+  highlightTagline: string;
+  highlightBackLabel: string;
+  highlightDescription: string;
+  highlightOrder: string;
 };
 
 const emptyForm = (): FormState => ({
@@ -41,6 +55,11 @@ const emptyForm = (): FormState => ({
   serviceStatusId: "",
   isFeatured: false,
   imageUrl: "",
+  highlightLabel: "",
+  highlightTagline: "",
+  highlightBackLabel: "",
+  highlightDescription: "",
+  highlightOrder: "",
 });
 
 const fromService = (service: Service): FormState => ({
@@ -54,6 +73,11 @@ const fromService = (service: Service): FormState => ({
   serviceStatusId: service.serviceStatus ? String(service.serviceStatus.id) : "",
   isFeatured: service.isFeatured,
   imageUrl: service.imageUrl ?? "",
+  highlightLabel: service.highlightLabel ?? "",
+  highlightTagline: service.highlightTagline ?? "",
+  highlightBackLabel: service.highlightBackLabel ?? "",
+  highlightDescription: service.highlightDescription ?? "",
+  highlightOrder: service.highlightOrder !== null ? String(service.highlightOrder) : "",
 });
 
 export function ServiceFormModal({
@@ -152,6 +176,13 @@ export function ServiceFormModal({
       return;
     }
 
+    const highlightOrderRaw = form.highlightOrder.trim();
+    const highlightOrder = highlightOrderRaw ? Number(highlightOrderRaw) : undefined;
+    if (highlightOrderRaw && (!Number.isInteger(highlightOrder) || (highlightOrder as number) < 1)) {
+      setLocalError("Ordem no destaque deve ser um número inteiro positivo.");
+      return;
+    }
+
     setLocalError(null);
     onSubmit({
       name,
@@ -164,6 +195,11 @@ export function ServiceFormModal({
       serviceStatusId: form.serviceStatusId ? Number(form.serviceStatusId) : undefined,
       isFeatured: form.isFeatured,
       imageUrl: form.imageUrl.trim() || undefined,
+      highlightLabel: form.highlightLabel.trim() || undefined,
+      highlightTagline: form.highlightTagline.trim() || undefined,
+      highlightBackLabel: form.highlightBackLabel.trim() || undefined,
+      highlightDescription: form.highlightDescription.trim() || undefined,
+      highlightOrder,
     });
   };
 
@@ -172,16 +208,27 @@ export function ServiceFormModal({
       <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl bg-white p-6 shadow-2xl dark:bg-forest">
         <h3 className="text-xl font-bold text-forest">{editing ? "Editar serviço" : "Novo serviço"}</h3>
         <div className="mt-4 flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-              Nome do serviço
-            </label>
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ex.: Escova Premium"
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
-            />
+          <div className="grid grid-cols-[110px_1fr] gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">ID</label>
+              <input
+                value={editing ? `SRV-${editing.id}` : "gerado ao salvar"}
+                disabled
+                readOnly
+                className="rounded-lg border border-gold/40 bg-stone-50 px-3 py-2 text-sm text-stone-500 dark:bg-forest-green/40 dark:text-stone-400"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                Nome do serviço
+              </label>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Ex.: Escova Premium"
+                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">
@@ -348,6 +395,79 @@ export function ServiceFormModal({
               </button>
             </div>
           </div>
+
+          {form.isFeatured && (
+            <div className="flex flex-col gap-3 rounded-lg border border-gold/40 bg-primary/5 p-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-primary">
+                Destaque na Home (flip-card)
+              </p>
+              <p className="-mt-2 text-xs text-stone-600 dark:text-stone-400">
+                Conteúdo exibido no flip-card deste serviço na Home pública. Rótulo e descrição de marketing — podem ser
+                diferentes do nome/descrição operacional acima.
+              </p>
+              <div className="grid grid-cols-[1fr_1fr_110px] gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                    Rótulo (frente)
+                  </label>
+                  <input
+                    value={form.highlightLabel}
+                    onChange={(e) => setForm({ ...form, highlightLabel: e.target.value })}
+                    placeholder="Ex.: Lashes"
+                    className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                    Rótulo (verso)
+                  </label>
+                  <input
+                    value={form.highlightBackLabel}
+                    onChange={(e) => setForm({ ...form, highlightBackLabel: e.target.value })}
+                    placeholder="Ex.: Extensão de Cílios"
+                    className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                    Ordem
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.highlightOrder}
+                    onChange={(e) => setForm({ ...form, highlightOrder: e.target.value })}
+                    placeholder="1"
+                    title="Posição do card na grade de Destaque (1 a 9). Deixe em branco pra ordenar por nome."
+                    className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                  Tagline (frente)
+                </label>
+                <input
+                  value={form.highlightTagline}
+                  onChange={(e) => setForm({ ...form, highlightTagline: e.target.value })}
+                  placeholder="Frase curta abaixo do rótulo, ex.: Corte preciso e tratamentos restauradores"
+                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                  Descrição (verso)
+                </label>
+                <textarea
+                  rows={2}
+                  value={form.highlightDescription}
+                  onChange={(e) => setForm({ ...form, highlightDescription: e.target.value })}
+                  placeholder="Texto exibido no verso do card, ao passar o mouse/tocar."
+                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {(localError || error) && <p className="mt-3 text-xs font-semibold text-state-critical">{localError || error}</p>}

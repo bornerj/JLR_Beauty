@@ -19,6 +19,7 @@ const membershipSchema = z.object({
   benefits: z.array(z.string()).optional(),
   isFeatured: z.coerce.boolean().optional(),
   status: z.string().optional(),
+  imageUrl: z.string().optional(),
 });
 const membershipUpdateSchema = membershipSchema.partial();
 
@@ -103,7 +104,7 @@ subscriptionsRouter.post("/memberships", requireAdmin, async (req, res) => {
     res.status(400).json({ message: MSG.INVALID_MEMBERSHIP, ...withDetail(formatZodDetail(parsed.error.issues)) });
     return;
   }
-  const { name, title, description, price, benefits, isFeatured, status } = parsed.data;
+  const { name, title, description, price, benefits, isFeatured, status, imageUrl } = parsed.data;
   const membership = await prisma.membership.create({
     data: {
       name, title, description,
@@ -111,6 +112,7 @@ subscriptionsRouter.post("/memberships", requireAdmin, async (req, res) => {
       benefits,
       isFeatured: Boolean(isFeatured ?? false),
       status: status || "Ativo",
+      imageUrl,
     },
   });
   res.status(201).json(membership);
@@ -131,6 +133,7 @@ subscriptionsRouter.patch("/memberships/:id", requireAdmin, async (req, res) => 
       name: payload.name, title: payload.title, description: payload.description,
       price: payload.price !== undefined ? new Prisma.Decimal(payload.price || 0) : undefined,
       benefits: payload.benefits, isFeatured: payload.isFeatured, status: payload.status,
+      imageUrl: payload.imageUrl,
     },
   });
   res.json(updated);

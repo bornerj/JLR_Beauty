@@ -5,9 +5,10 @@
  *
  * Distinto de "franquia em operação" (`Unit`, já coberta pelas Ondas 1-8) — este é o
  * pipeline COMERCIAL (venda da franquia, antes de virar unidade), sobre `FranchiseLead`.
- * Só leitura — este onda não adiciona nenhuma rota de escrita para mover um lead de
- * etapa (o board é um Kanban "usuário nunca arrasta", mesmo padrão do Mapa da Rede da
- * Onda 2 — colunas ordenadas pelo backend, não drag-and-drop).
+ * Escrita via `moveLeadStage` (RETROFIT-010b) — movimento de etapa no frontend é
+ * drag-and-drop desde o `PLAN-0029` (`DECISION-015`, substitui a regra "usuário nunca
+ * arrasta" original desta onda); a regra de negócio em si (movimento livre entre
+ * qualquer etapa, motivo obrigatório) não mudou, só o gatilho de UI.
  */
 export const FRANCHISE_STAGES = [
   "INTERESSADO",
@@ -45,6 +46,10 @@ export type PipelineLead = {
   daysInStage: number;
   /** `daysInStage` acima do esperado para a etapa (ou do limiar de segurança, sem histórico ainda). */
   isStalled: boolean;
+  /** Motivo/evento da mudança que trouxe o lead pra etapa atual (`FranchiseLeadStageHistory.reason`,
+   * PLAN-0025 item 3). Null quando a etapa atual é a de criação (nunca mudou) ou a transição é
+   * anterior ao campo `reason` existir. */
+  reason: string | null;
 };
 
 export type FranchisePipeline = {
@@ -63,6 +68,7 @@ export type LeadSnapshot = {
   estimatedValue: number | null;
   stageChangedAt: Date;
   createdAt: Date;
+  reason: string | null;
 };
 
 /** Uma transição de etapa já normalizada, entrada pura de `metrics.ts`. */

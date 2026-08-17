@@ -32,6 +32,9 @@ export type PipelineLead = {
   stageChangedAt: string;
   daysInStage: number;
   isStalled: boolean;
+  /** Motivo/evento da mudança que trouxe o lead pra etapa atual (achado do usuário, exibido
+   * como tooltip no card desde a sessão de 2026-08-17). */
+  reason: string | null;
 };
 
 export type FranchisePipeline = {

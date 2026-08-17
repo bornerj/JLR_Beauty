@@ -6,14 +6,23 @@ import type { CustomerFlow, CustomerFlowEntry, CustomerRawSignals, CustomerState
 /**
  * Admin V2 (PLAN-0022, Onda 7) — Clientes como Fluxo de Relacionamento (RETROFIT-008).
  * Camada de acesso a dados: pedidos PAGO/CANCELADO + agendamentos não-cancelados/
- * cancelados + assinaturas inadimplentes, agrupados pelo proxy de identidade
- * `email > telefone > nome` (mesma convenção de `unit-health/service.ts` e
- * `dashboardSalesInsights.ts`), depois delega a classificação para `classifier.ts`
- * (puro). Nenhuma escrita, nenhum campo novo no `User`/`Customer` (100% derivado).
+ * cancelados + assinaturas inadimplentes, agrupados pelo proxy de identidade, depois
+ * delega a classificação para `classifier.ts` (puro). Nenhuma escrita, nenhum campo
+ * novo no `User`/`Customer` (100% derivado).
+ *
+ * PLAN-0027 Item 4 (`ERR-0058`): prioridade da chave trocada de `email > telefone > nome`
+ * para **`telefone > email > nome`** — telefone normalizado (só dígitos) é a chave mais
+ * estável entre as duas fontes reais: pedidos sempre têm e-mail (agrupavam por e-mail),
+ * agendamentos não têm e-mail direto (`Appointment.clientId` fica `NULL` na prática, cai no
+ * fallback telefone) — as duas nunca convergiam pra mesma chave pro mesmo cliente físico,
+ * duplicando a contagem (8 clientes reais apareciam como 17). `unit-health/service.ts` e
+ * `panorama/service.ts` implementam a mesma convenção de forma independente (comentário
+ * antigo, não um import compartilhado) e **não foram alterados neste fix** — mesmo risco de
+ * duplicação pode existir lá, mas está fora do que foi pedido; ver `PLAN-0027`.
  */
 
 const identityKey = (email: string | null | undefined, phone: string | null | undefined, name: string | null | undefined): string =>
-  (email || "").trim().toLowerCase() || (phone || "").trim() || (name || "").trim() || "(sem identificacao)";
+  (phone || "").replace(/\D/g, "") || (email || "").trim().toLowerCase() || (name || "").trim() || "(sem identificacao)";
 
 type Accumulator = {
   name: string;

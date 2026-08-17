@@ -84,6 +84,7 @@ export const buildPipeline = (leads: LeadSnapshot[], history: StageHistoryEdge[]
       stageChangedAt: lead.stageChangedAt.toISOString(),
       daysInStage,
       isStalled: daysInStage > threshold,
+      reason: lead.reason,
     };
   });
 

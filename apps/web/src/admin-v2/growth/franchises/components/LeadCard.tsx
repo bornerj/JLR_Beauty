@@ -1,36 +1,30 @@
 import { formatCurrencyBRL } from "../../../shared/format";
-import { STAGE_LABELS } from "../state";
-import { FRANCHISE_STAGES } from "../types";
-import type { FranchiseStage, PipelineLead } from "../types";
+import type { PipelineLead } from "../types";
 
 /**
  * Admin V2 (PLAN-0022, Onda 9 + RETROFIT-010b; motivo obrigatório desde PLAN-0025) —
- * cartão de lead no Kanban comercial (RETROFIT-010). O board continua "usuário nunca
- * arrasta" (mesmo padrão do Mapa da Rede, Onda 2) — a movimentação de etapa é um seletor
- * explícito, não drag-and-drop. Selecionar uma etapa aqui só sinaliza a intenção pro
- * `PipelineBoardView` (que abre o modal de motivo) — a mutação real só acontece se o
- * usuário confirmar lá; como o `<select>` é controlado por `lead.stage`, cancelar o modal
- * já reverte a UI sozinho (a prop não mudou). Movimento livre entre qualquer etapa (não só
- * a próxima) — justificativa em `moveLeadStage` no backend.
+ * cartão de lead no Kanban comercial (RETROFIT-010).
+ *
+ * PLAN-0029 (`DECISION-015`) — reverte a decisão de RETROFIT-010b ("usuário nunca arrasta"): a mudança de
+ * etapa agora é drag-and-drop (o card em si, arrastável via `KanbanDraggableCard` em
+ * `PipelineBoardView.tsx`), não mais um `<select>` no card. Movimento livre entre qualquer
+ * etapa continua valendo (não só a próxima) — justificativa em `moveLeadStage` no backend,
+ * inalterada. Soltar o card só sinaliza a intenção — `PipelineBoardView` abre o modal de
+ * motivo obrigatório antes de confirmar de verdade; cancelar o modal reverte a UI sozinho
+ * (o board sempre renderiza a partir de `lead.stage`, nunca de um estado otimista).
+ *
+ * Achado do usuário (2026-08-17): o motivo virava obrigatório na troca de etapa, mas nunca
+ * aparecia de volta no card — ficava só no histórico. Agora exibido como uma linha "Motivo"
+ * com tooltip nativo (`title`, mesmo padrão já usado em outros campos do Admin V2) — passa o
+ * mouse e o texto completo aparece, sem precisar de um componente de tooltip customizado.
  */
 
-export function LeadCard({
-  lead,
-  moving,
-  onStageSelected,
-}: {
-  lead: PipelineLead;
-  /** true enquanto existe uma troca de etapa pendente/em andamento pra este lead (modal
-   * de motivo aberto ou submetendo) — desabilita o select pra evitar uma segunda intenção
-   * em cima da primeira. Erro de envio aparece no modal, não mais aqui. */
-  moving: boolean;
-  onStageSelected: (stage: FranchiseStage) => void;
-}) {
+export function LeadCard({ lead, moving }: { lead: PipelineLead; /** true enquanto existe uma troca de etapa pendente/em andamento pra este lead (modal de motivo aberto ou submetendo) — dá feedback visual de "em trânsito". */ moving: boolean }) {
   return (
     <div
-      className={`flex flex-col gap-1 rounded-lg border bg-white p-3 dark:bg-forest ${
+      className={`flex flex-col gap-1 rounded-lg border bg-white p-3 transition-opacity dark:bg-forest ${
         lead.isStalled ? "border-state-attention/50 bg-state-attention/5" : "border-[#cfe7d1] dark:border-forest-green"
-      }`}
+      } ${moving ? "opacity-50" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-bold text-forest">{lead.name}</p>
@@ -46,19 +40,14 @@ export function LeadCard({
         <span>há {Math.round(lead.daysInStage)}d nesta etapa</span>
       </div>
 
-      <select
-        aria-label={`Mover ${lead.name} para outra etapa`}
-        value={lead.stage}
-        disabled={moving}
-        onChange={(event) => onStageSelected(event.target.value as FranchiseStage)}
-        className="mt-1 rounded-lg border border-gold/40 bg-white px-2 py-1 text-xs font-semibold text-forest disabled:opacity-50 dark:bg-forest"
-      >
-        {FRANCHISE_STAGES.map((stage) => (
-          <option key={stage} value={stage}>
-            {STAGE_LABELS[stage]}
-          </option>
-        ))}
-      </select>
+      {lead.reason && (
+        <p
+          title={lead.reason}
+          className="w-fit cursor-help truncate text-xs font-semibold uppercase tracking-wider text-gold-accent underline decoration-dotted underline-offset-2"
+        >
+          Motivo
+        </p>
+      )}
     </div>
   );
 }

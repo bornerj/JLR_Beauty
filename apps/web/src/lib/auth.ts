@@ -99,6 +99,67 @@ export function getToken() {
   return token;
 }
 
+// ─── Session keep-alive (refresh token) ───────────────────────────────────────
+// O access token dura pouco (JWT_EXPIRES_IN, hoje 15min) de proposito — a
+// sessao longa vive no refresh token (cookie httpOnly `jlr_rt`, 7 dias). Sem
+// isto, `getToken()` limpa a sessao assim que o access token expira, mesmo com
+// o refresh token ainda valido (ex.: usuario troca de aba por >15min e volta).
+const KEEP_ALIVE_INTERVAL_MS = 5 * 60 * 1000; // bem abaixo do TTL do access token
+let keepAliveTimer: ReturnType<typeof setInterval> | null = null;
+
+export async function refreshAccessToken(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_URL}/api/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!response.ok) {
+      clearAuth();
+      return false;
+    }
+    const data = (await response.json()) as { token: string };
+    setToken(data.token);
+    return true;
+  } catch {
+    // Falha de rede: nao desloga por conta disso, so nao renova agora.
+    return false;
+  }
+}
+
+function stopSessionKeepAlive() {
+  if (keepAliveTimer) {
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = null;
+  }
+}
+
+function startSessionKeepAlive() {
+  stopSessionKeepAlive();
+  void refreshAccessToken();
+  keepAliveTimer = setInterval(() => {
+    if (localStorage.getItem(TOKEN_KEY)) void refreshAccessToken();
+  }, KEEP_ALIVE_INTERVAL_MS);
+}
+
+/** Chamar uma vez no bootstrap da aplicacao (main.tsx). */
+export function initSessionKeepAlive() {
+  if (typeof window === "undefined") return;
+
+  if (localStorage.getItem(TOKEN_KEY)) startSessionKeepAlive();
+
+  window.addEventListener(AUTH_STATE_EVENT, (event) => {
+    const detail = (event as CustomEvent<AuthUser | null>).detail;
+    if (detail) startSessionKeepAlive();
+    else stopSessionKeepAlive();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && localStorage.getItem(TOKEN_KEY)) {
+      void refreshAccessToken();
+    }
+  });
+}
+
 export function setToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
 }

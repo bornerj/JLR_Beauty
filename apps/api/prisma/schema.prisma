@@ -309,6 +309,11 @@ model Service {
   commissionPercent Int?
   imageUrl    String?
   isFeatured  Boolean    @default(false)
+  highlightLabel       String?
+  highlightTagline     String?
+  highlightBackLabel   String?
+  highlightDescription String? @db.Text
+  highlightOrder       Int?
   serviceCategoryId  Int?
   serviceCategory    ServiceCategory? @relation(fields: [serviceCategoryId], references: [id])
   serviceStatusId    Int?
@@ -330,6 +335,7 @@ model Membership {
   benefits    Json?
   isFeatured  Boolean        @default(false)
   status      String         @default("Ativo")
+  imageUrl    String?
   subscriptions Subscription[]
   orderItems  OrderItem[]
   createdAt   DateTime       @default(now())

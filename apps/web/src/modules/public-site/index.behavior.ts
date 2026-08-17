@@ -705,6 +705,7 @@ export function initIndexPage(): Cleanup {
     price: number | string;
     benefits?: string[] | null;
     isFeatured?: boolean | null;
+    imageUrl?: string | null;
   };
 
   type PendingSubscriptionCheckout = {
@@ -867,8 +868,9 @@ export function initIndexPage(): Cleanup {
           ? row.benefits.filter((item): item is string => typeof item === "string")
           : [];
         const isFeatured = typeof row.isFeatured === "boolean" ? row.isFeatured : false;
+        const imageUrl = typeof row.imageUrl === "string" && row.imageUrl.trim() ? row.imageUrl.trim() : null;
         if (!Number.isFinite(id) || !name || !title) return null;
-        return { id, name, title, price, benefits, isFeatured };
+        return { id, name, title, price, benefits, isFeatured, imageUrl };
       })
       .filter((entry): entry is HomeMembershipRow => Boolean(entry));
   };
@@ -983,9 +985,14 @@ export function initIndexPage(): Cleanup {
           )
           .join("");
 
+        const image = plan.imageUrl
+          ? `<div class="mb-4 h-36 w-full overflow-hidden rounded-xl"><img src="${escapeHtml(plan.imageUrl)}" alt="${escapeHtml(plan.name || "Plano")}" class="h-full w-full object-cover"></div>`
+          : "";
+
         return `
                 <div class="${featuredClass}">
                     ${badge}
+                    ${image}
                     <div class="mb-6">
                         <span class="${tierClass}">${escapeHtml(plan.name || "-")}</span>
                         <h4 class="display-title text-shadow-strong text-3xl text-forest dark:text-white mb-2">${escapeHtml(
@@ -1128,7 +1135,6 @@ export function initIndexPage(): Cleanup {
   const conciergeClose = document.getElementById("concierge-close");
   const conciergeBody = document.getElementById("concierge-body");
   const conciergeOptions = document.getElementById("concierge-options");
-  const conciergeTriggers = document.querySelectorAll("[data-open-concierge]");
   type ConciergeTriggerPrefill = {
     sourceLabel: string;
     categoryName: string;
@@ -1900,10 +1906,9 @@ export function initIndexPage(): Cleanup {
     enforceLockedUnitDate();
   }
 
-  const openConciergeFromTrigger = (event: Event) => {
+  const openConciergeFromTrigger = (trigger: HTMLElement, event: Event) => {
     event.preventDefault();
     event.stopPropagation();
-    const trigger = event.currentTarget as HTMLElement | null;
     pendingConciergePrefill = readConciergePrefillFromTrigger(trigger);
     if (conciergeState.lockUnitAndDate && conciergeBody && conciergeBody.childElementCount > 0) {
       enforceLockedUnitDate();
@@ -1915,9 +1920,18 @@ export function initIndexPage(): Cleanup {
 
   add(on(conciergeToggle, "click", openConcierge));
   add(on(conciergeClose, "click", closeConcierge));
+  // Delegado em `document` (em vez de vincular direto nos 9 botões via `conciergeTriggers`
+  // estático) — necessário desde o PLAN-0028 Caso B: os flip-cards de Serviços passaram a
+  // renderizar de forma assíncrona (fetch de `/api/public/services/featured`), então os
+  // botões `[data-open-concierge]` podem não existir ainda no DOM quando este script roda.
+  // Delegação funciona independente de quando o botão é inserido — mesmo padrão já usado
+  // pra `[data-membership-join]` (linha ~1049) e `[data-checkout]`.
   add(
-    onAll(conciergeTriggers, "click", (event) => {
-      openConciergeFromTrigger(event);
+    on(document, "click", (event) => {
+      const target = event.target as HTMLElement | null;
+      const trigger = target?.closest("[data-open-concierge]") as HTMLElement | null;
+      if (!trigger) return;
+      openConciergeFromTrigger(trigger, event);
     })
   );
 

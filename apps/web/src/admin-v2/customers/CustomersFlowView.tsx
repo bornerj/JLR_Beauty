@@ -13,6 +13,12 @@ import type { CustomerFlow, CustomerState } from "./types";
  * Critério de aceitação: clique em "Em risco" mostra a lista com o motivo específico de
  * cada cliente — por isso o estado selecionado abre a lista completa com `reason`
  * visível em cada linha, nunca só a contagem.
+ *
+ * PLAN-0027 Item 6: legenda explícita adicionada — esta tela deriva clientes de
+ * `Order`+`Appointment`+`Subscription` (`apps/api/src/modules/intelligence/customers/service.ts`),
+ * não da tabela `Customer` (`Cadastro > Clientes`, `CustomersListView.tsx`). Os dois números
+ * divergem por desenho, não por bug — ver `PLAN-0027` Item 1 (causa raiz completa) e Item 4
+ * (`ERR-0058`, contagem duplicada ainda não corrigida).
  */
 
 type FlowState = { loading: boolean; data: CustomerFlow | null; error: string | null };
@@ -75,6 +81,10 @@ export function CustomersFlowView() {
       <div>
         <h1 className="text-3xl font-bold text-forest">Clientes</h1>
         <p className="text-base text-stone-600 dark:text-stone-400">quem está entrando, ficando ou indo embora · últimos {flow.period.days} dia(s)</p>
+        <p className="mt-1 text-xs text-stone-500 dark:text-stone-500">
+          Inclui todo mundo que comprou ou agendou, mesmo quem nunca foi cadastrado formalmente em{" "}
+          <span className="font-semibold">Cadastro &gt; Clientes</span> — os dois números não precisam bater.
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">

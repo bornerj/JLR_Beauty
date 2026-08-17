@@ -57,6 +57,13 @@ const serviceSchema = z.object({
   serviceCategoryId: z.coerce.number().optional(),
   serviceStatusId: z.coerce.number().optional(),
   isFeatured: z.coerce.boolean().optional(),
+  // PLAN-0028 Caso B: conteúdo dos flip-cards de Destaque na Home pública — só faz
+  // sentido quando isFeatured=true, mas fica opcional pra não travar os outros serviços.
+  highlightLabel: z.string().optional(),
+  highlightTagline: z.string().optional(),
+  highlightBackLabel: z.string().optional(),
+  highlightDescription: z.string().optional(),
+  highlightOrder: z.coerce.number().optional(),
 });
 const serviceUpdateSchema = serviceSchema.partial();
 
@@ -465,7 +472,10 @@ catalogRouter.post("/services", requireAdmin, async (req, res) => {
     res.status(400).json({ message: MSG.INVALID_SERVICE, ...withDetail(formatZodDetail(parsed.error.issues)) });
     return;
   }
-  const { name, description, price, cost, durationMin, imageUrl, serviceCategoryId, serviceStatusId, isFeatured, commissionPercent } = parsed.data;
+  const {
+    name, description, price, cost, durationMin, imageUrl, serviceCategoryId, serviceStatusId, isFeatured, commissionPercent,
+    highlightLabel, highlightTagline, highlightBackLabel, highlightDescription, highlightOrder,
+  } = parsed.data;
   const service = await prisma.service.create({
     data: {
       name, description,
@@ -477,6 +487,8 @@ catalogRouter.post("/services", requireAdmin, async (req, res) => {
       isFeatured: Boolean(isFeatured ?? false),
       serviceCategoryId: serviceCategoryId ? Number(serviceCategoryId) : null,
       serviceStatusId: serviceStatusId ? Number(serviceStatusId) : null,
+      highlightLabel, highlightTagline, highlightBackLabel, highlightDescription,
+      highlightOrder: highlightOrder ?? null,
     },
     include: { serviceCategory: true, serviceStatus: true },
   });
@@ -508,6 +520,11 @@ catalogRouter.patch("/services/:id", requireAdmin, async (req, res) => {
       serviceStatusId: payload.serviceStatusId
         ? Number(payload.serviceStatusId)
         : payload.serviceStatusId === null ? null : undefined,
+      highlightLabel: payload.highlightLabel,
+      highlightTagline: payload.highlightTagline,
+      highlightBackLabel: payload.highlightBackLabel,
+      highlightDescription: payload.highlightDescription,
+      highlightOrder: payload.highlightOrder,
     },
     include: { serviceCategory: true, serviceStatus: true },
   });
@@ -561,6 +578,37 @@ catalogRouter.get("/public/services/catalog", async (_req, res) => {
   try {
     const categories = await listPublicServiceCatalogByCategory();
     res.json({ categories });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "erro inesperado";
+    res.status(500).json({ message: MSG.SERVER_ERROR, ...withDetail(detail) });
+  }
+});
+
+// PLAN-0028 Caso B (`ERR-0060`/`ERR-0062`): endpoint novo e aditivo — os flip-cards de
+// Destaque da Home pública passam a ler daqui em vez de media slots/page texts estáticos.
+// Não reaproveita `/public/services/catalog` (endpoint do modal "Menu Completo") porque tem
+// forma diferente (achatado, não por categoria) e campos diferentes (imagem + textos de
+// marketing do card, que o catálogo completo não precisa).
+catalogRouter.get("/public/services/featured", async (_req, res) => {
+  try {
+    const services = await prisma.service.findMany({
+      where: {
+        isFeatured: true,
+        OR: [{ serviceStatus: null }, { serviceStatus: { name: { in: ["Ativo", "ACTIVE"] } } }],
+      },
+      orderBy: [{ highlightOrder: "asc" }, { name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+        highlightLabel: true,
+        highlightTagline: true,
+        highlightBackLabel: true,
+        highlightDescription: true,
+        serviceCategory: { select: { name: true } },
+      },
+    });
+    res.json({ services });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "erro inesperado";
     res.status(500).json({ message: MSG.SERVER_ERROR, ...withDetail(detail) });

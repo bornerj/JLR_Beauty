@@ -7,6 +7,12 @@ import type { Customer, CustomerInput } from "../types";
  * conta de usuário via ID numérico bruto (sem busca/autocomplete) — mesma UX do legado, não
  * modernizado nesta onda (a tela de Usuários, Onda 14, ainda não existe nativa pra oferecer
  * um seletor melhor sem inventar uma dependência cruzada precoce).
+ *
+ * PLAN-0027 Item 5/7 (`ERR-0059`): ID do próprio cliente (`Customer.id`, somente leitura)
+ * agora é o primeiro campo do form, como na grid. "ID de usuário" trocou de posição com
+ * E-mail (campo maior fica com mais espaço) e ganhou `title` explicando que é um vínculo
+ * opcional com uma conta de login (`User`) — não é o ID do cliente e não vem preenchido
+ * automaticamente, mesmo achado documentado no `PLAN-0027`.
  */
 
 type FormState = {
@@ -104,7 +110,16 @@ export function CustomerFormModal({
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-2xl dark:bg-forest">
         <h3 className="text-xl font-bold text-forest">{editing ? "Editar cliente" : "Novo cliente"}</h3>
         <div className="mt-4 flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[110px_1fr] gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">ID</label>
+              <input
+                value={editing ? `CLI-${editing.id}` : "gerado ao salvar"}
+                disabled
+                readOnly
+                className="rounded-lg border border-gold/40 bg-stone-50 px-3 py-2 text-sm text-stone-500 dark:bg-forest-green/40 dark:text-stone-400"
+              />
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">Nome</label>
               <input
@@ -114,6 +129,9 @@ export function CustomerFormModal({
                 className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">Telefone</label>
               <input
@@ -123,9 +141,6 @@ export function CustomerFormModal({
                 className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
                 Telefone alternativo
@@ -134,6 +149,23 @@ export function CustomerFormModal({
                 value={form.phone2}
                 onChange={(e) => setForm({ ...form, phone2: e.target.value })}
                 placeholder="Opcional"
+                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[140px_1fr] gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                ID de usuário
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={form.userId}
+                onChange={(e) => setForm({ ...form, userId: e.target.value })}
+                placeholder="Opcional"
+                title="Vincula este cliente a uma conta de login existente (tabela User). Não é o ID do próprio cliente e não é preenchido automaticamente — deixe em branco se o cliente não tiver conta."
                 className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
               />
             </div>
@@ -176,20 +208,6 @@ export function CustomerFormModal({
                 className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
               />
             </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-              ID de usuário vinculado (opcional)
-            </label>
-            <input
-              type="number"
-              min={1}
-              value={form.userId}
-              onChange={(e) => setForm({ ...form, userId: e.target.value })}
-              placeholder="Deixe em branco se não houver conta de login"
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
-            />
           </div>
 
           <div className="flex flex-col gap-1">

@@ -149,6 +149,28 @@ export const fetchOrdersFlow = async (args: { token: string; days?: number; unit
   return (await response.json()) as OrdersFlow;
 };
 
+/**
+ * PLAN-0029 — usado pelo drag-and-drop do Board Operacional de Pedidos. Reusa
+ * `PATCH /orders/:id/fulfillment` (`orders.ts`), a mesma rota já usada pelo admin legado —
+ * nenhum endpoint novo. Retorna só `{ ok: true }`: o board recarrega via `fetchOrdersBoard`
+ * depois (mesmo padrão de `handleSubmit` nos outros forms do Admin V2 — não tenta reconciliar
+ * a resposta parcial do PATCH com o formato agregado do board).
+ */
+export const updateOrderFulfillmentStatus = async (args: {
+  token: string;
+  orderId: number;
+  fulfillmentStatus: "PENDENTE" | "SEPARANDO" | "EMBALADO" | "DESPACHADO" | "ENVIADO" | "ENTREGUE";
+}): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/orders/${args.orderId}/fulfillment`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fulfillmentStatus: args.fulfillmentStatus }),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+};
+
 export const fetchCapacityHeatmap = async (args: { token: string; unitId: number; days?: number }): Promise<CapacityHeatmap> => {
   const params = new URLSearchParams({ unitId: String(args.unitId) });
   if (args.days !== undefined) params.set("days", String(args.days));
