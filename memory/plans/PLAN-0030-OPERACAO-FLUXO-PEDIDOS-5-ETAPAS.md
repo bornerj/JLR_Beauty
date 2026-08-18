@@ -109,11 +109,31 @@ Usuário perguntou, depois da entrega inicial: se os cards em Atenção não pod
 
 **Achado colateral (não é bug, não corrigido — fora de escopo):** ao validar, encontrei 2 pedidos (`PV-MSRI9CSB-A8H2`/id 14, `PV-MSRI9D6P-X1EW`/id 22) já com `status=PAGO`/`fulfillmentStatus` avançado e histórico com nomes reais ("Jeiel"/"Borner") — **o próprio usuário testou o fluxo ao vivo** entre as minhas rodadas de validação, confirmando pagamento de verdade em 2 pedidos reais pela UI. Não revertido — é uso real do usuário, não dado de teste meu. Fica registrado aqui pra não confundir numa averiguação futura.
 
+**Este addendum foi commitado** (`c7160da`) antes do próximo achado abaixo — a coluna "Atenção" descrita aqui foi **substituída** pelo Addendum 2 no mesmo dia, ainda sem push.
+
+---
+
+## Addendum 2 — "Atenção" deixa de ser coluna, vira selo (2026-08-18, mesma sessão, depois do commit `c7160da`)
+
+Usuário testou o Addendum 1 ao vivo e reportou: "nenhum pedido que tentei mover de atenção foi movido, todos voltam". Investigação confirmou que os drags **estavam funcionando de verdade** (6 pedidos diferentes avançaram `SEPARANDO`/`EMBALADO` → `DESPACHADO` no banco, dados reais) — o problema era 100% visual: "Atenção" continuava sendo uma coluna **exclusiva** com prioridade sobre a etapa real (regra herdada do `PLAN-0022`, governança #4), então um card avançava de verdade e mesmo assim reaparecia no mesmo lugar (ainda atrasado = ainda flagueado = ainda cai em "Atenção"), parecendo que nada tinha acontecido.
+
+Duas opções levantadas pro usuário — ele escolheu a mudança maior:
+- (não escolhida) manter "Atenção" como coluna e só adicionar um aviso de confirmação (toast) no drag;
+- **(escolhida) "Atenção" deixa de ser uma coluna do kanban.** Board volta a ter só as 5 colunas reais (nunca 6). Todo pedido aparece sempre na sua coluna real (`columnFor()` sem desvio de prioridade); os flagueados (`operationalState !== "NORMAL"`) ganham um **selo inline** no próprio card (já existia — `card.reason`/`OrderCardView.tsx`, não precisou mudar) e entram num **agregado** `board.columns.atencao` (`count`/`totalValue`, computado em paralelo às 5 colunas reais, não mais exclusivo — um pedido pode estar simultaneamente na sua coluna real e no agregado). O agregado alimenta um banner de resumo no topo do board ("⚠ N pedido(s) precisam de atenção · R$ X em jogo") e continua alimentando Gargalos/Radar (RETROFIT-011/012) sem nenhuma mudança nesses dois módulos — eles só liam `count`/`totalValue`, que continuam com o mesmo significado agregado.
+
+**Efeito colateral positivo, generalizado:** o caso "pedido `ENVIADO` sem confirmação de entrega" deixa de ser exclusivo de cards flagueados — agora vale sempre, pra qualquer card na coluna "Despachado/Entregue": soltar de volta na própria coluna marca `ENTREGUE`, sem modal.
+
+**Arquivos:** `apps/api/src/modules/intelligence/operational-orders/service.ts` (`columnFor()` volta a ser só as 5 etapas reais, sem branch de prioridade; loop principal passa a empurrar cada pedido pra coluna real sempre +, em paralelo, pro agregado `atencao` quando flagueado); `apps/web/src/admin-v2/operations/orders/OrdersBoardView.tsx` (reescrito: `COLUMN_ORDER` volta a 5, remove `naturalColumnFor()`/lógica especial de origem "Atenção" — não precisa mais, já que a coluna exibida é sempre a real —, banner de resumo, regra de `despachadoEntregue` generalizada). Nenhuma migration, nenhum endpoint novo. `types.ts` (api+web) sem mudança de shape (`atencao` continua existindo no tipo, só muda o que significa).
+
+**Validado ao vivo (E2E real, Postgres real):** rebuild+redeploy `api`+`web`; drag de um card `PAGO·PENDENTE` flagueado (`PV-MSRI9CZK-WSPZ`) de "Pago" pra "Em Separação" — confirmado no banco (`SEPARANDO`) **e visualmente**: o card saiu fisicamente da coluna "Pago" e apareceu em "Em Separação", com o selo vermelho do motivo ainda visível ali — evidência clara de movimento, ao contrário do Addendum 1. Banner de resumo conferido ("30 pedido(s) precisam de atenção · R$ 8.150,10 em jogo"). Os 3 pedidos `BLOCKED` (estoque insuficiente) conferidos aparecendo na coluna real deles ("Pago"), com o link "Ver no Admin →", ainda não-arrastáveis. Grid de 5 colunas conferido sem scroll horizontal (`document.body.scrollWidth <= window.innerWidth`). `tsc`/build (api+web) limpos, `npm run test` 134/134 PASS (fixtures de `gargalos`/`radar` do Addendum original continuam válidas — shape do tipo não mudou). Dado de teste (pedido 18) revertido ao final.
+
+`DECISION-016` atualizada: item 6b marcado como superado, item 6c registra o desenho final.
+
 ---
 
 ## Git Record of Delivery
 
-### Step 1 — Pre-commit review
+### Step 1 — Pre-commit review (leva 1, commitada)
 
 **Arquivos alterados:**
 - `apps/api/src/routes/orders.ts` — `note` opcional em `PATCH /orders/:id`; `shippedAt` opcional em `PATCH /orders/:id/fulfillment`.
@@ -132,7 +152,18 @@ Usuário perguntou, depois da entrega inicial: se os cards em Atenção não pod
 
 **Validações executadas:** `apps/api` `tsc -b` PASS, `npm run test` 134/134 PASS; `apps/web` `tsc -b` + `npm run build` PASS; rebuild Docker (`api`+`web`) + `up -d --force-recreate`; E2E real completo (ver item 8 do checklist); nenhum dado de teste avulso ficou pendente de limpeza.
 
-- Step 2 (Commit authorization): _pendente — aguardando aprovação explícita._
-- Step 3 (Commit confirmation): _pendente._
-- Step 4 (Push authorization and result): _pendente._
+### Step 1b — Pre-commit review (leva 2, Addendum 2 — "Atenção vira selo")
+
+**Arquivos alterados:**
+- `apps/api/src/modules/intelligence/operational-orders/service.ts` — `columnFor()` volta a computar só a coluna real (sem branch de prioridade); loop de `getOrdersBoard()` passa a empurrar cada pedido pra coluna real sempre + em paralelo pro agregado `atencao` quando flagueado.
+- `apps/web/src/admin-v2/operations/orders/OrdersBoardView.tsx` — reescrito: volta a 5 colunas reais, remove `naturalColumnFor()`/lógica de origem especial de "Atenção", banner de resumo do agregado, regra de `despachadoEntregue`→confirmar `ENTREGUE` generalizada (não mais exclusiva de cards flagueados).
+- `memory/plans/PLAN-0030-...md`, `memory/decisions/DECISION-016.md` (item 6b marcado superado, 6c novo), `memory/MODIFICATION_LOG.md`, `memory/progress.md`.
+
+**Validações executadas:** `apps/api` `tsc -b` PASS, `npm run test` 134/134 PASS; `apps/web` `tsc -b` + `npm run build` PASS; rebuild Docker (`api`+`web`) + `up -d --force-recreate`; E2E real via drag simulado (`PAGO→EM SEP` confirmado no banco e visualmente, card saiu fisicamente da coluna de origem); banner de resumo conferido; os 3 `BLOCKED` reais conferidos na coluna real deles, ainda não-arrastáveis; grid de 5 colunas sem scroll horizontal conferido. Dado de teste (pedido 18) revertido ao final.
+
+- Step 2 (Commit authorization, leva 1): aprovado explicitamente pelo usuário ("pode commitar", 2026-08-18).
+- Step 3 (Commit confirmation, leva 1): `c7160da`, branch `main`, 18 arquivos (760 inserções, 102 remoções).
+- Step 2b (Commit authorization, leva 2 — Addendum 2): _pendente — aguardando aprovação explícita._
+- Step 3b (Commit confirmation, leva 2): _pendente._
+- Step 4 (Push authorization and result, as duas levas juntas): _pendente — aguardando uma aprovação explícita separada, depois da leva 2 commitada._
 - Push status: **PENDING**

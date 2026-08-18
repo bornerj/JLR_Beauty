@@ -12,7 +12,7 @@ import {
 import { formatCurrencyBRL, formatDateInputBR } from "../../shared/format";
 import { KanbanColumnHeader } from "../../shell/KanbanColumnHeader";
 import { KanbanDndProvider, KanbanDroppableColumn, KanbanDraggableCard } from "../../shell/kanban/KanbanDndBoard";
-import type { OperationalOrderCard, OrdersBoard, OrdersFlow } from "./types";
+import type { OrdersBoard, OrdersFlow } from "./types";
 import { OrderCardView } from "./components/OrderCardView";
 import { OrderFlowTimeline } from "./components/OrderFlowTimeline";
 import { ConfirmPaymentModal } from "./components/ConfirmPaymentModal";
@@ -26,7 +26,6 @@ import { ConfirmDispatchModal, type DispatchOutcome } from "./components/Confirm
  * Despachado/Entregue), substituindo o desenho anterior do PLAN-0029 (achado ao vivo: mover
  * fulfillmentStatus sozinho não tirava o card de "Entraram", porque a coluna era decidida por
  * `Order.status`, não por fulfillment — ver `columnFor()`, `operational-orders/service.ts`).
- * "Atenção" continua fixa (alerta automático de atraso, nem origem nem destino de drag).
  * Cada etapa só aceita a anterior imediata como origem — nunca pula etapa.
  * - Recebido→Pago: abre `ConfirmPaymentModal` (nome+data de quem confirmou — não existe
  *   integração de meio de pagamento cobrindo esse trecho do fluxo ainda). Fica atrás da flag
@@ -35,67 +34,49 @@ import { ConfirmDispatchModal, type DispatchOutcome } from "./components/Confirm
  * - Pago→Em Separação, Em Separação→Pronto: drag direto, sem modal (mesmo padrão de sempre).
  * - Pronto→Despachado/Entregue: abre `ConfirmDispatchModal` (Entregue confirma direto;
  *   Despachado pede meio + data editável, aceita registro retroativo).
+ * - Despachado/Entregue: um pedido já `ENVIADO` (falta só confirmar entrega) continua
+ *   arrastável — soltar de volta na própria coluna marca `ENTREGUE` direto, sem modal.
  *
- * Ajuste do usuário (2026-08-18) — cards em "Atenção" (alerta de tempo, não uma 6ª etapa: o
- * pedido continua em algum ponto real das 5 etapas, só demorou além do limiar) ficavam sem
- * jeito de agir. Resolvido reaproveitando o mesmo mecanismo de drag: um card em "Atenção" usa
- * `naturalColumnFor()` (mesma lógica do `columnFor()` do backend, sem a prioridade do alerta)
- * pra descobrir sua coluna real, e só pode ser solto no próximo passo dessa coluna real —
- * mesmos modais, mesma validação de "nunca pula etapa". Uma vez movido, sai do alerta (ou
- * continua lá, com o novo status, se ainda demorar). Caso especial: pedido já `ENVIADO`
- * (coluna real "despachadoEntregue") que ainda não foi confirmado como entregue não tem
- * "próximo passo" — soltar de volta na própria coluna "despachadoEntregue" marca `ENTREGUE`
- * direto (sem modal, não precisa de campo novo). `BLOCKED` (estoque insuficiente) é diferente
- * — não é um problema de tempo, não se resolve avançando etapa — por isso fica sempre fixo
- * (nunca arrastável) e ganha um link fixo pro Admin legado no card (`OrderCardView.tsx`).
+ * "Atenção" (2026-08-18, achado do usuário) — chegou a ser uma 6ª coluna exclusiva (mesma
+ * sessão, mais cedo), mas o usuário reportou que os pedidos pareciam "nunca mover": o alerta
+ * tinha prioridade sobre a etapa real, então um card avançava de verdade (confirmado no
+ * banco) e mesmo assim reaparecia no mesmo lugar, porque continuava flagueado. Resolvido
+ * removendo a exclusividade: todo pedido sempre aparece na sua coluna real (`columnFor()`,
+ * backend), e os flagueados (`operationalState !== "NORMAL"`) só ganham um aviso inline no
+ * card (`OrderCardView.tsx`, já existia) + entram no resumo `board.columns.atencao`
+ * (agregado, não mais uma coluna do kanban) mostrado no banner abaixo. `BLOCKED` (estoque
+ * insuficiente) continua sem drag — não se resolve avançando etapa — e mantém o link "Ver no
+ * Admin →" no card.
  */
 
 type OrdersState = { loading: boolean; board: OrdersBoard | null; flow: OrdersFlow | null; error: string | null };
 
-const COLUMN_ORDER: Array<keyof OrdersBoard["columns"]> = [
-  "recebido",
-  "pago",
-  "emSeparacao",
-  "pronto",
-  "despachadoEntregue",
-  "atencao",
-];
-const COLUMN_LABELS: Record<keyof OrdersBoard["columns"], string> = {
+type RealColumn = Exclude<keyof OrdersBoard["columns"], "atencao">;
+
+const COLUMN_ORDER: RealColumn[] = ["recebido", "pago", "emSeparacao", "pronto", "despachadoEntregue"];
+const COLUMN_LABELS: Record<RealColumn, string> = {
   recebido: "Receb",
   pago: "Pago",
   emSeparacao: "Em Sep",
   pronto: "Pronto",
   despachadoEntregue: "Desp/Entr",
-  atencao: "Atenção",
 };
-/** Colunas cujos cards podem ser pegos (arrastados) fora de "Atenção" — `despachadoEntregue` é etapa final (não sai de lá por drag normal). Cards de "Atenção" têm sua própria regra (ver `cardDraggable` no render — tudo, menos `BLOCKED`). */
-const CARD_DRAGGABLE_COLUMNS = new Set<keyof OrdersBoard["columns"]>(["recebido", "pago", "emSeparacao", "pronto"]);
-/** Colunas estruturalmente aptas a receber um drop — `pago` ainda depende da flag de confirmação manual (ver `manualPaymentConfirmationEnabled`). */
-const COLUMN_DROPPABLE_BASE = new Set<keyof OrdersBoard["columns"]>(["pago", "emSeparacao", "pronto", "despachadoEntregue"]);
-/** Próxima coluna real de cada etapa — nunca pula etapa. Usado tanto pro drag normal quanto
- * pro drag a partir de "Atenção" (que usa a coluna real do card, via `naturalColumnFor()`, no
- * lugar da coluna exibida). "despachadoEntregue" não tem próxima — é tratado como caso
- * especial (marcar `ENTREGUE`) quando a origem real já é ela mesma. */
-const NEXT_COLUMN: Partial<Record<keyof OrdersBoard["columns"], "pago" | "emSeparacao" | "pronto" | "despachadoEntregue">> = {
+/** Colunas cujos cards podem ser pegos (arrastados) sempre — `despachadoEntregue` tem regra própria (só card `ENVIADO`, ver `cardDraggable` no render). */
+const CARD_DRAGGABLE_COLUMNS = new Set<RealColumn>(["recebido", "pago", "emSeparacao", "pronto"]);
+/** Colunas aptas a receber um drop — `pago` ainda depende da flag de confirmação manual (ver `manualPaymentConfirmationEnabled`). */
+const COLUMN_DROPPABLE_BASE = new Set<RealColumn>(["pago", "emSeparacao", "pronto", "despachadoEntregue"]);
+/** Próxima coluna real de cada etapa — nunca pula etapa. "despachadoEntregue" não tem próxima (etapa final; ver caso especial de confirmar `ENTREGUE` no `handleCardDrop`). */
+const NEXT_COLUMN: Partial<Record<RealColumn, "pago" | "emSeparacao" | "pronto" | "despachadoEntregue">> = {
   recebido: "pago",
   pago: "emSeparacao",
   emSeparacao: "pronto",
   pronto: "despachadoEntregue",
 };
-/** `fulfillmentStatus` gravado nas transições sem modal (sem mudança de payload) — inclui o caso especial de "Atenção" (`despachadoEntregue` já `ENVIADO`, só falta confirmar `ENTREGUE`). */
+/** `fulfillmentStatus` gravado nas transições sem modal (sem mudança de payload) — inclui confirmar `ENTREGUE` de um pedido já `ENVIADO`. */
 const FULFILLMENT_STATUS_BY_COLUMN: Record<"emSeparacao" | "pronto" | "despachadoEntregue", "SEPARANDO" | "DESPACHADO" | "ENTREGUE"> = {
   emSeparacao: "SEPARANDO",
   pronto: "DESPACHADO",
   despachadoEntregue: "ENTREGUE",
-};
-
-/** Mesma lógica do `columnFor()` (`operational-orders/service.ts`), sem a prioridade do alerta — descobre em qual das 5 etapas reais um card estaria se não estivesse em "Atenção". */
-const naturalColumnFor = (card: OperationalOrderCard): keyof OrdersBoard["columns"] => {
-  if (card.status === "PENDENTE") return "recebido";
-  if (card.status === "PAGO" && card.fulfillmentStatus === "PENDENTE") return "pago";
-  if (card.fulfillmentStatus === "DESPACHADO") return "pronto";
-  if (card.fulfillmentStatus === "ENVIADO" || card.fulfillmentStatus === "ENTREGUE") return "despachadoEntregue";
-  return "emSeparacao";
 };
 
 const MANUAL_PAYMENT_CONFIRMATION_SETTING_KEY = "operations.manualPaymentConfirmationEnabled";
@@ -141,19 +122,19 @@ export function OrdersBoardView() {
   const [modalSubmitting, setModalSubmitting] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
-  /** `orderId -> coluna exibida` + `orderId -> card` (pra origem do drop, a coluna real de cards em "Atenção", e os modais). */
-  const { columnByOrderId, cardByOrderId } = useMemo(() => {
-    const columnMap = new Map<number, keyof OrdersBoard["columns"]>();
-    const cardMap = new Map<number, OperationalOrderCard>();
+  /** `orderId -> coluna real` + `orderId -> publicCode` (pra origem do drop e pros modais). */
+  const { columnByOrderId, publicCodeByOrderId } = useMemo(() => {
+    const columnMap = new Map<number, RealColumn>();
+    const codeMap = new Map<number, string | null>();
     if (state.board) {
       for (const columnKey of COLUMN_ORDER) {
         for (const order of state.board.columns[columnKey].orders) {
           columnMap.set(order.orderId, columnKey);
-          cardMap.set(order.orderId, order);
+          codeMap.set(order.orderId, order.publicCode);
         }
       }
     }
-    return { columnByOrderId: columnMap, cardByOrderId: cardMap };
+    return { columnByOrderId: columnMap, publicCodeByOrderId: codeMap };
   }, [state.board]);
 
   const moveOrderDirect = useCallback(
@@ -182,26 +163,23 @@ export function OrdersBoardView() {
   const handleCardDrop = useCallback(
     (cardId: string, columnId: string) => {
       const orderId = Number(cardId);
-      const targetColumn = columnId as keyof OrdersBoard["columns"];
+      const targetColumn = columnId as RealColumn;
       if (!Number.isFinite(orderId) || !COLUMN_DROPPABLE_BASE.has(targetColumn)) return;
       if (targetColumn === "pago" && !manualPaymentConfirmationEnabled) return;
 
       const originColumn = columnByOrderId.get(orderId);
-      const card = cardByOrderId.get(orderId);
-      if (!originColumn || !card || originColumn === targetColumn) return;
+      if (!originColumn) return;
 
-      // Card em "Atenção" usa a coluna real dele (não a exibida) pra decidir se o drop é válido.
-      const effectiveOrigin = originColumn === "atencao" ? naturalColumnFor(card) : originColumn;
-
-      // Caso especial: pedido já `ENVIADO` (etapa real já é "despachadoEntregue") só flagueado em
-      // "Atenção" por demora — soltar de volta na própria coluna marca `ENTREGUE`, sem modal.
-      if (effectiveOrigin === "despachadoEntregue" && targetColumn === "despachadoEntregue") {
+      // Pedido já `ENVIADO` (etapa final "despachadoEntregue") só falta confirmar entrega —
+      // soltar de volta na própria coluna marca `ENTREGUE`, sem modal.
+      if (originColumn === "despachadoEntregue" && targetColumn === "despachadoEntregue") {
         void moveOrderDirect(orderId, "despachadoEntregue");
         return;
       }
-      if (NEXT_COLUMN[effectiveOrigin] !== targetColumn) return;
+      if (originColumn === targetColumn) return;
+      if (NEXT_COLUMN[originColumn] !== targetColumn) return;
 
-      const publicCode = card.publicCode;
+      const publicCode = publicCodeByOrderId.get(orderId) ?? null;
       if (targetColumn === "pago") {
         setPendingPayment({ orderId, publicCode });
         return;
@@ -212,7 +190,7 @@ export function OrdersBoardView() {
       }
       void moveOrderDirect(orderId, targetColumn as "emSeparacao" | "pronto");
     },
-    [columnByOrderId, cardByOrderId, manualPaymentConfirmationEnabled, moveOrderDirect]
+    [columnByOrderId, publicCodeByOrderId, manualPaymentConfirmationEnabled, moveOrderDirect]
   );
 
   const cancelPendingPayment = useCallback(() => {
@@ -310,6 +288,7 @@ export function OrdersBoardView() {
 
   if (!state.board) return null;
   const board = state.board;
+  const attention = board.columns.atencao;
 
   return (
     <div className="flex flex-col gap-5">
@@ -318,12 +297,19 @@ export function OrdersBoardView() {
         <p className="text-base text-stone-600 dark:text-stone-400">onde os pedidos estão travando · últimos {board.period.days} dia(s)</p>
       </div>
 
+      {attention.count > 0 && (
+        <p className="rounded-lg border border-state-attention/40 bg-state-attention/10 px-3 py-2 text-sm font-semibold text-state-attention">
+          ⚠ {attention.count} pedido(s) precisam de atenção · {formatCurrencyBRL(attention.totalValue)} em jogo — o motivo aparece
+          em cada card abaixo.
+        </p>
+      )}
+
       {moveError && (
         <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">{moveError}</p>
       )}
 
       <KanbanDndProvider onCardDrop={handleCardDrop}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {COLUMN_ORDER.map((columnKey) => {
             const column = board.columns[columnKey];
             const hiddenCount = column.count - column.orders.length;
@@ -346,10 +332,15 @@ export function OrdersBoardView() {
                     </p>
                   ) : (
                     column.orders.map((card) => {
-                      // "Atenção" não tem regra fixa por coluna — todo card é arrastável, exceto
-                      // `BLOCKED` (estoque insuficiente não se resolve avançando etapa).
+                      // `BLOCKED` (estoque insuficiente) nunca arrasta — não se resolve avançando
+                      // etapa. Em "despachadoEntregue" só o pedido já `ENVIADO` arrasta (confirma
+                      // entrega); os demais são etapa final.
                       const cardDraggable =
-                        columnKey === "atencao" ? card.operationalState !== "BLOCKED" : CARD_DRAGGABLE_COLUMNS.has(columnKey);
+                        card.operationalState === "BLOCKED"
+                          ? false
+                          : columnKey === "despachadoEntregue"
+                            ? card.fulfillmentStatus === "ENVIADO"
+                            : CARD_DRAGGABLE_COLUMNS.has(columnKey);
                       return (
                         <KanbanDraggableCard
                           key={card.orderId}
