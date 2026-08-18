@@ -6,6 +6,17 @@
 
 ---
 
+## Resume Panel
+
+_(lido no início de cada sessão, conforme `.sfk/kernel/OPERATING_CARD.md` item 1 — atualizado a cada fechamento de sessão)_
+
+- **Última sessão fechada:** 2026-08-18, auditoria PASS (`memory/logs/AUDIT_CHECKLIST_20260818_032518-PASS.md`).
+- **Estado:** sem plano aberto, sem pendência de código. `PLAN-0027`/`0028`/`0029` fechados `DONE`, commitados e pushados (`origin/main` em `1c2154c`).
+- **next_action:** nenhuma ação obrigatória — aguardando o usuário trazer o próximo ponto (relato de bug/inconsistência ou novo pedido de feature). Se ele mencionar algo pendente da sessão anterior, ver a seção "Pendente para a próxima sessão" em `MODIFICATION_LOG.md` (entrada de 2026-08-18): itens conscientemente fora de escopo, não bloqueantes — limpeza das chaves órfãs de Textos das Páginas/Galeria de Mídias dos antigos flip-cards; possível risco de contagem duplicada equivalente ao `ERR-0058` em `unit-health/service.ts`/`dashboardSalesInsights.ts` (não verificado).
+- **Planos antigos e não relacionados**, sem mudança nesta sessão: `PLAN-0019` (TLS/HTTPS, bloqueado por domínio), `PLAN-0020` (Estoque, in-progress), `PLAN-0021` (Menu Admin, in-progress).
+
+---
+
 ## Modules
 
 <!-- Available states: stable | in-progress | blocked | planned | deprecated -->

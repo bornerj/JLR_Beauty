@@ -9624,3 +9624,26 @@ ode scripts/run-page-tests.mjs atualizado para validar componentes publicos TSX 
 - `ERR-0064` registrado em `DEBUG-HISTORY.md`.
 - Validações: `apps/web` `tsc -b` + build PASS; `apps/api` `tsc -b` + build + `npm run test` (134/134) PASS (sem mudança de backend, checado por precaução); rebuild Docker (`web`); E2E real via `PointerEvent` simulado com timing realista (não instantâneo — gestos de um salto só não davam tempo do dnd-kit processar, não é bug, é limitação de automação) contra o Postgres real, nos dois boards, ponta a ponta (incluindo o modal de motivo completo); validação visual real via Chrome. Mudanças de teste revertidas ao final; achado colateral sem risco documentado (efeito colateral pré-existente do endpoint legado de fulfillment sobre `Order.status`, só afetou dado sintético de teste).
 - `PLAN-0029` marcado como executado e validado, Pre-commit review preenchido. Commit/push seguem pendentes de aprovação explícita (mesmo lote pendente do `PLAN-0027`/`PLAN-0028`).
+
+## 2026-08-18 — SESSION AUDIT — PASS
+
+Sessão encerrada a pedido do usuário ("salve tudo para continuarmos amanhã").
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — `DECISION-015` nova, sem conflito com `DECISION-013`/`014` |
+| State Integrity | PASS — `PLAN-0027`/`0028`/`0029` fechados `DONE`; planos antigos não tocados |
+| Operational Memory | PASS — `MODIFICATION_LOG` e planos atualizados a cada marco |
+| Debug Memory | PASS — `ERR-0056` a `ERR-0064` registrados no formato padrão |
+| Technical Validation | PASS — lint/build/test rodados; 23 erros de lint pré-existentes (nenhum novo); migrations aplicadas e validadas; sem `console.*` não autorizado |
+| Regression Risk | PASS com nota — auth/agendamento tocados, validados via E2E real; sem teste automatizado novo (gap registrado, mesmo padrão já aceito no projeto) |
+| Git Governance | PASS — commit `e555234`+`1c2154c`, push `e9fbce7..1c2154c`, ambos com aprovação explícita e separada |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260818_032518-PASS.md`.
+
+**Resumo do que foi feito nesta sessão:** `PLAN-0027` (11 itens de fixes pontuais no Admin V2 — Clientes/Serviços/Cupons/Panorama/Planos), `PLAN-0028` (religação do conteúdo público de Serviços/Planos ao cadastro nativo), fix ponto-a-ponto do motivo no Pipeline de Franquias (`ERR-0063`), `PLAN-0029` (drag-and-drop reusável nos kanban de Operação e Franquias, `DECISION-015`). Todos os planos fechados `DONE`, commitados e pushados pra `origin/main`.
+
+**Pendente para a próxima sessão:**
+- Nenhuma pendência de código aberta desta leva.
+- Itens levantados mas conscientemente fora de escopo, aguardando decisão futura do usuário (não bloqueiam nada): remover/limpar as chaves órfãs de Textos das Páginas/Galeria de Mídias que os 9 flip-cards antigos usavam (`PLAN-0028`, nota de "decisão futura"); `unit-health/service.ts`/`dashboardSalesInsights.ts` usam a mesma convenção antiga de `identityKey` (`email > telefone > nome`) de forma independente — risco de duplicação equivalente ao `ERR-0058` pode existir lá também, não verificado.
+- Planos pré-existentes e não relacionados a esta sessão continuam com seu estado próprio, sem mudança: `PLAN-0019` (TLS/HTTPS, bloqueado por domínio), `PLAN-0020` (Estoque, in-progress), `PLAN-0021` (Menu Admin, in-progress).
