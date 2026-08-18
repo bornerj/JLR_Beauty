@@ -155,16 +155,44 @@ export const fetchOrdersFlow = async (args: { token: string; days?: number; unit
  * nenhum endpoint novo. Retorna só `{ ok: true }`: o board recarrega via `fetchOrdersBoard`
  * depois (mesmo padrão de `handleSubmit` nos outros forms do Admin V2 — não tenta reconciliar
  * a resposta parcial do PATCH com o formato agregado do board).
+ *
+ * PLAN-0030 — `shipmentCarrier`/`shippedAt` opcionais, usados pela transição Pronto→Despachado
+ * (modal pede o meio de envio e aceita uma data retroativa; sem eles o endpoint mantém o
+ * comportamento de sempre, `shippedAt = new Date()` no servidor).
  */
 export const updateOrderFulfillmentStatus = async (args: {
   token: string;
   orderId: number;
   fulfillmentStatus: "PENDENTE" | "SEPARANDO" | "EMBALADO" | "DESPACHADO" | "ENVIADO" | "ENTREGUE";
+  shipmentCarrier?: string;
+  shippedAt?: string;
 }): Promise<void> => {
   const response = await fetch(`${getApiUrl()}/api/orders/${args.orderId}/fulfillment`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ fulfillmentStatus: args.fulfillmentStatus }),
+    body: JSON.stringify({
+      fulfillmentStatus: args.fulfillmentStatus,
+      ...(args.shipmentCarrier ? { shipmentCarrier: args.shipmentCarrier } : {}),
+      ...(args.shippedAt ? { shippedAt: args.shippedAt } : {}),
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+};
+
+/**
+ * PLAN-0030 — confirmação manual de pagamento (coluna "Pago" do Board Operacional). Reusa
+ * `PATCH /orders/:id` (`orders.ts`, mesma rota do admin legado), sem endpoint novo. `note` vira
+ * o texto gravado em `OrderStatusHistory` — aqui sempre "confirmado manualmente por X em Y",
+ * já que hoje não existe integração de meio de pagamento cobrindo esse trecho do fluxo
+ * (ver flag `operations.manualPaymentConfirmationEnabled`, `fetchSetting`).
+ */
+export const confirmOrderPayment = async (args: { token: string; orderId: number; note: string }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/orders/${args.orderId}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "PAGO", note: args.note }),
   });
   if (!response.ok) {
     throw new Error(await parseApiError(response));

@@ -32,6 +32,12 @@ export const formatShortDate = (isoDate: string): string => {
   return `${day}/${month}`;
 };
 
+/** "YYYY-MM-DD" -> "dd/mm/aaaa" (PLAN-0030 — texto de confirmação manual de pagamento/despacho no Board Operacional). */
+export const formatDateInputBR = (isoDate: string): string => {
+  const [year, month, day] = isoDate.split("-");
+  return `${day}/${month}/${year}`;
+};
+
 export const WEEKDAY_LABELS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"] as const;
 
 /** Rótulo de hora curto ("9h" / "14h") usado nas linhas do heatmap de capacidade. */

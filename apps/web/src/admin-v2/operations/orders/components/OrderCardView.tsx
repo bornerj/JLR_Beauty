@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { formatCurrencyBRL, formatMinutes } from "../../../shared/format";
 import { ORDER_STATE_DOT_CLASS, ORDER_STATE_TEXT_CLASS } from "../state";
 import type { OperationalOrderCard } from "../types";
@@ -7,6 +8,12 @@ import type { OperationalOrderCard } from "../types";
  * Sem drill-down: o Admin legado não suporta deep-link para o pedido específico
  * (mesmo achado já registrado na Onda 2 para "Ver agenda/clientes/produtos") — o card é
  * só leitura nesta versão, nunca um link morto.
+ *
+ * PLAN-0030 — card `BLOCKED` (estoque insuficiente) não é resolvido avançando etapa (não é
+ * um problema de tempo, é um problema real) — por isso, em vez de virar arrastável como os
+ * demais cards de "Atenção", ganha um link fixo pro Admin legado (`/admin#vendas`, mesmo
+ * padrão de deep-link por hash do `HubCard.tsx`) — não existe deep-link pro pedido específico
+ * (nota acima), então o admin busca pelo código público mostrado aqui.
  */
 
 export function OrderCardView({ card }: { card: OperationalOrderCard }) {
@@ -24,6 +31,11 @@ export function OrderCardView({ card }: { card: OperationalOrderCard }) {
           <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${ORDER_STATE_DOT_CLASS[card.operationalState]}`} />
           {card.reason}
         </p>
+      )}
+      {card.operationalState === "BLOCKED" && (
+        <Link to="/admin#vendas" className="text-xs font-bold text-primary underline underline-offset-2 hover:text-primary/80">
+          Ver no Admin →
+        </Link>
       )}
     </div>
   );

@@ -23,10 +23,12 @@ const baseInputs = (): RadarInputs => ({
   ordersBoard: {
     period: PERIOD,
     columns: {
-      entraram: { count: 0, totalValue: 0, orders: [] },
-      emPreparacao: { count: 0, totalValue: 0, orders: [] },
+      recebido: { count: 0, totalValue: 0, orders: [] },
+      pago: { count: 0, totalValue: 0, orders: [] },
+      emSeparacao: { count: 0, totalValue: 0, orders: [] },
+      pronto: { count: 0, totalValue: 0, orders: [] },
+      despachadoEntregue: { count: 0, totalValue: 0, orders: [] },
       atencao: { count: 0, totalValue: 0, orders: [] },
-      prontos: { count: 0, totalValue: 0, orders: [] },
     },
   },
   portfolioProducts: { period: PERIOD, volumeMedian: 0, marginMedian: null, products: [] },

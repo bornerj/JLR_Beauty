@@ -22,10 +22,12 @@ export type OrdersBoardColumn = {
 export type OrdersBoard = {
   period: { from: string; to: string; days: number };
   columns: {
-    entraram: OrdersBoardColumn;
-    emPreparacao: OrdersBoardColumn;
+    recebido: OrdersBoardColumn;
+    pago: OrdersBoardColumn;
+    emSeparacao: OrdersBoardColumn;
+    pronto: OrdersBoardColumn;
+    despachadoEntregue: OrdersBoardColumn;
     atencao: OrdersBoardColumn;
-    prontos: OrdersBoardColumn;
   };
 };
 

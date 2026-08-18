@@ -8,8 +8,10 @@ import type { FlowTransition, OperationalOrderCard, OrdersBoard, OrdersBoardColu
  * Admin V2 (PLAN-0022, Onda 3) — Board Operacional de Pedidos (RETROFIT-004).
  * Agrega `Order` do período, classifica cada um via `classifier.ts` (puro, sem
  * side-effect — o estado operacional nunca é gravado, só calculado na resposta) e
- * distribui nas 4 colunas do board; `getOrdersFlow` mede o tempo real entre etapas do
- * fulfillment a partir dos timestamps já existentes no schema.
+ * distribui nas 6 colunas do board (PLAN-0030 — fluxo real de 5 etapas: Recebido → Pago →
+ * Em Separação → Pronto → Despachado/Entregue, mais a coluna de alerta "Atenção");
+ * `getOrdersFlow` mede o tempo real entre etapas do fulfillment a partir dos timestamps já
+ * existentes no schema (não usa as chaves de coluna do board, não precisou de mudança).
  */
 
 /** Amostra máxima retornada por coluna. `count`/`totalValue` sempre refletem TODOS os pedidos da coluna, não só a amostra. */
@@ -17,8 +19,6 @@ const MAX_SAMPLE_PER_COLUMN = 20;
 
 /** Limiar (minutos) a partir do qual uma transição do fluxo é sinalizada como gargalo. Documentado aqui, não configurável em runtime (mesmo padrão de `classifier.ts`). */
 const BOTTLENECK_THRESHOLD_MINUTES = 240;
-
-const READY_FULFILLMENT_STATUSES = ["DESPACHADO", "ENVIADO", "ENTREGUE"] as const;
 
 /**
  * Pedidos cancelados saem do funil operacional: não estão "travando" em etapa nenhuma,
@@ -71,17 +71,20 @@ const toCard = (order: BoardOrderRow, now: Date): OperationalOrderCard => {
 };
 
 /**
- * Distribui um pedido já classificado numa das 4 colunas do board:
- * `atencao` tem prioridade sobre o estágio natural (governança #4 do PLAN-0022 — o
- * estado derivado nunca é escondido atrás do estágio "normal" do fulfillment).
+ * Distribui um pedido já classificado numa das 6 colunas do board (PLAN-0030, fluxo real de
+ * 5 etapas + alerta): `atencao` tem prioridade sobre o estágio natural (governança #4 do
+ * PLAN-0022 — o estado derivado nunca é escondido atrás do estágio "normal" do fulfillment).
+ * "Pago" é o único estágio que exige os dois campos ao mesmo tempo (`status = PAGO` e
+ * `fulfillmentStatus` ainda `PENDENTE`) — assim que a separação começa, o pedido sai de "Pago"
+ * mesmo sem `status` mudar de novo.
  */
 const columnFor = (order: BoardOrderRow, card: OperationalOrderCard): keyof OrdersBoard["columns"] => {
   if (card.operationalState !== "NORMAL") return "atencao";
-  if (order.status === "PENDENTE") return "entraram";
-  if (READY_FULFILLMENT_STATUSES.includes(order.fulfillmentStatus as (typeof READY_FULFILLMENT_STATUSES)[number])) {
-    return "prontos";
-  }
-  return "emPreparacao";
+  if (order.status === "PENDENTE") return "recebido";
+  if (order.status === "PAGO" && order.fulfillmentStatus === "PENDENTE") return "pago";
+  if (order.fulfillmentStatus === "DESPACHADO") return "pronto";
+  if (order.fulfillmentStatus === "ENVIADO" || order.fulfillmentStatus === "ENTREGUE") return "despachadoEntregue";
+  return "emSeparacao"; // catch-all: SEPARANDO, EMBALADO (mesmo papel do antigo default "Em Preparação")
 };
 
 export const getOrdersBoard = async (
@@ -111,10 +114,12 @@ export const getOrdersBoard = async (
   });
 
   const columns: OrdersBoard["columns"] = {
-    entraram: emptyColumn(),
-    emPreparacao: emptyColumn(),
+    recebido: emptyColumn(),
+    pago: emptyColumn(),
+    emSeparacao: emptyColumn(),
+    pronto: emptyColumn(),
+    despachadoEntregue: emptyColumn(),
     atencao: emptyColumn(),
-    prontos: emptyColumn(),
   };
 
   for (const order of orders) {

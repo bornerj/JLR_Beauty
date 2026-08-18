@@ -121,6 +121,10 @@ const orderSchema = z.object({
 
 const orderUpdateSchema = z.object({
   status: z.enum(["PENDENTE", "PAGO", "ENVIADO", "ENTREGUE", "CANCELADO"]).optional(),
+  /** PLAN-0030 — nota livre pro histórico (`OrderStatusHistory.note`); quando ausente, mantém
+   * o texto padrão de sempre ("status alterado pelo painel admin"). Usado hoje pela confirmação
+   * manual de pagamento do Board Operacional ("Pagamento confirmado manualmente por X em Y"). */
+  note: z.string().max(500).optional(),
 });
 
 const orderFulfillmentUpdateSchema = z.object({
@@ -130,6 +134,9 @@ const orderFulfillmentUpdateSchema = z.object({
   shipmentTrackingCode: z.string().max(191).nullable().optional(),
   shipmentCarrier: z.string().max(191).nullable().optional(),
   fulfillmentNotes: z.string().max(4000).nullable().optional(),
+  /** PLAN-0030 — data de despacho editável (aceita registro retroativo) vinda do modal do Board
+   * Operacional; quando ausente, mantém o comportamento de sempre (`new Date()` no momento do PATCH). */
+  shippedAt: z.string().datetime().optional(),
 });
 
 const orderBulkAdvanceSchema = z.object({
@@ -1409,7 +1416,7 @@ ordersRouter.patch("/orders/:id", requireAdmin, async (req, res) => {
         fromStatus: existing.status,
         toStatus: nextStatus,
         source: "ADMIN",
-        note: "status alterado pelo painel admin",
+        note: parsed.data.note ?? "status alterado pelo painel admin",
       });
     }
     return row;
@@ -1476,7 +1483,7 @@ ordersRouter.patch("/orders/:id/fulfillment", requireAdmin, async (req, res) => 
       updateData.dispatchedAt = new Date();
     }
     if (nextFulfillmentStatus === "ENVIADO") {
-      updateData.shippedAt = new Date();
+      updateData.shippedAt = payload.shippedAt ? new Date(payload.shippedAt) : new Date();
       updateData.status = "ENVIADO";
     }
     if (nextFulfillmentStatus === "ENTREGUE") {
