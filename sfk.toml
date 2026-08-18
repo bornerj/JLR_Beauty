@@ -99,6 +99,7 @@ vars = [
   "CORS_ORIGIN",                        # deve coincidir com APP_WEB_URL
   "JWT_SECRET",                         # token generation secret (min 32 chars)
   "JWT_EXPIRES_IN",                     # ex: 12h
+  "TLS_ENABLED",                        # true | false — controla o Secure do cookie de refresh (true só com HTTPS real, ver PLAN-0019)
   "AUTH_RATE_LIMIT_WINDOW_MS",          # rate limit window in ms
   "AUTH_RATE_LIMIT_MAX_ATTEMPTS",       # max login attempts per window
   "AUTH_RATE_LIMIT_BLOCK_MS",           # block duration in ms

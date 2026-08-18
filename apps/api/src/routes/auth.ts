@@ -29,11 +29,25 @@ import { MSG } from "../lib/messages";
 import { recordAudit } from "../lib/auditLog";
 
 const REFRESH_COOKIE = "jlr_rt";
-const isProduction = process.env.NODE_ENV === "production";
+
+/**
+ * `TLS_ENABLED` (2026-08-18, bug real reportado pelo usuário) — o cookie de refresh precisa de
+ * `secure: true` só quando o navegador realmente fala HTTPS com o servidor; usar `NODE_ENV`
+ * pra isso estava errado aqui (`isProduction` != "servido por HTTPS"). Hoje a produção roda em
+ * HTTP puro (SEC-30/`PLAN-0019`, bloqueado por domínio) — um cookie `Secure` sobre HTTP é
+ * silenciosamente descartado pelo navegador, então o refresh nunca funcionava e toda sessão
+ * expirava exatos `JWT_EXPIRES_IN` (15min) depois do login, sem exceção. Contorno: `secure`
+ * passa a ser controlado por `TLS_ENABLED` (default `false`, nome apenas — sem mudar valor
+ * nenhum de segredo). Não aumenta o risco atual: a sessão inteira (incluindo o access token
+ * enviado a cada request) já trafega sem criptografia hoje; isso só restaura o comportamento
+ * de sessão longa que já era o desenho original. Setar `TLS_ENABLED=true` assim que o
+ * `PLAN-0019` sair do bloqueio (domínio + TLS reais).
+ */
+const isTlsEnabled = process.env.TLS_ENABLED === "true";
 
 const refreshCookieOptions = {
   httpOnly: true,
-  secure: isProduction,
+  secure: isTlsEnabled,
   sameSite: "lax" as const,
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: "/api/auth",
@@ -41,7 +55,7 @@ const refreshCookieOptions = {
 
 const clearRefreshCookieOptions = {
   httpOnly: true,
-  secure: isProduction,
+  secure: isTlsEnabled,
   sameSite: "lax" as const,
   path: "/api/auth",
 };

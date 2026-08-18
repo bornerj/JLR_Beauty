@@ -1,6 +1,6 @@
 # PLAN-0030 — Board Operacional de Pedidos: fluxo real de 5 etapas (Recebido → Pago → Em Separação → Pronto → Despachado/Entregue)
 
-**Status:** 🟢 EXECUTADO E VALIDADO 2026-08-18 — E2E real (curl + drag simulado via `PointerEvent`) contra Postgres real, nas 5 transições + os 2 modais (incluindo os 2 sub-caminhos de Despachado/Entregue) + flag desligada bloqueando o drop em "Pago". `DECISION-016`, `ERR-0065`, `ERR-0066`. Falta commit/push (aguardando aprovação explícita).
+**Status:** ✅ DONE 2026-08-18 — E2E real (curl + drag simulado via `PointerEvent`) contra Postgres real, nas 5 transições + os 2 modais (incluindo os 2 sub-caminhos de Despachado/Entregue) + flag desligada bloqueando o drop em "Pago" + Addendum 2 ("Atenção" virou selo, não mais coluna). `DECISION-016`, `ERR-0065`, `ERR-0066`. Commitado (`c7160da`, `3e5d82a`) e pushado (`origin/main` `6ccb472..3e5d82a`), ambos com aprovação explícita e separada do usuário.
 **Origem:** usuário reportou (2026-08-18) que os pedidos parados em "Entraram" não tinham como ser movidos. Investigação ao vivo (drag real testado no ambiente Docker local + inspeção do banco) revelou que a solução simples (reusar o endpoint de fulfillment) não funciona — ver "Achado de arquitetura" abaixo. O usuário decidiu, a partir daí, redesenhar o fluxo inteiro pra 5 etapas reais em vez de só destravar a coluna antiga.
 **Sub-item já executado e validado nesta sessão (fora do escopo restante deste plano):** fix do tooltip "Motivo" no Kanban de Franquias (`ERR-0065`) — nativo (`title`) trocado por tooltip próprio, sempre mostra "Motivo" com fallback "N/A". `apps/web/src/admin-v2/growth/franchises/components/LeadCard.tsx`. `tsc`/build limpos, validado visualmente via Chrome (texto real e "N/A" confirmados). Sem commit/push ainda (mesmo lote deste plano).
 
@@ -163,7 +163,7 @@ Duas opções levantadas pro usuário — ele escolheu a mudança maior:
 
 - Step 2 (Commit authorization, leva 1): aprovado explicitamente pelo usuário ("pode commitar", 2026-08-18).
 - Step 3 (Commit confirmation, leva 1): `c7160da`, branch `main`, 18 arquivos (760 inserções, 102 remoções).
-- Step 2b (Commit authorization, leva 2 — Addendum 2): _pendente — aguardando aprovação explícita._
-- Step 3b (Commit confirmation, leva 2): _pendente._
-- Step 4 (Push authorization and result, as duas levas juntas): _pendente — aguardando uma aprovação explícita separada, depois da leva 2 commitada._
-- Push status: **PENDING**
+- Step 2b (Commit authorization, leva 2 — Addendum 2): aprovado explicitamente pelo usuário ("pode commitar", 2026-08-18).
+- Step 3b (Commit confirmation, leva 2): `3e5d82a`, branch `main`, 6 arquivos (131 inserções, 86 remoções).
+- Step 4 (Push authorization and result, as duas levas juntas): aprovado explicitamente pelo usuário ("pode fazer o push", 2026-08-18). Resultado: `origin/main` `6ccb472..3e5d82a` (2 commits, `c7160da`+`3e5d82a`).
+- Push status: **COMPLETED**

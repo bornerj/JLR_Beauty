@@ -18,18 +18,21 @@ const SERVICE_ROWS: [keyof DockerStatus, string][] = [
 const LED_CLASS: Record<ServiceStatus, string> = {
   online:  "db-status-led db-status-led--online",
   offline: "db-status-led db-status-led--offline",
+  unknown: "db-status-led db-status-led--unknown",
   loading: "db-status-led db-status-led--unknown",
 };
 
 const STATUS_LABEL: Record<ServiceStatus, string> = {
   online:  "Online",
   offline: "Offline",
+  unknown: "Não verificado",
   loading: "Verificando...",
 };
 
 const STATUS_COLOR: Record<ServiceStatus, string> = {
   online:  "#198754",
   offline: "#ef4444",
+  unknown: "#b58b2a",
   loading: "#b58b2a",
 };
 

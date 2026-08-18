@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { getToken } from "../../lib/auth";
 
-export type ServiceStatus = "online" | "offline" | "loading";
+/**
+ * `unknown` (2026-08-18, bug real reportado pelo usuário) — distinto de `offline`. O endpoint
+ * (`GET /health/services`) exige admin autenticado (`requireAdmin`) — se a sessão do widget
+ * expirou (ex.: sessão de 15min sem refresh bem-sucedido, ver nota de `apps/api/src/routes/auth.ts`
+ * sobre o cookie `Secure` não funcionar em produção sem TLS) ou a rede falha, isso não significa
+ * que o Docker caiu — significa que não deu pra checar. Antes, qualquer falha de rede/auth virava
+ * "offline" pra todos os serviços, um alarme falso (Postgres/API "caídos" com tudo rodando).
+ */
+export type ServiceStatus = "online" | "offline" | "unknown" | "loading";
 
 export type DockerStatus = {
   nginx: ServiceStatus;
@@ -23,24 +31,24 @@ const INITIAL: DockerStatus = {
   postgres: "loading",
 };
 
+const ALL_UNKNOWN: DockerStatus = { nginx: "unknown", api: "unknown", web: "unknown", postgres: "unknown" };
+
 async function fetchDockerHealth(): Promise<DockerStatus> {
   try {
     const token = getToken();
+    // Sem token: nem vale a pena chamar (o endpoint exige admin) — não dá pra checar, não é "offline".
+    if (!token) return ALL_UNKNOWN;
     const res = await fetch(`${API_URL}/health/services`, {
       cache: "no-store",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: { Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) return { nginx: "online", api: "offline", web: "online", postgres: "offline" };
+    if (!res.ok) return ALL_UNKNOWN; // inclui 401 de sessão expirada — não é sinal de infra caída.
     const data = (await res.json()) as ServicesResponse;
     const s = data.services ?? {};
-    return {
-      nginx:    s["nginx"]?.status    === "online" ? "online" : "offline",
-      api:      s["api"]?.status      === "online" ? "online" : "offline",
-      web:      s["web"]?.status      === "online" ? "online" : "offline",
-      postgres: s["postgres"]?.status === "online" ? "online" : "offline",
-    };
+    const resolve = (name: string): ServiceStatus => (s[name] ? (s[name].status === "online" ? "online" : "offline") : "unknown");
+    return { nginx: resolve("nginx"), api: resolve("api"), web: resolve("web"), postgres: resolve("postgres") };
   } catch {
-    return { nginx: "offline", api: "offline", web: "offline", postgres: "offline" };
+    return ALL_UNKNOWN; // falha de rede — idem, não é sinal de infra caída.
   }
 }
 

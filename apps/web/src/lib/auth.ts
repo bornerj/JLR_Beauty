@@ -114,7 +114,13 @@ export async function refreshAccessToken(): Promise<boolean> {
       credentials: "include",
     });
     if (!response.ok) {
-      clearAuth();
+      // Falha ao renovar (2026-08-18, bug real reportado pelo usuário) NAO desloga por conta
+      // disso — `initSessionKeepAlive()` chama isto assim que o app carrega, então um cookie
+      // de refresh ausente/vencido (ex.: usuário nunca tinha logado nesta aba, ou o cookie
+      // ficou indisponível por algum motivo, ver TLS_ENABLED em `routes/auth.ts`) apagava um
+      // access token que ainda podia estar perfeitamente válido — a sessão inteira "quebrava"
+      // no próximo reload/navegação, não só quando o access token de verdade expirava.
+      // `getToken()` já cuida de expirar/limpar sozinho quando o access token realmente vence.
       return false;
     }
     const data = (await response.json()) as { token: string };
