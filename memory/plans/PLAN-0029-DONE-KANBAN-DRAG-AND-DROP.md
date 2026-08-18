@@ -81,10 +81,10 @@ Comparativo das 3 opções citadas:
 ## Git Record of Delivery
 
 - Step 1 (Pre-commit review): ✅ feito — ver resumo abaixo.
-- Step 2 (Commit authorization): pendente — aguardando aprovação explícita do usuário (mesmo lote pendente do `PLAN-0027`/`PLAN-0028`).
-- Step 3 (Commit confirmation): pendente.
-- Step 4 (Push authorization and result): pendente — segunda aprovação separada, só depois do commit.
-- Push status: PENDING
+- Step 2 (Commit authorization): ✅ aprovado explicitamente pelo usuário ("sim, pode commitar").
+- Step 3 (Commit confirmation): ✅ `e555234` em `main` — commit único cobrindo `PLAN-0027`+`PLAN-0028`+`PLAN-0029` (48 arquivos, +2062/-441).
+- Step 4 (Push authorization and result): ✅ aprovado explicitamente pelo usuário ("pode enviar") — `e9fbce7..e555234 main -> main`.
+- Push status: COMPLETED
 
 ### Pre-commit review (Step 1)
 

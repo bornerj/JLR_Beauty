@@ -1,7 +1,7 @@
 # PLAN-0027 — Fixes pontuais de inconsistências/bugs reportados pelo usuário
 
 **Status:** 🟡 ENCERRADO PELO CONTEÚDO 2026-08-17 — usuário mandou encerrar este plano ("encerre esse plano e abra um plano novo apenas para esses dois casos"). Todos os itens (1-11) estão resolvidos, corrigidos ou explicitamente encaminhados: Itens 1-3, 5, 6, 7, 8, 9 concluídos; Item 4 concluído (decisão do usuário — chave de identidade corrigida); Itens 10 e 11 concluídos na parte de dado/cadastro (filtro Destaque, `isFeatured` reconciliado, `Membership.imageUrl`), e a parte de arquitetura pendente de cada um ("religar" a renderização pública pra consumir o cadastro nativo) foi **desmembrada para `PLAN-0028-RELIGAR-CONTEUDO-SERVICOS-PLANOS-CADASTRO-NATIVO.md`** — não fica solta aqui. Sem pendência de item neste plano.
-**Nota sobre fechamento formal (`DONE`):** por regra do kernel (`.sfk/kernel/RULES.md` §10/§13), um plano só pode virar `-DONE-` com o Git Record de Delivery completo (commit + push com aprovação explícita, cada um separado). Esse plano está com o conteúdo 100% fechado e pronto para revisão pré-commit (ver seção "Git Record of Delivery" no fim do arquivo), mas **ainda não foi commitado nem pushado** — segue com o nome atual (sem `-DONE-`) até essa autorização acontecer, mesmo padrão já usado no `PLAN-0025`.
+**Fechamento formal (`DONE`):** Git Record de Delivery completo — commit `e555234` (aprovado explicitamente) + push `e9fbce7..e555234 main -> main` (segunda aprovação explícita, separada). Renomeado pra `-DONE-` conforme `.sfk/kernel/RULES.md` §10/§13.
 **Origem:** usuário começou a citar inconsistências/bugs percebidos em uso real do Admin V2; cada item é investigado (RAG + causa raiz) antes de entrar aqui. Este plano é o backlog único de todos os itens até a autorização de execução.
 **Agentes de apoio:** `@debugger` (causa raiz, todos os itens), `@frontend-specialist` / `@backend-specialist` conforme o item.
 **Regra de execução (quando autorizada):** um fix por vez quando fizer sentido isolar; validar (build/tsc/test conforme o caso); registrar cada bug real em `memory/logs/DEBUG-HISTORY.md` (ERR-XXXX) antes de fechar o item; commit só com aprovação explícita, push só com uma segunda aprovação separada.
@@ -233,10 +233,10 @@ Nenhum item pendente neste plano — encerrado por instrução do usuário em 20
 ## Git Record of Delivery
 
 - Step 1 (Pre-commit review): ✅ feito — ver resumo abaixo.
-- Step 2 (Commit authorization): pendente — aguardando aprovação explícita do usuário.
-- Step 3 (Commit confirmation): pendente.
-- Step 4 (Push authorization and result): pendente — segunda aprovação separada, só depois do commit.
-- Push status: PENDING
+- Step 2 (Commit authorization): ✅ aprovado explicitamente pelo usuário ("sim, pode commitar").
+- Step 3 (Commit confirmation): ✅ `e555234` em `main` — commit único cobrindo `PLAN-0027`+`PLAN-0028`+`PLAN-0029` (48 arquivos, +2062/-441).
+- Step 4 (Push authorization and result): ✅ aprovado explicitamente pelo usuário ("pode enviar") — `e9fbce7..e555234 main -> main`.
+- Push status: COMPLETED
 
 ### Pre-commit review (Step 1)
 
