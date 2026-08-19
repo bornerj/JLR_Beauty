@@ -9724,3 +9724,21 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260818_032518-PASS.md`.
 - `tsc`/build (web) limpos (classe `px-2.5` já existia no CSS compilado, sem necessidade de regenerar); rebuild Docker (`web`); validado visualmente via Chrome real.
 - Arquivo: `apps/web/src/admin-v2/operations/orders/OrdersListView.tsx`.
 - Pendente: commit/push — mesmo lote pendente desta sessão (aguardando aprovação explícita).
+
+## 2026-08-18 — `PLAN-0025` regularizado: rename pra `-DONE-` (achado de auditoria)
+
+- **Contexto/objetivo**: usuário pediu levantamento de quais planos estavam sem `-DONE-` no nome
+  do arquivo. `PLAN-0025` apareceu na lista, mas investigação mostrou que o conteúdo do plano já
+  estava com `Status: ✅ DONE` e `Push status: COMPLETED` desde 2026-08-15 (Git Record completo:
+  commit `90a1214` + fechamento `5a12e04`, ambos confirmados em `origin/main` via
+  `git merge-base --is-ancestor`). O trabalho e as duas autorizações (commit/push) já tinham
+  acontecido — só o `git mv` pro nome `-DONE-` nunca foi executado, e `progress.md` ainda dizia
+  "Sem commit/push (aguardando autorização)", desatualizado.
+- **Ação**: `git mv memory/plans/PLAN-0025-ADMIN-V2-POLIMENTO-UX.md
+  memory/plans/PLAN-0025-DONE-ADMIN-V2-POLIMENTO-UX.md`; `memory/progress.md` (linha do
+  PLAN-0025) atualizada pra refletir commit/push reais e o rename.
+- **Arquivos alterados**: `memory/plans/PLAN-0025-DONE-ADMIN-V2-POLIMENTO-UX.md` (renomeado),
+  `memory/progress.md`, `memory/MODIFICATION_LOG.md` (esta entrada).
+- **Status**: `PLAN-0025` agora consistente (conteúdo, nome de arquivo e `progress.md` batendo).
+  Nenhum código alterado — só regularização de registro. Pendente de commit/push (aguardando
+  aprovação do usuário).
