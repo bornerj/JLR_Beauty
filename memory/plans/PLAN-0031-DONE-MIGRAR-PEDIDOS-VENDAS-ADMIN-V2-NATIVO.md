@@ -1,6 +1,6 @@
 # PLAN-0031 — Migrar "Pedidos e Vendas" (lista + detalhe/edição + venda manual) pro Admin V2 nativo
 
-**Status:** 🟢 EXECUTADO E VALIDADO 2026-08-18 — todas as 7 ondas concluídas na mesma sessão ("pode começar pela Onda 1 e siga até o fim"), E2E real (browser real, Postgres real) em cada fluxo. Ver "Diário de execução" no final do arquivo. Falta commit/push (aguardando aprovação explícita, ainda não solicitada).
+**Status:** ✅ DONE 2026-08-18 — todas as 7 ondas concluídas na mesma sessão ("pode começar pela Onda 1 e siga até o fim"), E2E real (browser real, Postgres real) em cada fluxo. Ver "Diário de execução" no final do arquivo. Commitado (`322f636`) e pushado (`origin/main` `3e5d82a..322f636`), ambos com aprovação explícita e separada.
 **Origem:** usuário pediu (2026-08-18), no mesmo lote de ajustes do `PLAN-0030`: a tela "Pedidos e Vendas" do admin legado — que tem um link a partir da Operação (cards `BLOCKED` do Kanban, "Ver no Admin →") — precisa ser migrada pro Admin V2 nativo, tanto a lista quanto a edição de pedido, mantendo o cabeçalho com os botões de navegação (o mesmo padrão de breadcrumb + abas já usado em todo o Admin V2). É um item de uma pendência maior, já conhecida do projeto: aposentar o admin legado (`DECISION-014` regra #6 / `DECISION-013` regra #3, RETROFIT-022, "ainda sem critério fixado").
 
 ---
@@ -143,7 +143,7 @@ Sem arquivo novo — `handleBulkAdvance` em `OrdersListView.tsx`, usando `bulkAd
 
 **Validações executadas:** `apps/api` `tsc -b` + `npm run test` (134/134) PASS (backend não tocado); `apps/web` `tsc -b` + `npm run build` PASS; rebuild Docker (`web`) + `up -d --force-recreate`; E2E real completo (ver Onda 7); checklist do `ERR-0070` aplicado ao CSS; nenhum dado de teste avulso pendente.
 
-- Step 2 (Commit authorization): _pendente — aguardando aprovação explícita._
-- Step 3 (Commit confirmation): _pendente._
-- Step 4 (Push authorization and result): _pendente._
-- Push status: **PENDING**
+- Step 2 (Commit authorization): aprovado explicitamente pelo usuário ("pode commitar", 2026-08-18).
+- Step 3 (Commit confirmation): `322f636`, branch `main`, 16 arquivos (1648 inserções, 43 remoções). Inclui, no mesmo lote (a pedido do usuário — "outros ajustes necessários" antes de commitar): `ERR-0070` (grid do Board Operacional quebrado), ID `PV-{id}` consistente em Kanban+Lista, coluna "Em Separação" por extenso, contraste dos botões de paginação da Lista.
+- Step 4 (Push authorization and result): aprovado explicitamente pelo usuário ("push em seguida, assim que acabar os commits", 2026-08-18). Resultado: `origin/main` `3e5d82a..322f636`.
+- Push status: **COMPLETED**
