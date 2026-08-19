@@ -24,6 +24,20 @@
  * processo**: o próprio comando de regeneração sobrescreve este cabeçalho (o Tailwind CLI
  * substitui o arquivo inteiro, comentário incluso) — reescrever este bloco é parte
  * obrigatória do passo de regeneração, não opcional.
+ *
+ * Regenerado de novo em 2026-08-18 (`ERR-0070`) — o Board Operacional (`PLAN-0030`) usou
+ * `xl:grid-cols-5`/`xl:grid-cols-6`/`lg:grid-cols-3` pela primeira vez em qualquer tela do
+ * projeto; a checagem proativa (nota acima, padrão desde a Onda 7 do `PLAN-0026`) **não foi
+ * feita** antes do rebuild Docker daquela sessão — o board foi validado só via
+ * `PointerEvent`/DOM (sem checar o grid computado nem o CSS servido), então passou "verde"
+ * mesmo com `xl:grid-cols-5` ausente do CSS. Usuário reportou o board quebrado (2 colunas
+ * largas) numa sessão seguinte. `xl:grid-cols-5` confirmado ausente via `grep` no CSS
+ * servido antes deste fix (mesmo sintoma do `ERR-0040`/`ERR-0049`/`ERR-0051`).
+ *
+ * Regenerado de novo em 2026-08-18 (`PLAN-0031`, Onda 1 — Lista de Pedidos) — desta vez a
+ * checagem proativa **foi feita** (checklist do `ERR-0070`): `min-w-[200px]` (select de
+ * catálogo do `ManualSaleModal.tsx`) era a única classe genuinamente nova introduzida pela
+ * migração; grepada e confirmada ausente antes de regenerar, presente depois.
  */
 
 .pointer-events-none {
@@ -271,6 +285,10 @@
   grid-column: span 1 / span 1
 }
 
+.col-span-3 {
+  grid-column: span 3 / span 3
+}
+
 .float-left {
   float: left
 }
@@ -423,6 +441,10 @@
 
 .mt-2 {
   margin-top: 0.5rem
+}
+
+.mt-2\.5 {
+  margin-top: 0.625rem
 }
 
 .mt-3 {
@@ -689,6 +711,10 @@
 
 .h-\[40\%\] {
   height: 40%
+}
+
+.h-\[420px\] {
+  height: 420px
 }
 
 .h-\[45\%\] {
@@ -1032,6 +1058,10 @@
   min-width: 180px
 }
 
+.min-w-\[200px\] {
+  min-width: 200px
+}
+
 .min-w-\[480px\] {
   min-width: 480px
 }
@@ -1122,6 +1152,10 @@
 
 .max-w-\[20rem\] {
   max-width: 20rem
+}
+
+.max-w-\[220px\] {
+  max-width: 220px
 }
 
 .max-w-\[26px\] {
@@ -1353,12 +1387,24 @@
   grid-template-columns: repeat(7, minmax(0, 1fr))
 }
 
+.grid-cols-\[110px_1fr\] {
+  grid-template-columns: 110px 1fr
+}
+
+.grid-cols-\[140px_1fr\] {
+  grid-template-columns: 140px 1fr
+}
+
 .grid-cols-\[1fr_100px_100px\] {
   grid-template-columns: 1fr 100px 100px
 }
 
 .grid-cols-\[1fr_140px\] {
   grid-template-columns: 1fr 140px
+}
+
+.grid-cols-\[1fr_1fr_110px\] {
+  grid-template-columns: 1fr 1fr 110px
 }
 
 .grid-cols-\[1fr_80px_1fr\] {
@@ -1644,6 +1690,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap
+}
+
+.whitespace-normal {
+  white-space: normal
 }
 
 .whitespace-nowrap {
@@ -2043,6 +2093,10 @@
   border-color: rgb(186 230 253 / var(--tw-border-opacity, 1))
 }
 
+.border-state-attention\/40 {
+  border-color: rgb(217 119 6 / 0.4)
+}
+
 .border-state-attention\/50 {
   border-color: rgb(217 119 6 / 0.5)
 }
@@ -2270,6 +2324,10 @@
   background-color: rgb(16 34 22 / 0.1)
 }
 
+.bg-forest\/10 {
+  background-color: rgb(13 27 18 / 0.1)
+}
+
 .bg-forest\/5 {
   background-color: rgb(13 27 18 / 0.05)
 }
@@ -2372,6 +2430,10 @@
   background-color: rgb(0 150 127 / 0.1)
 }
 
+.bg-primary\/15 {
+  background-color: rgb(0 150 127 / 0.15)
+}
+
 .bg-primary\/20 {
   background-color: rgb(0 150 127 / 0.2)
 }
@@ -2416,6 +2478,10 @@
 .bg-state-attention {
   --tw-bg-opacity: 1;
   background-color: rgb(217 119 6 / var(--tw-bg-opacity, 1))
+}
+
+.bg-state-attention\/10 {
+  background-color: rgb(217 119 6 / 0.1)
 }
 
 .bg-state-attention\/15 {
@@ -3747,6 +3813,10 @@
   --tw-ring-color: rgb(0 150 127 / var(--tw-ring-opacity, 1))
 }
 
+.ring-primary\/50 {
+  --tw-ring-color: rgb(0 150 127 / 0.5)
+}
+
 .ring-red-400 {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(248 113 113 / var(--tw-ring-opacity, 1))
@@ -4316,6 +4386,10 @@
   background-color: rgb(168 162 158 / var(--tw-bg-opacity, 1))
 }
 
+.disabled\:opacity-30:disabled {
+  opacity: 0.3
+}
+
 .disabled\:opacity-40:disabled {
   opacity: 0.4
 }
@@ -4332,6 +4406,10 @@
   --tw-shadow: 0 0 #0000;
   --tw-shadow-colored: 0 0 #0000;
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)
+}
+
+.disabled\:hover\:bg-transparent:hover:disabled {
+  background-color: transparent
 }
 
 .group:focus-within .group-focus-within\:text-primary {
@@ -4526,6 +4604,10 @@
 
 .dark\:bg-forest-green\/20:is(.dark *) {
   background-color: rgb(16 34 22 / 0.2)
+}
+
+.dark\:bg-forest-green\/40:is(.dark *) {
+  background-color: rgb(16 34 22 / 0.4)
 }
 
 .dark\:bg-forest\/10:is(.dark *) {
@@ -5324,6 +5406,10 @@
 
   .xl\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr))
+  }
+
+  .xl\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr))
   }
 
   .xl\:grid-cols-6 {

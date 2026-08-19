@@ -12,13 +12,13 @@ import { useState } from "react";
 export type DispatchOutcome = { kind: "ENTREGUE" } | { kind: "DESPACHADO"; carrier: string; date: string };
 
 export function ConfirmDispatchModal({
-  publicCode,
+  orderId,
   submitting,
   error,
   onCancel,
   onConfirm,
 }: {
-  publicCode: string | null;
+  orderId: number;
   submitting: boolean;
   error: string | null;
   onCancel: () => void;
@@ -41,7 +41,7 @@ export function ConfirmDispatchModal({
       <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-forest">
         <h3 className="text-lg font-bold text-forest">Despachado ou entregue?</h3>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-          Pedido <strong className="text-forest">{publicCode ?? "—"}</strong>
+          Pedido <strong className="text-forest">PV-{orderId}</strong>
         </p>
 
         <div className="mt-4 flex gap-2">

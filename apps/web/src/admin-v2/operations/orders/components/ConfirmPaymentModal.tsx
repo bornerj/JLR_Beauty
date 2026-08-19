@@ -11,13 +11,13 @@ import { useState } from "react";
  */
 
 export function ConfirmPaymentModal({
-  publicCode,
+  orderId,
   submitting,
   error,
   onCancel,
   onConfirm,
 }: {
-  publicCode: string | null;
+  orderId: number;
   submitting: boolean;
   error: string | null;
   onCancel: () => void;
@@ -33,7 +33,7 @@ export function ConfirmPaymentModal({
       <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-forest">
         <h3 className="text-lg font-bold text-forest">Confirmar pagamento</h3>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-          Pedido <strong className="text-forest">{publicCode ?? "—"}</strong> — sem integração de meio de pagamento
+          Pedido <strong className="text-forest">PV-{orderId}</strong> — sem integração de meio de pagamento
           ativa aqui ainda, confirme quem recebeu.
         </p>
 

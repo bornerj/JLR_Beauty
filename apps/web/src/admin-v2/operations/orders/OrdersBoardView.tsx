@@ -57,7 +57,7 @@ const COLUMN_ORDER: RealColumn[] = ["recebido", "pago", "emSeparacao", "pronto",
 const COLUMN_LABELS: Record<RealColumn, string> = {
   recebido: "Receb",
   pago: "Pago",
-  emSeparacao: "Em Sep",
+  emSeparacao: "Em Separação",
   pronto: "Pronto",
   despachadoEntregue: "Desp/Entr",
 };
@@ -81,7 +81,7 @@ const FULFILLMENT_STATUS_BY_COLUMN: Record<"emSeparacao" | "pronto" | "despachad
 
 const MANUAL_PAYMENT_CONFIRMATION_SETTING_KEY = "operations.manualPaymentConfirmationEnabled";
 
-type PendingOrder = { orderId: number; publicCode: string | null } | null;
+type PendingOrder = { orderId: number } | null;
 
 export function OrdersBoardView() {
   const { scope } = useAdminScope();
@@ -122,19 +122,17 @@ export function OrdersBoardView() {
   const [modalSubmitting, setModalSubmitting] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
-  /** `orderId -> coluna real` + `orderId -> publicCode` (pra origem do drop e pros modais). */
-  const { columnByOrderId, publicCodeByOrderId } = useMemo(() => {
+  /** `orderId -> coluna real` (pra saber a origem do drop). */
+  const columnByOrderId = useMemo(() => {
     const columnMap = new Map<number, RealColumn>();
-    const codeMap = new Map<number, string | null>();
     if (state.board) {
       for (const columnKey of COLUMN_ORDER) {
         for (const order of state.board.columns[columnKey].orders) {
           columnMap.set(order.orderId, columnKey);
-          codeMap.set(order.orderId, order.publicCode);
         }
       }
     }
-    return { columnByOrderId: columnMap, publicCodeByOrderId: codeMap };
+    return columnMap;
   }, [state.board]);
 
   const moveOrderDirect = useCallback(
@@ -179,18 +177,17 @@ export function OrdersBoardView() {
       if (originColumn === targetColumn) return;
       if (NEXT_COLUMN[originColumn] !== targetColumn) return;
 
-      const publicCode = publicCodeByOrderId.get(orderId) ?? null;
       if (targetColumn === "pago") {
-        setPendingPayment({ orderId, publicCode });
+        setPendingPayment({ orderId });
         return;
       }
       if (targetColumn === "despachadoEntregue") {
-        setPendingDispatch({ orderId, publicCode });
+        setPendingDispatch({ orderId });
         return;
       }
       void moveOrderDirect(orderId, targetColumn as "emSeparacao" | "pronto");
     },
-    [columnByOrderId, publicCodeByOrderId, manualPaymentConfirmationEnabled, moveOrderDirect]
+    [columnByOrderId, manualPaymentConfirmationEnabled, moveOrderDirect]
   );
 
   const cancelPendingPayment = useCallback(() => {
@@ -309,7 +306,7 @@ export function OrdersBoardView() {
       )}
 
       <KanbanDndProvider onCardDrop={handleCardDrop}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {COLUMN_ORDER.map((columnKey) => {
             const column = board.columns[columnKey];
             const hiddenCount = column.count - column.orders.length;
@@ -367,7 +364,7 @@ export function OrdersBoardView() {
 
       {pendingPayment && (
         <ConfirmPaymentModal
-          publicCode={pendingPayment.publicCode}
+          orderId={pendingPayment.orderId}
           submitting={modalSubmitting}
           error={modalError}
           onCancel={cancelPendingPayment}
@@ -377,7 +374,7 @@ export function OrdersBoardView() {
 
       {pendingDispatch && (
         <ConfirmDispatchModal
-          publicCode={pendingDispatch.publicCode}
+          orderId={pendingDispatch.orderId}
           submitting={modalSubmitting}
           error={modalError}
           onCancel={cancelPendingDispatch}

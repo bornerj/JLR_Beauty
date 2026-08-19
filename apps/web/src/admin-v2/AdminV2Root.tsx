@@ -6,6 +6,7 @@ import { PanoramaView } from "./panorama/PanoramaView";
 import { NetworkView } from "./network/NetworkView";
 import { UnitDetailView } from "./network/UnitDetailView";
 import { OrdersBoardView } from "./operations/orders/OrdersBoardView";
+import { OrdersListView } from "./operations/orders/OrdersListView";
 import { CapacityView } from "./operations/agenda/CapacityView";
 import { ProductMatrixView } from "./portfolio/products/ProductMatrixView";
 import { ServiceMatrixView } from "./portfolio/services/ServiceMatrixView";
@@ -41,18 +42,24 @@ import { TestsView } from "./sistema/tests/TestsView";
  * telas internas do Admin V2, só o ponto de entrada.
  */
 
-type OperationsTabKey = "pedidos" | "agenda" | "produtos" | "servicos";
+type OperationsTabKey = "pedidos" | "lista" | "agenda" | "produtos" | "servicos";
 
 /**
  * Sub-abas do mundo "Operação" (Pedidos = Onda 3, Agenda = Onda 4, Produtos = Onda 5,
- * Serviços = Onda 6). "Portfólio" não tem slot próprio nos 7 "mundos" fixos da sidebar
- * (Onda 1) — nasce aqui, dentro de Operação, mesmo padrão já usado para Agenda na Onda 4.
- * Mesmo estilo visual dos presets de período da AdminTopbar.
+ * Serviços = Onda 6, Lista = `PLAN-0031`). "Portfólio" não tem slot próprio nos 7 "mundos"
+ * fixos da sidebar (Onda 1) — nasce aqui, dentro de Operação, mesmo padrão já usado para
+ * Agenda na Onda 4. Mesmo estilo visual dos presets de período da AdminTopbar.
+ *
+ * "Lista" (`PLAN-0031`) — migração nativa de "Pedidos e Vendas" do admin legado (tabela +
+ * filtros + detalhe/edição + venda manual), irmã do Kanban ("Pedidos"): pergunta que o Kanban
+ * fecha é "onde os pedidos estão travando", a Lista fecha "achar/editar um pedido específico
+ * ou registrar uma venda manual" — telas complementares, não uma substituindo a outra.
  */
 function OperationsTabs({ active }: { active: OperationsTabKey }) {
   const navigate = useNavigate();
   const tabs: Array<{ key: OperationsTabKey; label: string; path: string }> = [
     { key: "pedidos", label: "Pedidos", path: "/admin-v2/operacao" },
+    { key: "lista", label: "Lista", path: "/admin-v2/operacao/lista" },
     { key: "agenda", label: "Agenda", path: "/admin-v2/operacao/agenda" },
     { key: "produtos", label: "Produtos", path: "/admin-v2/operacao/produtos" },
     { key: "servicos", label: "Serviços", path: "/admin-v2/operacao/servicos" },
@@ -76,6 +83,7 @@ function OperationsTabs({ active }: { active: OperationsTabKey }) {
 }
 
 const OPERATIONS_SUBTAB_LABELS: Record<Exclude<OperationsTabKey, "pedidos">, string> = {
+  lista: "Lista",
   agenda: "Agenda",
   produtos: "Produtos",
   servicos: "Serviços",
@@ -158,6 +166,7 @@ function AdminV2Shell() {
   const isNetworkArea = location.pathname.includes("/rede");
   const isUnitDetail = /\/rede\/[^/]+\/?$/.test(location.pathname);
   const isOperationsArea = location.pathname.includes("/operacao");
+  const isListaArea = location.pathname.includes("/operacao/lista");
   const isAgendaArea = location.pathname.includes("/operacao/agenda");
   const isProdutosArea = location.pathname.includes("/operacao/produtos");
   const isServicosArea = location.pathname.includes("/operacao/servicos");
@@ -213,13 +222,15 @@ function AdminV2Shell() {
           ? "insights"
           : "radar";
   const customersTab: CustomersTabKey = isSubscriptionsArea ? "assinaturas" : "fluxo";
-  const activeTab: OperationsTabKey = isAgendaArea
-    ? "agenda"
-    : isProdutosArea
-      ? "produtos"
-      : isServicosArea
-        ? "servicos"
-        : "pedidos";
+  const activeTab: OperationsTabKey = isListaArea
+    ? "lista"
+    : isAgendaArea
+      ? "agenda"
+      : isProdutosArea
+        ? "produtos"
+        : isServicosArea
+          ? "servicos"
+          : "pedidos";
   const activeKey = isOperationsArea
     ? "operacao"
     : isNetworkArea
@@ -298,6 +309,7 @@ function AdminV2Shell() {
         <Route path="rede" element={<NetworkView />} />
         <Route path="rede/:unitId" element={<UnitDetailView />} />
         <Route path="operacao" element={<OrdersBoardView />} />
+        <Route path="operacao/lista" element={<OrdersListView />} />
         <Route path="operacao/agenda" element={<CapacityView />} />
         <Route path="operacao/produtos" element={<ProductMatrixView />} />
         <Route path="operacao/servicos" element={<ServiceMatrixView />} />

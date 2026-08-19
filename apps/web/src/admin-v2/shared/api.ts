@@ -1,6 +1,7 @@
 import type { AdminV2Unit, PanoramaSnapshot } from "../panorama/types";
 import type { NetworkBoard, UnitDiagnostic } from "../network/types";
 import type { OrdersBoard, OrdersFlow } from "../operations/orders/types";
+import type { BulkAdvanceResponse, OrderListRow, OrdersSummary } from "../operations/orders/listTypes";
 import type { CapacityHeatmap, SlotDetail } from "../operations/agenda/types";
 import type { PortfolioProducts } from "../portfolio/products/types";
 import type { ServicePerformanceList } from "../portfolio/services/types";
@@ -197,6 +198,69 @@ export const confirmOrderPayment = async (args: { token: string; orderId: number
   if (!response.ok) {
     throw new Error(await parseApiError(response));
   }
+};
+
+/**
+ * PLAN-0031 — Lista de Pedidos nativa (migração de `admin-orders/behavior.ts`). Os 5 clientes
+ * abaixo reusam endpoints que já existiam pro admin legado, sem mudança nenhuma de backend.
+ */
+
+/** `GET /orders` — lista completa (itens/pagamentos/histórico inclusos), sem paginação/filtro server-side (mesmo comportamento do legado; filtro é sempre client-side). */
+export const fetchOrdersFull = async (args: { token: string }): Promise<OrderListRow[]> => {
+  const response = await fetch(`${getApiUrl()}/api/orders`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as OrderListRow[];
+};
+
+/** `GET /orders/summary` — KPIs agregados (total, em progresso, despachados, entregues, cancelados, pagamento pendente, receita confirmada). */
+export const fetchOrdersSummary = async (args: { token: string }): Promise<OrdersSummary> => {
+  const response = await fetch(`${getApiUrl()}/api/orders/summary`, {
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as OrdersSummary;
+};
+
+/** `PATCH /orders/:id` genérico — status do pedido (inclui `CANCELADO`, que no backend aciona `cancelOrderWithOptionalRestock`). `note` opcional vira texto no histórico (`PLAN-0030`). */
+export const updateOrderStatus = async (args: { token: string; orderId: number; status: string; note?: string }): Promise<void> => {
+  const response = await fetch(`${getApiUrl()}/api/orders/${args.orderId}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ status: args.status, ...(args.note ? { note: args.note } : {}) }),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+};
+
+/** `PATCH /orders/bulk/advance` — avança em lote a próxima etapa de fulfillment de vários pedidos (usado pelo botão "marcar próxima etapa" da Lista de Pedidos). */
+export const bulkAdvanceOrders = async (args: { token: string; orderIds: number[] }): Promise<BulkAdvanceResponse> => {
+  const response = await fetch(`${getApiUrl()}/api/orders/bulk/advance`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${args.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ orderIds: args.orderIds }),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
+  return (await response.json()) as BulkAdvanceResponse;
+};
+
+/** `POST /orders` — venda manual/balcão (`requireStaff`, `PLAN-0020`). Preço/total calculados no servidor a partir do catálogo; `unitId` obrigatório só quando há item de produto físico. */
+export const createManualSaleOrder = async (args: {
+  token: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  unitId?: number;
+  markAsPaid: boolean;
+  items: Array<{ productId?: number; serviceId?: number; membershipId?: number; quantity: number }>;
+}): Promise<void> => {
+  const { token, ...body } = args;
+  const response = await fetch(`${getApiUrl()}/api/orders`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(await parseApiError(response));
 };
 
 export const fetchCapacityHeatmap = async (args: { token: string; unitId: number; days?: number }): Promise<CapacityHeatmap> => {

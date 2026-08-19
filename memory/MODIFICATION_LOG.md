@@ -9689,3 +9689,38 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260818_032518-PASS.md`.
 - Validações: `apps/api` `tsc -b` + `npm run test` (134/134) PASS; `apps/web` `tsc -b` + `npm run build` PASS; rebuild Docker (`api`+`web`) + `up -d --force-recreate`; E2E real via `fetch` no navegador (login real → cookie armazenado de verdade pelo Chrome → `POST /auth/refresh` 200 com token novo → hard-navigation pro `/admin` sem "sessão expirada"); endpoint `/health/services` confirmado exigindo `requireAdmin` e devolvendo 401 com token inválido.
 - Arquivos: `apps/api/src/routes/auth.ts`; `apps/web/src/lib/auth.ts`; `apps/web/src/modules/admin-docker-status/useDockerHealth.ts`, `DockerStatusModal.tsx`; `.env`, `.env.docker.example`, `sfk.toml`.
 - Pendente: commit/push (aguardando aprovação explícita).
+
+## 2026-08-18 — Registro de EXECUÇÃO (bug — Board Operacional quebrado, grid Tailwind não compilado)
+- Usuário reportou o Kanban de Operação (que estava certo) aparecendo com só 2 colunas bem largas, com desconfiança explícita de que eu tinha alterado mais do que deveria — pediu pra eu acessar o browser e entender antes de corrigir.
+- Investigação ao vivo (browser real, `getComputedStyle`) + inspeção do CSS servido confirmou: mesma causa raiz já documentada 3 vezes antes (`ERR-0040`/`ERR-0049`/`ERR-0051`) — `tailwind.generated.css` é uma foto estática do Tailwind CLI, não um build ao vivo. `xl:grid-cols-5` (novo no `PLAN-0030`) nunca tinha sido usado em nenhum arquivo do projeto, então nunca foi compilado nessa foto — o navegador ignorou a classe ausente silenciosamente e caiu na regra existente de menor especificidade (`sm:grid-cols-2`), daí "2 colunas largas" em qualquer largura.
+- Corrigido: `tailwind.generated.css` regenerado (comando documentado no próprio cabeçalho do arquivo); Board Operacional ganhou o breakpoint `lg:grid-cols-3` que também estava faltando (achado adicional, sem ele o board ainda ficaria em 2 colunas entre 640-1280px mesmo com a classe presente).
+- `ERR-0070` registrado com autocrítica: o `ERR-0049` já tinha deixado uma nota de processo explícita pra regenerar esse arquivo sempre que uma tela introduzisse um padrão visual novo — não segui essa nota ao adicionar as classes de grid do `PLAN-0030`; validei só via drag/DOM/banco, nunca conferi o grid computado nem grepei o CSS servido. Checklist novo documentado no próprio `ERR-0070` pra não repetir.
+- Validações: `tsc -b`/build (web) PASS; rebuild Docker (`web`) + `up -d --force-recreate`; diff entre uma regeneração fresca via Tailwind CLI e o arquivo commitado (vazio — confirma que está em dia); `grep` confirmando a classe presente; `getComputedStyle` real no navegador confirmando 5 colunas em 1680px (antes: 2).
+- Arquivos: `apps/web/src/styles/tailwind.generated.css`, `apps/web/src/admin-v2/operations/orders/OrdersBoardView.tsx`.
+- Pendente: commit/push (aguardando aprovação explícita).
+
+## 2026-08-18 — Registro de ajuste (Board Operacional — ID consistente com Pedidos e Vendas + rótulo da coluna)
+- Usuário pediu 2 ajustes pequenos no mesmo board: (1) o card mostrava `card.publicCode` (código longo, ex. `PV-MSRI9DTA-33H4`, usado só pro rastreio do cliente/checkout) — deveria mostrar o mesmo ID curto (`PV-{id}`, ex. `PV-39`) usado em toda a tela de Pedidos e Vendas do legado (`admin-orders/behavior.ts`); (2) a coluna "Em Sep" podia virar "Em Separação" por extenso, já que agora cabe (grid corrigido no `ERR-0070`).
+- `OrderCardView.tsx` e os 2 modais (`ConfirmPaymentModal`/`ConfirmDispatchModal`) passaram a usar `PV-{orderId}` — `publicCode` removido da prop/plumbing inteira (`OrdersBoardView.tsx`), já que não tinha mais uso.
+- `tsc`/build (web) PASS; rebuild Docker (`web`); validado visualmente via Chrome real (`PV-39` aparecendo certo pro pedido id 39, coluna "EM SEPARAÇÃO").
+- Arquivos: `apps/web/src/admin-v2/operations/orders/OrdersBoardView.tsx`, `components/OrderCardView.tsx`, `components/ConfirmPaymentModal.tsx`, `components/ConfirmDispatchModal.tsx`.
+- Pendente: commit/push (usuário pediu pra não commitar ainda — tem mais um ajuste maior em avaliação, ver "Pendente para a próxima sessão"/discussão em andamento sobre migrar Pedidos e Vendas pro Admin V2 nativo).
+
+## 2026-08-18 — Registro de EXECUÇÃO (PLAN-0031 — migração "Pedidos e Vendas" pro Admin V2 nativo)
+- Usuário aprovou o plano ("pode começar pela Onda 1 e siga até o fim mas documente todo o processo e principalmente o que foi feito de mudança") — as 7 ondas executadas na mesma sessão.
+- Nova aba "Lista" dentro de Operação (`/admin-v2/operacao/lista`), irmã do Kanban: tabela completa de pedidos com busca (id/nome/e-mail), filtro de status e fulfillment, paginação client-side, seleção múltipla, 7 KPIs no topo, botão de venda manual.
+- Modal de detalhe (somente leitura: itens, pagamentos, histórico completo) e modal de edição (status do pedido + fulfillment/transportadora/rastreio/notas, com bloqueio de opções que avançam etapa quando há pagamento vinculado não aprovado, mesma regra do backend).
+- Ação em lote "marcar próxima etapa" (`PATCH /orders/bulk/advance`) e venda manual/balcão completa (catálogo produto+serviço, checagem de disponibilidade cross-unit, `POST /orders`).
+- Link "Ver no Admin →" dos cards `BLOCKED` do Kanban religado pra rota nativa nova, com `?highlight={id}` abrindo o detalhe do pedido específico direto — melhoria real sobre o legado, que nunca teve deep-link pro pedido.
+- **Zero mudança de backend** — os 5 endpoints usados (`GET /orders`, `GET /orders/summary`, `PATCH /orders/bulk/advance`, `PATCH /orders/:id`, `POST /orders`) já existiam pro admin legado, migração 100% frontend.
+- Checklist do `ERR-0070` aplicado proativamente: `min-w-[200px]` (único class novo genuíno) checado no CSS servido antes/depois de regenerar `tailwind.generated.css`.
+- Validações: `apps/api` `tsc -b` + `npm run test` (134/134, backend não tocado) PASS; `apps/web` `tsc -b` + `npm run build` PASS; rebuild Docker (`web`) + `up -d --force-recreate`; E2E real completo via Chrome real + Postgres real em todos os fluxos (lista, detalhe, edição, ação em lote, venda manual, deep-link do Kanban) — detalhes completos no "Diário de execução" do `PLAN-0031`. Nenhum dado de teste avulso ficou pendente.
+- Arquivos novos: `apps/web/src/admin-v2/operations/orders/{listTypes.ts,OrdersListView.tsx}`, `components/{OrderDetailModal,OrderEditModal,ManualSaleModal}.tsx`. Arquivos alterados: `shared/api.ts` (5 clientes novos), `AdminV2Root.tsx` (aba/rota), `OrderCardView.tsx` (link religado), `tailwind.generated.css` (regenerado).
+- Pendente: commit/push (aguardando aprovação explícita, ainda não solicitada nesta sessão — mesmo lote dos ajustes anteriores do PV-{id}/coluna Em Separação).
+
+## 2026-08-18 — Ajuste de contraste (Lista de Pedidos — botões de paginação)
+- Usuário reportou: botões de navegação da tabela (« ‹ › ») quase não apareciam — só borda, sem fundo, baixo contraste.
+- `OrdersListView.tsx` — os 4 botões passaram a usar `bg-primary text-white hover:bg-primary/90` (mesmo estilo do botão "+ Venda manual"), com `disabled:opacity-40` pro estado desabilitado.
+- `tsc`/build (web) limpos (classe `px-2.5` já existia no CSS compilado, sem necessidade de regenerar); rebuild Docker (`web`); validado visualmente via Chrome real.
+- Arquivo: `apps/web/src/admin-v2/operations/orders/OrdersListView.tsx`.
+- Pendente: commit/push — mesmo lote pendente desta sessão (aguardando aprovação explícita).
