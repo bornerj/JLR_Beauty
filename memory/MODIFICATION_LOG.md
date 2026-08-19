@@ -9742,3 +9742,51 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260818_032518-PASS.md`.
 - **Status**: `PLAN-0025` agora consistente (conteúdo, nome de arquivo e `progress.md` batendo).
   Nenhum código alterado — só regularização de registro. Pendente de commit/push (aguardando
   aprovação do usuário).
+
+## 2026-08-18 — `PLAN-0020` fechado DONE: validação visual (5 telas) + pentest manual S10
+
+- **Contexto/objetivo**: continuação da auditoria de planos sem `-DONE-`. `PLAN-0020` (Estoque
+  Multi-Unidade + Vendas + BI) já estava tecnicamente completo e commitado/pushado desde
+  2026-07-07 (`ee6a61a`), mas com 2 pendências abertas há mais de um mês: confirmação visual do
+  usuário e pentest manual S10 (isolamento entre unidades). Usuário pediu explicação do plano,
+  perguntou em quais telas validar, e autorizou o pentest ("faz o pentest agora").
+- **Validação visual (browser real, claude-in-chrome)**: como o plano foi escrito antes do Admin
+  V2 existir, as 5 telas testadas foram as equivalentes nativas de hoje (migradas via
+  `PLAN-0026`/`PLAN-0031`), não as legadas `admin-products`/`admin-sales`/`admin-kpis` citadas no
+  texto original do plano:
+  1. **Cadastros → Produtos** — Entrada de estoque (+5 em Franco da Rocha) via modal Movimentar;
+     Histórico confirmou o registro exato (tipo/qtd/saldo/motivo/autor). Grade "Estoque por
+     unidade" atualizou em tempo real sem reload.
+  2. **Operação → Produtos** (matriz Armadilha/Estrela/Joia) — confirmado uso de CMV/margem real
+     (produto com `costPrice` cadastrado mostrou margem 82.1%, os sem custo mostraram 100%).
+  3. **Operação → Lista → Venda manual** — venda de balcão criada (PV-50): PAGO, canal ADMIN,
+     vendedor e unidade corretos, **total calculado no servidor** (não confiou em nada do
+     cliente), baixa de estoque direta (`sellStockDirect`), lista atualizou sozinha.
+  4. **Panorama** — card "Operação agora" exibindo "Valor em estoque" (mesmo cálculo do
+     `getInventoryOverview` do `PLAN-0020`).
+  5. **SPA público** — seletor de quantidade do destaque funcional; zerei temporariamente o
+     estoque online de "Base (Unha Fortalecida)" e o card mostrou selo **"ESGOTADO"** (não sumiu
+     da vitrine, imagem acinzentada, carrinho desabilitado) — exatamente a regra do plano.
+  - **Achado de teste, não é bug**: primeira tentativa de venda manual não submeteu porque
+    faltavam e-mail/telefone (campos obrigatórios) — validação client-side correta, só sem toast
+    visível; refeito com os campos completos, funcionou.
+  - Todos os dados de teste (pedido PV-50, entrada +5, ajuste Esgotado) revertidos via SQL
+    direto ao final — banco conferido idêntico ao estado anterior.
+- **Pentest manual S10 (isolamento entre unidades/franquias)**: 2 usuários de teste criados via
+  `POST /auth/register` (role padrão CLIENT) e promovidos direto no banco — `PROFESSIONAL` na
+  unidade 1 (Parque da Cidade) e `MANAGER` na unidade 2 (Birmann 20). Tokens obtidos por login
+  real da API (nenhum JWT forjado). 16 requisições via `curl` cobrindo leitura/escrita cross-unit
+  em 6 endpoints (`/units/:id/inventory[/summary]`, `/products/:id/movements`, `/reservations`,
+  `/stock/entry|consumption|adjust`), `POST /orders` com `unitId` forjado no body, `GET /orders`
+  (admin-only), o endpoint cross-unit somente-saldo (S7), `GET /dashboard/sales-insights` com
+  `?unitId=` de outra unidade na query (S4), e gating por papel independente da unidade (S6).
+  **16/16 PASS** — nenhum vazamento encontrado; `resolveUnitScope`/`canAccessUnit`/
+  `guardUnitAccess` fail-closed em todos os pontos, inclusive quando a query string tentava
+  forçar `unitId` de outra unidade (servidor sempre ignorou e usou a unidade real do token).
+  Usuários de teste e o único movimento de estoque real gerado (revertido) apagados do banco.
+- **Arquivos alterados**: `memory/plans/PLAN-0020-DONE-PRODUTOS-ESTOQUE-LEDGER-VENDAS-MULTICANAL-BI.md`
+  (renomeado, seção `## Pentest S10` + checklist de pendências fechado), `memory/progress.md`,
+  `memory/MODIFICATION_LOG.md` (esta entrada). Nenhum código de produção alterado.
+- **Status**: `PLAN-0020` agora `DONE` de verdade — checklist técnico (2026-07-07) + validação
+  visual + pentest S10 (2026-08-18), tudo fechado. Pendente de commit/push (aguardando aprovação
+  do usuário).

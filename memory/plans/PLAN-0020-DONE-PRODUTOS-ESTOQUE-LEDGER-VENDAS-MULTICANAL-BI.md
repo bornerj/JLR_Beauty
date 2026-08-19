@@ -1,6 +1,6 @@
 # PLAN-0020 — Produtos, Estoque Multi-Unidade (Ledger), Vendas Multicanal e BI por Papel
 
-**Status:** ✅ EXECUTADO e commitado/pushed (2026-07-06/07, commit `ee6a61a`) — núcleo produto+ledger+venda+BI operacional; checklist técnico (ondas 0-7, critérios de aceitação, travas S1-S9) fechado; rodada 1 de validação visual do usuário concluída (4 ajustes aplicados); testes automatizados das rotinas críticas implementados (23/23 PASS); Git Record completo. Falta só para virar DONE: confirmação final do usuário sobre a validação visual e o pentest manual S10 (isolamento entre unidades/franquias).
+**Status:** ✅ DONE (fechado em 2026-08-18) — núcleo produto+ledger+venda+BI operacional; checklist técnico (ondas 0-7, critérios de aceitação, travas S1-S9) fechado desde 2026-07-07 (commit `ee6a61a`, Git Record completo); rodada 1 de validação visual do usuário concluída (4 ajustes aplicados); testes automatizados das rotinas críticas (23/23 PASS). As 2 pendências finais fechadas em 2026-08-18: validação visual das 5 telas nativas no Admin V2 (o núcleo migrou do admin legado pro Admin V2 via `PLAN-0026`/`PLAN-0031`) e pentest manual S10 (16/16 PASS, isolamento entre unidades confirmado) — ver `## Pentest S10 (2026-08-18)`.
 **Data:** 2026-07-06
 **Escopo macro:** `apps/api` (schema Prisma, middleware auth, rotas catalog/orders, módulo admin/kpis, novos libs de estoque e escopo de unidade), `apps/web` (admin-products, admin-sales, admin-kpis/dashboard role-aware, SPA HomeProductsSection), infra Docker (restart do postgres)
 **Agentes de apoio:** `@orchestrator`, `@database-architect`, `@product-manager`, `@backend-specialist`, `@frontend-specialist`
@@ -267,7 +267,7 @@ Cruzamento com `prd_inventario_franquia.pdf`. **Coberto na PLAN-0020** (após as
 - [x] Endpoint cross-unit devolve só saldo, sem financeiro (S7).
 - [x] `/public/products` expõe flag coarse (`inStock`), não saldo exato (S8).
 - [x] RLS habilitada em `ProductStock` e `StockMovement` (rw-all + ro-select + default-deny) (S9).
-- [ ] Pentest manual replicando o padrão do PLAN-0018: staff de uma unidade/franquia não acessa dados de outra (S10) — **não executado nesta rodada**; recomendado antes do fechamento formal como DONE, análogo ao pentest do PLAN-0018.
+- [x] Pentest manual replicando o padrão do PLAN-0018: staff de uma unidade/franquia não acessa dados de outra (S10) — **executado em 2026-08-18**, ver `## Pentest S10 (2026-08-18)` abaixo. 16/16 testes PASS.
 
 ---
 
@@ -296,10 +296,37 @@ Cruzamento com `prd_inventario_franquia.pdf`. **Coberto na PLAN-0020** (após as
 
 **Testes automatizados (2026-07-07):** implementados para as rotinas críticas que não dependem de infraestrutura de banco de testes (ainda inexistente no projeto) — `stockLedger.test.ts` (7 casos: entrada/saída, bloqueio de saldo negativo, validação de quantidade, sync do cache global), `stockReservation.test.ts` (8 casos: reservar sem tocar no REAL, disponível insuficiente, confirmar, liberar idempotente, re-checagem pós-expiração confirmando e falhando, reserva já finalizada), `middleware/auth.test.ts` (8 casos: `resolveUnitScope`/`canAccessUnit` fail-closed para MASTER/ADMIN/MANAGER/PROFESSIONAL, cobrindo S1-S4). Fake mínimo de `Prisma.TransactionClient` em `lib/testHelpers/fakeStockTx.ts` (sem dependência nova) para não depender de Postgres real. Total 23/23 PASS (`npm run test` no `apps/api`), TS PASS. **Fora do escopo automatizado por exigir infra de banco de teste/HTTP:** rotas Express (`orders.ts`, `inventory.ts`) fim-a-fim e concorrência real com 2 sessões simultâneas — cobertas até aqui só pelo teste manual via API real (Onda 7) e pela revisão de lock (`SELECT ... FOR UPDATE`).
 
-**Pendências para DONE:**
-- [ ] Validação visual/manual do usuário — confirmação final do usuário de que a rodada 1 fechou todos os pontos (sem novo report pendente).
-- [ ] Pentest manual S10 (staff de uma unidade/franquia não acessa dados de outra), análogo ao pentest do PLAN-0018.
-- [ ] Fluxo Git completo (commit + push autorizados) → Git Record abaixo.
+**Pendências para DONE — todas fechadas em 2026-08-18:**
+- [x] Validação visual/manual do usuário — 5 telas nativas do Admin V2 (o núcleo deste plano migrou de admin-products/admin-sales/admin-kpis legado pro Admin V2 nativo entre o `PLAN-0026`/`PLAN-0031`) testadas ao vivo via browser real: Cadastros→Produtos (Movimentar/Histórico), Operação→Produtos (matriz CMV/margem), Operação→Lista (venda manual), Panorama (Valor em estoque), SPA público (Esgotado + seletor de quantidade). Todos os dados de teste revertidos após validação.
+- [x] Pentest manual S10 (staff de uma unidade/franquia não acessa dados de outra), análogo ao pentest do PLAN-0018 — ver `## Pentest S10 (2026-08-18)` abaixo.
+- [x] Fluxo Git completo (commit + push autorizados) → Git Record abaixo — já fechado desde 2026-07-07 (`ee6a61a`); nenhuma mudança de código nesta rodada, só validação (a atualização deste arquivo/`progress.md` entra num commit de documentação à parte).
+
+---
+
+## Pentest S10 (2026-08-18) — isolamento entre unidades/franquias
+
+**Método:** 2 usuários de teste criados via `POST /auth/register` (role CLIENT por padrão) e promovidos direto no banco — `Pentest S10 Unidade1` (id 16, `PROFESSIONAL`, `unitId=1` Parque da Cidade) e `Pentest S10 Unidade2 Manager` (id 17, `MANAGER`, `unitId=2` Birmann 20). Tokens obtidos via login real da API (sem forjar JWT). 16 requisições via `curl` direto na API, cobrindo escrita e leitura cross-unit, gating por papel e o endpoint cross-unit (S7). Usuários de teste e o único movimento de estoque real gerado (baixa de controle, revertida) apagados do banco ao final — banco confirmado idêntico ao estado anterior.
+
+| # | Teste | Esperado | Resultado |
+|---|---|---|---|
+| 1 | PROF1 (unit1) `GET /units/2/inventory/summary` | 403 | ✅ 403 "acesso negado" |
+| 2 | PROF1 `GET /units/2/inventory` | 403 | ✅ 403 |
+| 3 | PROF1 `GET /units/2/products/1/movements` | 403 | ✅ 403 |
+| 4 | PROF1 `GET /units/2/reservations` | 403 | ✅ 403 |
+| 5 | PROF1 `POST /units/2/products/1/stock/consumption` | 403 | ✅ 403 |
+| 6 | MGR2 (unit2) `POST /units/1/products/1/stock/entry` | 403 | ✅ 403 |
+| 7 | MGR2 `POST /units/1/products/1/stock/adjust` | 403 | ✅ 403 |
+| 8 | MGR2 `POST /orders` com `unitId:1` no body (unidade real é 2) | 403 | ✅ 403 "venda fora da unidade do usuario" (S3) |
+| 9 | PROF1 `GET /orders` (lista geral, admin-only) | 403 | ✅ 403 — endpoint é `requireAdmin`, staff nem chega a testar unidade |
+| 10 | PROF1 `GET /units/1/inventory/summary` (própria unidade — controle) | 200 | ✅ 200, dados da própria unidade |
+| 11 | MGR2 `GET /units/2/inventory/summary` (própria unidade — controle) | 200 | ✅ 200, dados da própria unidade |
+| 12 | PROF1 `GET /inventory/cross-unit?productId=1` (S7) | 200, só saldo | ✅ 200 — devolveu `unitId/unitName/isOnline/available` das 5 unidades, **zero campo financeiro** (sem preço/receita/custo) |
+| 13 | PROF1 `GET /dashboard/sales-insights?unitId=2` (tenta forçar outra unidade via query) | filtro ignorado, força unit1 | ✅ resposta veio com `filters:{unitId:1,sellerUserId:16}` — query string **completamente ignorada**, fail-closed |
+| 14 | MGR2 `GET /dashboard/sales-insights?unitId=1` (idem) | filtro ignorado, força unit2 | ✅ resposta veio com `filters:{unitId:2}` — dados reais da própria unidade (R$2.443,90/8 pedidos), nada de unit1 |
+| 15 | PROF1 (role PROFESSIONAL) `POST /units/1/products/1/stock/entry` **na própria unidade** (gating por papel, S6 — entrada é só gerente/admin) | 403 | ✅ 403 — bloqueado pelo papel, não pela unidade |
+| 16 | PROF1 `POST /units/1/products/1/stock/consumption` **na própria unidade** (controle positivo — confirma que os 403 acima são reais, não uma falha geral) | 201 | ✅ 201, `balanceAfter` correto — revertido em seguida |
+
+**Veredito:** 16/16 PASS. Nenhum vazamento cross-unit encontrado em leitura, escrita, BI ou no endpoint cross-unit; gating por papel (S6) também confirmado independente do isolamento por unidade. `resolveUnitScope`/`canAccessUnit`/`guardUnitAccess` funcionam fail-closed em todos os pontos testados, inclusive quando o cliente tenta forçar `unitId` via query string.
 
 ## Git Record of Delivery
 - **Step 1 (Pre-commit review):** 35 arquivos revisados (11 modificados em `apps/api`, 9 em `apps/web`, 3 em `memory/`, 12 novos incl. migrations/testes); validações executadas: `tsc --noEmit` (api+web) PASS, `npm run build` (api+web) PASS, `npm run test` (api) 23/23 PASS. `.claude/` deixado de fora do commit (fora de escopo).
