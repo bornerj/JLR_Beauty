@@ -9790,3 +9790,27 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260818_032518-PASS.md`.
 - **Status**: `PLAN-0020` agora `DONE` de verdade — checklist técnico (2026-07-07) + validação
   visual + pentest S10 (2026-08-18), tudo fechado. Pendente de commit/push (aguardando aprovação
   do usuário).
+
+## 2026-08-18 — SESSION AUDIT — PASS (continuação da tarde/noite)
+
+Sessão encerrada a pedido do usuário ("salve tudo conforme as regras do projeto e amanhã
+continuamos").
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — nenhuma `DECISION-*` tocada, nenhuma mudança estrutural |
+| State Integrity | PASS — `PLAN-0025` e `PLAN-0020` fechados `DONE`; `PLAN-0019`/`0021` seguem com seu estado pré-existente, não tocados |
+| Operational Memory | PASS — `MODIFICATION_LOG` e planos atualizados a cada marco |
+| Debug Memory | N/A — nenhum bug encontrado ou corrigido nesta leva |
+| Technical Validation | N/A (lint/build/test) — zero arquivos de código alterados, só `memory/*.md`; validação real desta leva foi E2E (5 telas via browser real + 16 testes de pentest via `curl`) |
+| Regression Risk | PASS — RBAC/isolamento por unidade exercitado ao vivo (pentest), nenhum código alterado, nenhuma regressão |
+| Git Governance | PASS — commits `6a971cd`+`fa84663`, push `de69c51..fa84663`, ambos com aprovação explícita e separada |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260818_234842-PASS.md`.
+
+**Resumo do que foi feito nesta leva:** usuário pediu levantamento de quais `PLAN-XXXX` estavam sem `-DONE-` no nome do arquivo. Achados: `PLAN-0019` (bloqueado, conhecido), `PLAN-0020` (Estoque — checklist técnico completo desde 2026-07-07, 2 pendências abertas), `PLAN-0021` (falta só commit/push, conhecido), `PLAN-0025` (Polimento UX — na verdade já **estava** commitado/pushado desde 2026-08-15, só faltava o rename). `PLAN-0025` regularizado (rename + registro corrigido). `PLAN-0020`: usuário pediu explicação do plano e em quais telas validar; as 5 telas equivalentes nativas no Admin V2 (o núcleo migrou do admin legado via `PLAN-0026`/`PLAN-0031`) foram testadas ao vivo via browser real (Cadastros→Produtos, Operação→Produtos, Operação→Lista→Venda manual, Panorama, SPA público) — todas OK, dados de teste revertidos. Pentest manual S10 executado a pedido explícito do usuário: 2 usuários de teste reais (`PROFESSIONAL`/`MANAGER` de unidades distintas, tokens via login real da API), 16 requisições cobrindo isolamento cross-unit em leitura/escrita/BI + gating por papel — **16/16 PASS**, nenhum vazamento. Ambos os planos fechados `DONE`, commitados (`6a971cd`, `fa84663`) e pushados (`de69c51..fa84663`).
+
+**Pendente para a próxima sessão:**
+- Nenhuma pendência de código aberta desta leva.
+- Itens de sessões anteriores, ainda sem decisão do usuário (não bloqueiam nada): remover/limpar as chaves órfãs de Textos das Páginas/Galeria de Mídias dos antigos flip-cards (`PLAN-0028`); risco de duplicação equivalente ao `ERR-0058` em `unit-health/service.ts`/`dashboardSalesInsights.ts` (não verificado).
+- Planos pré-existentes sem `-DONE-`, não tocados nesta sessão: `PLAN-0019` (TLS/HTTPS, bloqueado por domínio), `PLAN-0021` (Menu Admin — falta só commit/push).
