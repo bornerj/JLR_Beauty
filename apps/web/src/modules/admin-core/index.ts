@@ -1,1 +1,0 @@
-export { initAdminPage } from "./behavior";

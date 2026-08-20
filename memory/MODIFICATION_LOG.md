@@ -9865,3 +9865,17 @@ Usuário decidiu aposentar o Admin legado (`DECISION-017`, supera `DECISION-013`
 **Validações:** `tsc -b` (web) PASS em cada onda; rebuild Docker + validação visual real (popover de infra, botão Voltar); suíte E2E rodada de verdade contra o Docker ao vivo (`membership-grid` PASS, `flows` "Admin flows" PASS, `flows` "franquias form" PASS — 1 falha fora de escopo não tocada, "home cart and checkout flow", área não relacionada).
 
 **Status:** Ondas 0-3 commitadas e pushadas (aprovação explícita do usuário). Onda 4 (remoção física dos 24 módulos legados) e Onda 5 (validação final) seguem pendentes pra próxima etapa da sessão.
+
+## 2026-08-20 — Registro de EXECUÇÃO (PLAN-0033 — Ondas 4-5, remoção física + validação final)
+
+**Onda 4 (remoção física):** rota `/admin`/`admin.html` removida de `App.tsx`; `apps/web/src/pages/Admin.tsx` e `apps/web/src/components/pages/AdminContent.tsx` (709 linhas) removidos; os 24 módulos legados (`apps/web/src/modules/admin-*`, incluindo `admin-docker-status` já superado pela Onda 1) removidos — **82 arquivos apagados no total**. `tsc -b` (web) compilou limpo na primeira tentativa — confirma o RAG original (zero acoplamento real entre Admin V2 e o legado). Checagem extra em `nginx/`/`docker-compose.yml`/`Dockerfile` não achou nenhuma referência viva restante.
+
+**Onda 5 (validação final):**
+- Bundle: **1.435 KB → 901 KB (−534 KB, ~37% menor)**; gzip 295→205 KB; 301→215 módulos.
+- Rebuild Docker + validação visual real: Panorama/Operação/Rede/Clientes/Crescimento/Cadastros/Sistema navegados, nada quebrado; `/admin` confirmado sem renderizar nada (React Router sem rota, `HTTP 200` por ser SPA — nginx serve `index.html` pra qualquer path, quem decide o conteúdo é o cliente).
+- **Achado corrigido**: card "Infra" do hub de Sistema citava o modal do legado (já aposentado) — atualizado (`SistemaHubView.tsx`), removido da lista de desabilitados já que a função virou o ícone do topbar (Onda 1).
+- **Achado operacional**: dados de teste ficaram órfãos no banco real 3x ao longo da sessão (produtos "Produto E2E...", `DELETE /products/:id` falha pra produto com histórico de estoque — `ERR-0053`, pré-existente, fora de escopo — e o cleanup dos testes ignora esse erro). Limpo via SQL direto a cada vez; banco confirmado de volta ao estado real (9 produtos) na validação final.
+- `apps/api` `tsc -b` + `npm run test` — 167/167 PASS, backend intocado.
+- Suíte E2E completa rodada contra o Docker ao vivo — achou uma 3ª falha fora do escopo original (`order-dashboard-lifecycle.spec.ts`, mesma classe do `ERR-0072` — `unitId`/`initialStock` faltando + `markAsPaid` default; usuário autorizou corrigir também, `ERR-0073`). **Suíte final: 4/5 verde** (`membership-grid`, `flows` "Admin flows", `flows` "franquias form", `order-dashboard-lifecycle`). 1 falha remanescente, genuinamente pré-existente e fora de escopo, não tocada: `flows.spec.ts` "home cart and checkout flow" (carrinho do site público).
+
+**Status:** `PLAN-0033` — Ondas 0-5 completas. Falta só Onda 6 (fechamento formal: Git Record, rename `-DONE-`) e a aprovação de commit/push desta leva (82 remoções + 2 achados extras).

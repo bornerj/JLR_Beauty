@@ -1,7 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import RequireAdmin from "./RequireAdmin";
-import AdminPage from "../pages/Admin";
 import AdminV2Page from "../pages/AdminV2";
 import AssinaturasPage from "../pages/Assinaturas";
 import DbConsolePage from "../pages/DbConsole";
@@ -16,7 +15,6 @@ export default function App() {
         <Route path="assinaturas.html" element={<Navigate to="/assinaturas" replace />} />
         <Route path="franquias.html" element={<Navigate to="/franquias" replace />} />
         <Route path="checkout.html" element={<Navigate to="/?checkout=1" replace />} />
-        <Route path="admin.html" element={<Navigate to="/admin" replace />} />
         <Route path="db-console.html" element={<Navigate to="/db-console" replace />} />
         <Route element={<PublicLayout />}>
           <Route index element={<HomePage />} />
@@ -24,14 +22,6 @@ export default function App() {
           <Route path="franquias" element={<FranquiasPage />} />
           <Route path="checkout" element={<Navigate to="/?checkout=1" replace />} />
         </Route>
-        <Route
-          path="admin"
-          element={
-            <RequireAdmin>
-              <AdminPage />
-            </RequireAdmin>
-          }
-        />
         <Route
           path="admin-v2/*"
           element={

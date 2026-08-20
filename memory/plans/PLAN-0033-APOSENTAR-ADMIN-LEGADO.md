@@ -70,19 +70,21 @@ Remover fisicamente da base local tudo que é exclusivo do Admin legado (24 mód
 - [x] **Achados em cascata durante a execução real da suíte** (todos pré-existentes, nenhum causado pela reescrita — o teste não rodava há tempo): `POST /orders` sem `unitId` obrigatório (S2, `PLAN-0020`); 6 enums em inglês que deveriam ser PT-BR (`APROVADO`/`PENDENTE`/`ATIVA`/`CONFIRMADO`/`PAGO`/`CANCELADO`); `POST /appointments` exige profissional já vinculado ao serviço (`ProfessionalService`) **e** turno (`ProfessionalShift`) cobrindo o horário exato — o teste usava `new Date()` sem alinhar a nada disso. Todos corrigidos (autorização explícita do usuário pra investigar o bug de agendamento).
 - [x] Suíte rodada de verdade contra o Docker ao vivo (`DATABASE_URL` apontando pro IP do container Postgres, já que não há porta publicada pro host — achado de ambiente, não de código): `membership-grid.spec.ts` PASS, `flows.spec.ts` "Admin flows" PASS, `flows.spec.ts` "franquias form" PASS. 1 falha remanescente **fora de escopo**, não tocada: "home cart and checkout flow" (carrinho do site público) — área não relacionada ao Admin legado nem ao bug de agendamento autorizado; registrada como achado separado, não corrigida aqui.
 
-## Onda 4 — Remoção física
-- [ ] Remover a rota `/admin`/`admin.html` de `App.tsx`.
-- [ ] Remover `apps/web/src/pages/Admin.tsx`.
-- [ ] Remover `apps/web/src/components/pages/AdminContent.tsx`.
-- [ ] Remover os 23 módulos legados restantes de `apps/web/src/modules/admin-*` (todos exceto `admin-docker-status`, já portado/esvaziado na Onda 1).
-- [ ] `tsc -b` (web) — confirmar zero import quebrado.
+## Onda 4 — Remoção física ✅ CONCLUÍDA
+- [x] Rota `/admin` e o redirect `admin.html` removidos de `App.tsx`.
+- [x] `apps/web/src/pages/Admin.tsx` removido.
+- [x] `apps/web/src/components/pages/AdminContent.tsx` removido.
+- [x] Os 24 módulos legados removidos de `apps/web/src/modules/admin-*` — incluindo `admin-docker-status` (já 100% superado pela Onda 1, zero import restante confirmado via grep antes de apagar).
+- [x] `tsc -b` (web) — **compilação limpa, zero import quebrado**, confirma o RAG original (Admin V2 nunca dependeu de nada do legado). Checagem extra: `grep` em `apps/web/src` e na infra (`nginx/`, `docker-compose.yml`, `Dockerfile`) não achou nenhuma referência viva restante (só 4 comentários históricos, documentação, sem efeito funcional).
 
-## Onda 5 — Validação final
-- [ ] `npm run build` (web) — confirmar bundle menor que antes (registrar tamanho antes/depois).
-- [ ] Rebuild Docker (`web`) + `up -d --force-recreate`.
-- [ ] Validação visual real via browser: Admin V2 inteiro navegado (Panorama, Operação, Rede, Clientes, Crescimento, Cadastros, Sistema) confirmando nada quebrado; botão "Voltar" e ícone de status conferidos; `/admin` confirmado 404.
-- [ ] `apps/api` `tsc -b` + `npm run test` — confirmar 167/167 PASS sem mudança (backend intocado, checagem por precaução).
-- [ ] `npx playwright test` — suíte E2E completa verde.
+## Onda 5 — Validação final ✅ CONCLUÍDA (com 2 achados fora de escopo documentados)
+- [x] `npm run build` (web) — **901 KB** (era 1.435 KB antes da Onda 4 — **−534 KB, ~37% menor**; gzip 295→205 KB, ~30% menor); 301→215 módulos transformados.
+- [x] Rebuild Docker (`web`) + `up -d --force-recreate` (2 rodadas — 1ª após a remoção física, 2ª após o achado extra abaixo).
+- [x] Validação visual real via browser: Panorama, Operação (Kanban completo), Rede, Clientes, Crescimento (Pipeline), Cadastros (hub + Produtos), Sistema navegados — tudo renderizando normal. Botão "← Voltar" e ícone de status conferidos. `http://localhost/admin` → página em branco, `root` do React vazio (React Router sem rota correspondente); `HTTP 200` (comportamento normal de SPA — nginx serve o `index.html` pra qualquer rota, quem decide o que renderizar é o React Router do lado do cliente; não é um 404 de servidor, mas o efeito é o mesmo: nada do legado aparece).
+- [x] **Achado extra corrigido**: o card "Infra" do hub de Sistema ainda dizia "hoje só como modal flutuante no Admin" (legado, agora inexistente) — desatualizado desde a Onda 1. Removido da lista de desabilitados (`SistemaHubView.tsx`) já que a função existe agora no próprio topbar do Admin V2.
+- [x] `apps/api` `tsc -b` + `npm run test` — **167/167 PASS**, backend intocado, confirmado.
+- [x] **Achado operacional**: dados de teste do `PLAN-0032`/`0033` (produtos "Produto E2E...", 2 pedidos vinculados) ficaram órfãos no banco real — `DELETE /products/:id` falha pra produto com histórico de estoque (`ERR-0053`, bug pré-existente conhecido, fora de escopo) e o `cleanup` do teste ignora esse erro silenciosamente. Limpo via SQL direto (2 rodadas, confirmado banco de volta a 9/9 produtos reais).
+- [x] `npx playwright test` (suíte completa) — as 2 telas alvo da Onda 3 (`flows.spec.ts` "Admin flows", `membership-grid.spec.ts`) **PASS**. Achou uma 3ª falha (`order-dashboard-lifecycle.spec.ts`, mesma classe do `ERR-0072`, arquivo nunca tocado) — usuário autorizou corrigir também: `ERR-0073` registrado, corrigido (`unitId`, `initialStock`+`initialStockUnitId`, `markAsPaid: false`), **PASS** confirmado. **Suíte final: 4/5 verde.** 1 falha remanescente, pré-existente e genuinamente fora de escopo (não corrigida): `flows.spec.ts` "home cart and checkout flow" (carrinho do site público, nada a ver com Admin/pedidos/agendamento). Dados de teste (produtos com histórico de estoque, `ERR-0053` bloqueia `DELETE` via API) limpos do banco real via SQL direto após cada rodada de validação.
 
 ## Onda 6 — Memória e fechamento
 - [ ] `DEBUG-HISTORY.md`: sem entrada nova esperada (não é bug fix) — só se algo quebrar na validação.

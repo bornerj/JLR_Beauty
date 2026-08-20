@@ -8,10 +8,14 @@ import { HubCard } from "../shell/HubCard";
  * (`native: true`) só quando a tela correspondente é entregue. **Onda 10 (Testes) fechou o
  * hub inteiro** — as 6 telas navegáveis de Sistema já são nativas.
  *
- * Segurança e Infra ficam desabilitadas: não existe `data-view` dedicada pra elas no
- * Admin legado hoje — Segurança é feature de backend (AuditLog/RLS) sem tela própria,
- * Infra só existe como modal flutuante (Docker Status Modal), não como view navegável.
- * Nunca fabricado link falso — ver `DrillCard`/`AdminSidebar` para o mesmo padrão.
+ * Segurança fica desabilitada: não existe tela dedicada pra ela — é feature de backend
+ * (AuditLog/RLS) sem UI própria. Nunca fabricado link falso — ver `DrillCard`/`AdminSidebar`
+ * para o mesmo padrão.
+ *
+ * `PLAN-0033` — "Infra" saiu da lista de desabilitados: o widget de status (antes um modal
+ * flutuante só do Admin legado, agora aposentado) foi portado pro próprio topbar do Admin V2
+ * (`DockerStatusButton.tsx`, ícone no canto direito) — deixou de ser "não existe", só não é
+ * uma tela dedicada dentro deste hub.
  */
 
 const CARDS = [
@@ -24,8 +28,7 @@ const CARDS = [
 ];
 
 const DISABLED_CARDS = [
-  { icon: "security", label: "Segurança", disabledReason: "sem tela dedicada no Admin ainda" },
-  { icon: "dns", label: "Infra", disabledReason: "hoje só como modal flutuante no Admin" },
+  { icon: "security", label: "Segurança", disabledReason: "sem tela dedicada ainda" },
 ];
 
 export function SistemaHubView() {

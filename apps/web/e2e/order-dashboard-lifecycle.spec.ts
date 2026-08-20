@@ -143,24 +143,37 @@ test("order lifecycle e2e: pago, nao pago, cancelado stripe, despacho, entrega e
       auth.token,
       "/product-statuses"
     );
+    const units = await apiGet<Array<{ id: number; isOnline?: boolean }>>(request, auth.token, "/units");
     const categoryId = productCategories[0]?.id;
     const statusId = productStatuses[0]?.id;
+    const unitId = units.find((unit) => !unit.isOnline)?.id ?? units[0]?.id;
     expect(categoryId, "product category required for E2E").toBeTruthy();
     expect(statusId, "product status required for E2E").toBeTruthy();
+    expect(unitId, "unit required for E2E").toBeTruthy();
 
+    // `PLAN-0033` — achado pré-existente (mesma classe do `ERR-0072`, arquivo diferente):
+    // `stock` não existe em `productSchema` (só `initialStock`+`initialStockUnitId`, o
+    // estoque é por unidade via ledger desde o `PLAN-0020`) — era ignorado silenciosamente,
+    // produto sempre nascia com saldo 0. `unitId` também faltava em `POST /orders`,
+    // obrigatório pra ADMIN/MASTER (S2, `PLAN-0020`).
     const product = await apiPost<{ id: number }>(request, auth.token, "/products", {
       name: `Produto Pedido E2E ${Date.now()}`,
       price: 25,
-      stock: 20,
       productCategoryId: Number(categoryId),
       productStatusId: Number(statusId),
       status: "Ativo",
+      initialStock: 20,
+      initialStockUnitId: unitId,
     });
     createdProductId = product.id;
 
+    // `markAsPaid` tem `default(true)` no schema (venda de balcão nasce paga por padrão,
+    // `PLAN-0020` Onda 3) — o teste precisa do pedido nascer PENDENTE de propósito, pra
+    // testar o bloqueio 409 de status/fulfillment antes do pagamento ser aprovado.
     const firstOrder = await apiPost<{ id: number }>(request, auth.token, "/orders", {
-      items: [{ productId: product.id, quantity: 2, unitPrice: 25 }],
-      total: 50,
+      items: [{ productId: product.id, quantity: 2 }],
+      unitId,
+      markAsPaid: false,
       customerName: "Pedido E2E Fluxo 1",
       customerEmail: `pedido1.${Date.now()}@example.com`,
       customerPhone: "+55 (11) 98888-1111",
@@ -243,8 +256,8 @@ test("order lifecycle e2e: pago, nao pago, cancelado stripe, despacho, entrega e
 
     const stockBeforeSecondOrder = await getProductStockById(request, auth.token, product.id);
     const secondOrder = await apiPost<{ id: number }>(request, auth.token, "/orders", {
-      items: [{ productId: product.id, quantity: 1, unitPrice: 25 }],
-      total: 25,
+      items: [{ productId: product.id, quantity: 1 }],
+      unitId,
       customerName: "Pedido E2E Fluxo 2",
       customerEmail: `pedido2.${Date.now()}@example.com`,
       customerPhone: "+55 (11) 97777-2222",
@@ -300,6 +313,11 @@ test("order lifecycle e2e: pago, nao pago, cancelado stripe, despacho, entrega e
       await prisma.order.deleteMany({ where: { id: { in: createdOrderIds } } });
     }
     if (createdProductId) {
+      // `PLAN-0033` — `StockMovement.product` não tem `onDelete: Cascade` (`ERR-0053`,
+      // pré-existente, fora de escopo consertar aqui): produto com histórico de estoque
+      // (este agora tem, via `initialStock` real) bloqueia a FK. Limpa o ledger primeiro.
+      await prisma.stockMovement.deleteMany({ where: { productId: createdProductId } });
+      await prisma.productStock.deleteMany({ where: { productId: createdProductId } });
       await prisma.product.deleteMany({ where: { id: createdProductId } });
     }
   }
