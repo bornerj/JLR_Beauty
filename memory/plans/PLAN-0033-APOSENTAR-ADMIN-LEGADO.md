@@ -47,27 +47,28 @@ Remover fisicamente da base local tudo que é exclusivo do Admin legado (24 mód
 
 ---
 
-## Onda 0 — Rede de segurança (antes de tocar em qualquer arquivo)
-- [ ] `git status` limpo (nada não commitado).
-- [ ] `git fetch` + confirmar `origin/main` == `HEAD` local (nada só local, nada só remoto).
-- [ ] Criar branch `archive/admin-legado` a partir do `HEAD` atual (ainda com tudo).
-- [ ] **Push da branch pro GitHub** (`git push origin archive/admin-legado`) — a rede de segurança precisa estar no remoto, não só local.
-- [ ] Confirmar no GitHub (via `gh` ou UI) que a branch existe remotamente com o conteúdo completo.
+## Onda 0 — Rede de segurança (antes de tocar em qualquer arquivo) ✅ CONCLUÍDA
+- [x] `git status` limpo — commit `14d5531` (`DECISION-017`+`PLAN-0033`), pushado antes de prosseguir.
+- [x] `git fetch` + confirmar `origin/main` == `HEAD` local — ambos em `14d5531`, sincronizado.
+- [x] Criar branch `archive/admin-legado` a partir do `HEAD` atual (`14d5531`, ainda com tudo).
+- [x] **Push da branch pro GitHub** — `git push origin archive/admin-legado` → `* [new branch] archive/admin-legado -> archive/admin-legado`.
+- [x] Confirmado remotamente: `git ls-remote origin archive/admin-legado` → `14d5531` (idêntico ao local); `git ls-tree` na branch confirma `AdminContent.tsx`/`admin-goals`/etc. presentes.
 
-## Onda 1 — Portar o widget de status de infra
-- [ ] Mover `useDockerHealth.ts` pra `apps/web/src/admin-v2/shell/` (ou `admin-v2/shared/`).
-- [ ] Novo componente pequeno (`DockerStatusButton.tsx` ou similar): círculo com ícone `info`, cor conforme status (mesma lógica `online`/`offline`/`unknown` do `ERR-0069`), abre o modal existente (`DockerStatusModal.tsx`, também realocado) ao clicar.
-- [ ] Inserir no `AdminTopbar.tsx`, canto direito.
-- [ ] Validar ao vivo: status real (API/Postgres/nginx rodando) refletido no ícone; clique abre o modal com a informação certa.
+## Onda 1 — Portar o widget de status de infra ✅ CONCLUÍDA
+- [x] `useDockerHealth.ts` realocado pra `apps/web/src/admin-v2/shared/` (lógica idêntica, só endereço).
+- [x] Componente novo `DockerStatusButton.tsx` (`admin-v2/shell/`): círculo com ícone `info`, borda vermelha (`state-critical`) se algum serviço offline, popover ao clicar com as 4 linhas (Nginx/API/Web/PostgreSQL) usando os tokens `state-healthy`/`state-critical`/`state-attention` (mesmo padrão de `admin-v2/shared/health.ts`) — sem depender do CSS do legado (`legacy.css` fica intocado, é usado também pelo menu público).
+- [x] Inserido no `AdminTopbar.tsx`, canto direito, depois dos presets de período.
+- [x] Validado ao vivo: popover abre mostrando os 4 serviços "Online" (confirma `docker ps` real); ícone renderiza certo.
 
-## Onda 2 — Fix do botão "← Admin"
-- [ ] `AdminTopbar.tsx`: texto "← Voltar", `to="/"`.
-- [ ] Validar clique leva pra SPA pública.
+## Onda 2 — Fix do botão "← Admin" ✅ CONCLUÍDA
+- [x] `AdminTopbar.tsx`: texto "← Voltar", `to="/"`.
+- [x] Validado ao vivo via JS (`href="/"`, texto "← Voltar" confirmados no DOM real).
 
-## Onda 3 — Reescrever/retirar os 2 specs E2E acoplados ao legado
-- [ ] `membership-grid.spec.ts`: reescrever contra `/admin-v2/cadastros/planos`.
-- [ ] `flows.spec.ts` bloco "Admin flows": avaliar cobertura já existente no Admin V2 (ondas já validadas com E2E real, ver `MODIFICATION_LOG`); reescrever o que for cobertura única, remover o resto.
-- [ ] Rodar a suíte E2E (`npx playwright test`) confirmando tudo verde antes de prosseguir.
+## Onda 3 — Reescrever/retirar os 2 specs E2E acoplados ao legado ✅ CONCLUÍDA
+- [x] `membership-grid.spec.ts`: reescrito contra `/admin-v2/cadastros/planos` (locators por role/texto, sem `data-*` do legado). Rodado ao vivo contra o Docker real: **PASS**.
+- [x] `flows.spec.ts` bloco "Admin flows": criação de usuário/serviço/produto virou API direta (a verificação já era feita via API de qualquer forma); ajuste de estoque passou a usar o endpoint real do ledger (`stock/adjust`, não `PATCH /products/:id` — esse campo nunca existiu no schema). Bloco final de verificação por UI reescrito pras 3 telas nativas com equivalente real (Testes, Usuários, Lista de Pedidos); 2 sem equivalente (Assinantes, grid de agendamentos) removidas e documentadas inline (comentário no teste), não substituídas.
+- [x] **Achados em cascata durante a execução real da suíte** (todos pré-existentes, nenhum causado pela reescrita — o teste não rodava há tempo): `POST /orders` sem `unitId` obrigatório (S2, `PLAN-0020`); 6 enums em inglês que deveriam ser PT-BR (`APROVADO`/`PENDENTE`/`ATIVA`/`CONFIRMADO`/`PAGO`/`CANCELADO`); `POST /appointments` exige profissional já vinculado ao serviço (`ProfessionalService`) **e** turno (`ProfessionalShift`) cobrindo o horário exato — o teste usava `new Date()` sem alinhar a nada disso. Todos corrigidos (autorização explícita do usuário pra investigar o bug de agendamento).
+- [x] Suíte rodada de verdade contra o Docker ao vivo (`DATABASE_URL` apontando pro IP do container Postgres, já que não há porta publicada pro host — achado de ambiente, não de código): `membership-grid.spec.ts` PASS, `flows.spec.ts` "Admin flows" PASS, `flows.spec.ts` "franquias form" PASS. 1 falha remanescente **fora de escopo**, não tocada: "home cart and checkout flow" (carrinho do site público) — área não relacionada ao Admin legado nem ao bug de agendamento autorizado; registrada como achado separado, não corrigida aqui.
 
 ## Onda 4 — Remoção física
 - [ ] Remover a rota `/admin`/`admin.html` de `App.tsx`.

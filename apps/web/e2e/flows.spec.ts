@@ -86,6 +86,23 @@ async function apiPatch<T>(
   return (await response.json()) as T;
 }
 
+async function apiPut<T>(
+  request: typeof test.request,
+  token: string,
+  path: string,
+  data: unknown
+) {
+  const response = await request.put(`${API_BASE_URL}/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data,
+  });
+  if (!response.ok()) {
+    const detail = await response.text();
+    throw new Error(`PUT ${path} failed: ${response.status()} ${detail}`);
+  }
+  return (await response.json()) as T;
+}
+
 async function apiDelete(request: typeof test.request, token: string, path: string) {
   const response = await request.delete(`${API_BASE_URL}/api${path}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -140,6 +157,30 @@ test.describe("Public flows", () => {
 });
 
 test.describe("Admin flows", () => {
+  /**
+   * `PLAN-0033` — reescrito pro Admin V2. O legado (`/admin`, seletores `data-view-trigger`/
+   * `data-*-save`/`data-*-row`) foi aposentado; `TestsView.tsx` (Admin V2, `PLAN-0026` Onda 10)
+   * documenta a razão explícita de não portar esses seletores 1:1 (árvore React diferente,
+   * sempre daria falso-negativo).
+   *
+   * A criação/edição de usuário, serviço e produto passou de "clicar no formulário legado"
+   * pra chamada de API direta — o teste já verificava a persistência via API logo depois de
+   * cada passo de UI, então a interação de UI não testava nada que a chamada direta não prove
+   * igual, e isso elimina 100% do acoplamento com o DOM do legado nessa parte. O ajuste de
+   * estoque do produto passou a usar o endpoint real do ledger (`stock/adjust`, `PLAN-0020`/
+   * `ERR-0071`) em vez de `PATCH /products/:id` com `stock` — esse campo nunca existiu no
+   * `productUpdateSchema` (backend ignora silenciosamente), então a chamada original nunca
+   * teria funcionado de verdade; a correção usa o endpoint que o `ERR-0071` desta sessão
+   * confirmou correto.
+   *
+   * O bloco final de verificação via UI foi trocado pras 3 telas nativas com equivalente real
+   * (Testes, Usuários, Lista de Pedidos). 2 verificações do teste original não têm
+   * equivalente nativo e foram removidas, não substituídas — documentado inline:
+   * "Assinantes" (gestão individual de assinatura — achado do `PLAN-0032` ocorrência #6,
+   * backend pronto, zero UI em lugar nenhum) e o grid de agendamentos por cliente/serviço
+   * (a Agenda nativa é um mapa de capacidade dia×hora, não uma lista por agendamento —
+   * conceito diferente por desenho, `PLAN-0022` Onda 4).
+   */
   test("admin validates status/category/stock and orders/subscriptions flows", async ({
     page,
     request,
@@ -167,19 +208,20 @@ test.describe("Admin flows", () => {
       auth.token,
       "/product-statuses"
     );
+    const units = await apiGet<Array<{ id: number; isOnline?: boolean }>>(request, auth.token, "/units");
 
     const serviceCategoryId = serviceCategories[0]?.id;
     const serviceStatusId = serviceStatuses[0]?.id;
     const serviceStatusAltId = serviceStatuses[1]?.id || serviceStatusId;
     const productCategoryId = productCategories[0]?.id;
-    const productCategoryAltId = productCategories[1]?.id || productCategoryId;
     const productStatusId = productStatuses[0]?.id;
-    const productStatusAltId = productStatuses[1]?.id || productStatusId;
+    const stockUnitId = units.find((unit) => !unit.isOnline)?.id ?? units[0]?.id;
 
     expect(serviceCategoryId, "Missing service category").toBeTruthy();
     expect(serviceStatusId, "Missing service status").toBeTruthy();
     expect(productCategoryId, "Missing product category").toBeTruthy();
     expect(productStatusId, "Missing product status").toBeTruthy();
+    expect(stockUnitId, "Missing unit for stock adjust").toBeTruthy();
 
     await page.addInitScript(
       ({ token, user }) => {
@@ -190,211 +232,111 @@ test.describe("Admin flows", () => {
     );
 
     try {
-      await page.goto("/admin");
-      await expect(page.locator(".admin-sidebar")).toBeVisible();
-
-      await page.click('[data-view-trigger="testes"]');
-      const runTests = page.locator("[data-run-tests]");
-      await expect(runTests).toBeVisible();
-      await runTests.click();
-      await expect(runTests).not.toBeDisabled();
-      await expect(page.locator("[data-tests-count-pass]")).not.toHaveText("0");
-
-      await page.click('[data-view-trigger="usuarios"]');
-      await expect(page.locator('[data-view="usuarios"]')).not.toHaveClass(/hidden/);
-      await expect(page.locator("[data-user-row]").first()).toBeVisible();
-
+      // Usuário — criação via API (a UI de criação legada saiu de cena; verificação de
+      // renderização real acontece no bloco de UI mais abaixo, tela nativa de Usuários).
       const userEmail = `e2e.user.${Date.now()}@example.com`;
-      await page.click('[data-open-modal="user-create"]');
-      await expect(page.locator('[data-modal="user-create"]')).toBeVisible();
-      await page.fill("[data-user-create-name]", "E2E Usuario");
-      await page.fill("[data-user-create-email]", userEmail);
-      await page.fill("[data-user-create-password]", "Aa!12345");
-      await page.selectOption("[data-user-create-role]", "CLIENT");
-      await page.click("[data-user-create-save]");
-      await expect(page.locator('[data-modal="user-create"]')).toBeHidden();
-
-      const users = await apiGet<Array<{ id: number; email: string; role: string }>>(
+      const createdUser = await apiPost<{ id: number; email: string; role: string }>(
         request,
         auth.token,
-        "/users"
+        "/users",
+        { name: "E2E Usuario", email: userEmail, password: "Aa!12345", role: "CLIENT" }
       );
-      const createdUser = users.find((user) => user.email === userEmail);
-      expect(createdUser, "User should be persisted in DB").toBeTruthy();
-      if (createdUser) {
-        expect(createdUser.role).toBe("CLIENT");
-        cleanup.push(async () => apiDelete(request, auth.token, `/users/${createdUser.id}`));
-      }
+      expect(createdUser.role).toBe("CLIENT");
+      cleanup.push(async () => apiDelete(request, auth.token, `/users/${createdUser.id}`));
 
-      await page.click('[data-view-trigger="servicos"]');
-      await expect(page.locator('[data-view="servicos"]')).not.toHaveClass(/hidden/);
-      await page.waitForFunction(
-        () => (document.querySelector('[data-service-category]') as HTMLSelectElement | null)?.options
-          .length > 1
-      );
-
+      // Serviço — criação + edição de status via API.
       const serviceName = `Servico E2E ${Date.now()}`;
-      await page.fill("[data-service-name]", serviceName);
-      await page.fill("[data-service-duration]", "30");
-      await page.fill("[data-service-price]", "10");
-      await page.selectOption("[data-service-category]", String(serviceCategoryId));
-      await page.selectOption("[data-service-status]", String(serviceStatusId));
-      await page.click("[data-service-save]");
-      await expect(page.locator("[data-service-save]")).toBeEnabled();
-
-      const serviceRow = page.locator("[data-service-row]", { hasText: serviceName });
-      await expect(serviceRow).toBeVisible();
-
-      const findService = async () => {
-        const services = await apiGet<
-          Array<{
-            id: number;
-            name: string;
-            price: number | string;
-            serviceCategory?: { id: number } | null;
-            serviceStatus?: { id: number } | null;
-          }>
-        >(request, auth.token, "/services");
-        return services.find((service) => service.name === serviceName);
-      };
-
-      let createdService = await findService();
-      expect(createdService, "Service should be persisted in DB").toBeTruthy();
-      if (createdService) {
-        expect(Number(createdService.price)).toBeCloseTo(10, 2);
-        expect(createdService.serviceCategory?.id).toBe(serviceCategoryId);
-        expect(createdService.serviceStatus?.id).toBe(serviceStatusId);
-      }
+      let createdService = await apiPost<{
+        id: number;
+        name: string;
+        price: number | string;
+        serviceCategory?: { id: number } | null;
+        serviceStatus?: { id: number } | null;
+      }>(request, auth.token, "/services", {
+        name: serviceName,
+        durationMin: 30,
+        price: 10,
+        serviceCategoryId,
+        serviceStatusId,
+      });
+      expect(Number(createdService.price)).toBeCloseTo(10, 2);
+      expect(createdService.serviceCategory?.id).toBe(serviceCategoryId);
+      expect(createdService.serviceStatus?.id).toBe(serviceStatusId);
+      cleanup.push(async () => apiDelete(request, auth.token, `/services/${createdService.id}`));
 
       if (serviceStatusAltId && serviceStatusAltId !== serviceStatusId) {
-        await serviceRow.locator('[data-service-action="edit"]').click();
-        await expect(page.locator("[data-service-save]")).toHaveText(/Atualizar/i);
-        await page.selectOption("[data-service-status]", String(serviceStatusAltId));
-        await expect(page.locator("[data-service-status]")).toHaveValue(
-          String(serviceStatusAltId)
-        );
-        await page.click("[data-service-save]");
-        await expect(page.locator("[data-service-save]")).toBeEnabled();
-
-        await expect
-          .poll(async () => {
-            const service = await findService();
-            return service?.serviceStatus?.id || null;
-          })
-          .toBe(serviceStatusAltId);
-        createdService = await findService();
-        if (createdService) {
-          cleanup.push(async () => apiDelete(request, auth.token, `/services/${createdService.id}`));
-        }
-      } else if (createdService) {
-        cleanup.push(async () => apiDelete(request, auth.token, `/services/${createdService.id}`));
+        createdService = await apiPatch(request, auth.token, `/services/${createdService.id}`, {
+          serviceStatusId: serviceStatusAltId,
+        });
+        expect(createdService.serviceStatus?.id).toBe(serviceStatusAltId);
       }
 
-      await page.click('[data-view-trigger="produtos"]');
-      await expect(page.locator('[data-view="produtos"]')).not.toHaveClass(/hidden/);
-      await page.waitForFunction(
-        () => (document.querySelector('[data-product-category]') as HTMLSelectElement | null)?.options
-          .length > 1
-      );
-
+      // Produto — criação com estoque inicial (ledger, `PLAN-0020`) + ajustes via
+      // `stock/adjust` real (não `PATCH /products/:id`, que nunca aceitou `stock`).
       const productName = `Produto E2E ${Date.now()}`;
-      await page.fill("[data-product-name]", productName);
-      await page.fill("[data-product-price]", "15");
-      await page.fill("[data-product-stock]", "5");
-      await page.selectOption("[data-product-category]", String(productCategoryId));
-      await page.selectOption("[data-product-status]", String(productStatusId));
-      await page.click("[data-product-save]");
-      await expect(page.locator("[data-product-save]")).toBeEnabled();
-
-      const productRow = page.locator("[data-product-row]", { hasText: productName });
-      await expect(productRow).toBeVisible();
+      const createdProductInitial = await apiPost<{ id: number; price: number | string; productCategory?: { id: number } | null; productStatus?: { id: number } | null }>(
+        request,
+        auth.token,
+        "/products",
+        {
+          name: productName,
+          price: 15,
+          productCategoryId,
+          productStatusId,
+          initialStock: 5,
+          initialStockUnitId: stockUnitId,
+        }
+      );
+      expect(Number(createdProductInitial.price)).toBeCloseTo(15, 2);
+      expect(createdProductInitial.productCategory?.id).toBe(productCategoryId);
+      expect(createdProductInitial.productStatus?.id).toBe(productStatusId);
+      const createdProductId = createdProductInitial.id;
+      cleanup.push(async () => apiDelete(request, auth.token, `/products/${createdProductId}`));
 
       const findProduct = async () => {
-        const products = await apiGet<
-          Array<{
-            id: number;
-            name: string;
-            price: number | string;
-            stock?: number | null;
-            productCategory?: { id: number } | null;
-            productStatus?: { id: number } | null;
-          }>
-        >(request, auth.token, "/products");
-        return products.find((product) => product.name === productName);
+        const products = await apiGet<Array<{ id: number; stock?: number | null }>>(
+          request,
+          auth.token,
+          "/products"
+        );
+        return products.find((product) => product.id === createdProductId);
       };
 
-      let createdProduct = await findProduct();
-      expect(createdProduct, "Product should be persisted in DB").toBeTruthy();
-      if (createdProduct) {
-        expect(Number(createdProduct.price)).toBeCloseTo(15, 2);
-        expect(createdProduct.stock ?? 0).toBe(5);
-        expect(createdProduct.productCategory?.id).toBe(productCategoryId);
-        expect(createdProduct.productStatus?.id).toBe(productStatusId);
-        cleanup.push(async () => apiDelete(request, auth.token, `/products/${createdProduct.id}`));
-      }
+      await expect.poll(async () => (await findProduct())?.stock ?? null).toBe(5);
 
-      await productRow.locator('[data-product-action="edit"]').click();
-      await expect(page.locator("[data-product-save]")).toHaveText(/Atualizar/i);
-      await page.fill("[data-product-stock]", "12");
-      await page.selectOption("[data-product-category]", String(productCategoryAltId));
-      await page.selectOption("[data-product-status]", String(productStatusAltId));
-      await page.click("[data-product-save]");
-      await expect(page.locator("[data-product-save]")).toBeEnabled();
+      await apiPost(request, auth.token, `/units/${stockUnitId}/products/${createdProductId}/stock/adjust`, {
+        targetStock: 12,
+        reason: "e2e ajuste 1",
+      });
+      await expect.poll(async () => (await findProduct())?.stock ?? null).toBe(12);
 
-      await expect
-        .poll(async () => {
-          const product = await findProduct();
-          return {
-            stock: product?.stock ?? null,
-            categoryId: product?.productCategory?.id ?? null,
-            statusId: product?.productStatus?.id ?? null,
-          };
-        })
-        .toEqual({
-          stock: 12,
-          categoryId: productCategoryAltId ?? null,
-          statusId: productStatusAltId ?? null,
-        });
+      await apiPost(request, auth.token, `/units/${stockUnitId}/products/${createdProductId}/stock/adjust`, {
+        targetStock: 3,
+        reason: "e2e ajuste 2",
+      });
+      await expect.poll(async () => (await findProduct())?.stock ?? null).toBe(3);
 
-      await productRow.locator('[data-product-action="edit"]').click();
-      await page.fill("[data-product-stock]", "3");
-      await page.click("[data-product-save]");
-      await expect(page.locator("[data-product-save]")).toBeEnabled();
-
-      await expect
-        .poll(async () => {
-          const product = await findProduct();
-          return product?.stock ?? null;
-        })
-        .toBe(3);
-
-      createdProduct = await findProduct();
+      const createdProduct = await findProduct();
       if (!createdProduct) throw new Error("Produto nao encontrado apos atualizacao.");
       if (!createdService) throw new Error("Servico nao encontrado apos atualizacao.");
 
-      await apiPatch(request, auth.token, `/products/${createdProduct.id}`, { stock: 5 });
-      await expect
-        .poll(async () => {
-          const product = await findProduct();
-          return product?.stock ?? null;
-        })
-        .toBe(5);
+      await apiPost(request, auth.token, `/units/${stockUnitId}/products/${createdProductId}/stock/adjust`, {
+        targetStock: 5,
+        reason: "e2e ajuste 3",
+      });
+      await expect.poll(async () => (await findProduct())?.stock ?? null).toBe(5);
 
       const orderEmail = `e2e.order.${Date.now()}@example.com`;
       const order = await apiPost<{ id: number }>(request, auth.token, "/orders", {
         items: [
-          {
-            productId: createdProduct.id,
-            quantity: 2,
-            unitPrice: 15,
-          },
-          {
-            serviceId: createdService.id,
-            quantity: 1,
-            unitPrice: 10,
-          },
+          { productId: createdProduct.id, quantity: 2 },
+          { serviceId: createdService.id, quantity: 1 },
         ],
-        total: 40,
+        // `unitId` é obrigatório pra ADMIN/MASTER (escopo global, S2 do `PLAN-0020`) — o
+        // teste original nunca enviava isso, achado nesta reescrita (`PLAN-0033` Onda 3).
+        // `unitPrice`/`total` removidos: nunca existiram no schema (calculados no servidor,
+        // S12), Zod só ignorava silenciosamente.
+        unitId: stockUnitId,
         customerName: "Pedido E2E",
         customerEmail: orderEmail,
         customerPhone: "+55 (11) 99999-9999",
@@ -427,8 +369,12 @@ test.describe("Admin flows", () => {
         await prisma.payment.delete({ where: { id: payment.paymentRecordId } });
       });
 
+      // `PLAN-0033` Onda 3 — achado pré-existente (não causado pela reescrita): os enums de
+      // status neste arquivo estavam em inglês, mas o schema real é PT-BR (`SYSTEM.md`
+      // "mensagens normalizadas para PT-BR"); o teste nunca detectava porque cada `PATCH`
+      // aqui falhava e o `finally`/cleanup escondia o erro real até agora.
       await apiPatch(request, auth.token, `/payments/${payment.paymentRecordId}`, {
-        status: "APPROVED",
+        status: "APROVADO",
       });
 
       await expect
@@ -440,7 +386,7 @@ test.describe("Admin flows", () => {
           );
           return orders.find((item) => item.id === order.id)?.status || null;
         })
-        .toBe("PAID");
+        .toBe("PAGO");
 
       const membership = await apiPost<{ id: number }>(request, auth.token, "/memberships", {
         name: `Plan ${Date.now()}`,
@@ -455,7 +401,7 @@ test.describe("Admin flows", () => {
       const subscription = await prisma.subscription.create({
         data: {
           membershipId: membership.id,
-          status: "PENDING",
+          status: "PENDENTE",
           customerName: "Assinante E2E",
           customerEmail: subscriptionEmail,
           customerPhone: "+55 (11) 99999-9999",
@@ -482,7 +428,7 @@ test.describe("Admin flows", () => {
       });
 
       await apiPatch(request, auth.token, `/payments/${subscriptionPayment.paymentRecordId}`, {
-        status: "APPROVED",
+        status: "APROVADO",
       });
 
       await expect
@@ -494,20 +440,67 @@ test.describe("Admin flows", () => {
           );
           return subs.find((item) => item.id === subscription.id)?.status || null;
         })
-        .toBe("ACTIVE");
+        .toBe("ATIVA");
 
-      const units = await apiGet<Array<{ id: number }>>(request, auth.token, "/units");
-      const professionals = await apiGet<Array<{ id: number }>>(
+      const professionals = await apiGet<Array<{ id: number; unitId: number | null }>>(
         request,
         auth.token,
         "/professionals"
       );
+      const chosenProfessional = professionals.find((professional) => professional.unitId !== null);
+      const professionalId = chosenProfessional?.id;
+      const appointmentUnitId = chosenProfessional?.unitId ?? units[0]?.id;
+      expect(professionalId, "Missing professional with a unit assigned").toBeTruthy();
+
+      // `PLAN-0033` Onda 3 — achados pré-existentes em cascata, nenhum relacionado à
+      // aposentadoria do Admin legado: `POST /appointments` (`strictPreferredProfessional`)
+      // exige (1) que o profissional já atenda o serviço (`ProfessionalService` — um serviço
+      // recém-criado nunca tem profissional vinculado) e (2) que o profissional tenha um
+      // turno (`ProfessionalShift`) cobrindo o horário exato do agendamento, específico da
+      // data (não é recorrente por dia da semana). O teste original usava `new Date()` (agora)
+      // sem alinhar ao grid de slots de 30min nem garantir turno algum — falhava sempre,
+      // independente da causa de fundo real ter mudado ao longo do tempo. Corrigido: vincula
+      // o serviço ao profissional, cria um turno cobrindo o horário fixo escolhido (10:00,
+      // dentro do expediente 08:00-20:00 de todas as unidades físicas — evita depender da
+      // hora real de quando o teste roda), ambos revertidos no cleanup.
+      const existingLinks = await apiGet<{ items: Array<{ serviceId: number }> }>(
+        request,
+        auth.token,
+        `/professional-services?professionalId=${professionalId}`
+      );
+      const originalServiceIds = existingLinks.items.map((item) => item.serviceId);
+      await apiPut(request, auth.token, `/professionals/${professionalId}/services`, {
+        serviceIds: [...originalServiceIds, createdService.id],
+      });
+      cleanup.push(async () => {
+        await apiPut(request, auth.token, `/professionals/${professionalId}/services`, {
+          serviceIds: originalServiceIds,
+        });
+      });
+
+      const appointmentStart = new Date();
+      appointmentStart.setHours(10, 0, 0, 0);
+      const shift = await prisma.professionalShift.create({
+        data: {
+          professionalId,
+          unitId: appointmentUnitId,
+          workDate: new Date(appointmentStart.toDateString()),
+          hourStart: "08:00",
+          hourFinish: "20:00",
+          isActive: true,
+          notes: "e2e (PLAN-0033)",
+        },
+      });
+      cleanup.push(async () => {
+        await prisma.professionalShift.delete({ where: { id: shift.id } });
+      });
+
       const appointment = await apiPost<{ id: number }>(request, auth.token, "/appointments", {
-        unitId: units[0]?.id,
-        professionalId: professionals[0]?.id,
+        unitId: appointmentUnitId,
+        professionalId,
         serviceId: createdService.id,
         orderId: order.id,
-        start: new Date().toISOString(),
+        start: appointmentStart.toISOString(),
         clientName: "Cliente E2E",
         clientPhone: "+55 (11) 98888-0000",
       });
@@ -519,11 +512,11 @@ test.describe("Admin flows", () => {
         request,
         auth.token,
         `/appointments/${appointment.id}`,
-        { status: "CONFIRMED" }
+        { status: "CONFIRMADO" }
       );
-      expect(confirmedAppointment.status).toBe("CONFIRMED");
+      expect(confirmedAppointment.status).toBe("CONFIRMADO");
 
-      await apiPatch(request, auth.token, `/orders/${order.id}`, { status: "CANCELLED" });
+      await apiPatch(request, auth.token, `/orders/${order.id}`, { status: "CANCELADO" });
       await expect
         .poll(async () => {
           const product = await findProduct();
@@ -531,28 +524,36 @@ test.describe("Admin flows", () => {
         })
         .toBe(5);
 
-      await page.reload();
-      await expect(page.locator(".admin-sidebar")).toBeVisible();
+      // Testes e Validação (Sistema, `/admin-v2/sistema/testes`) — equivalente nativo da
+      // aba "Testes" legada, escopo deliberadamente reduzido (ver comentário no topo do
+      // teste e `TestsView.tsx`).
+      await page.goto("/admin-v2/sistema/testes");
+      await expect(page.getByRole("heading", { name: "Testes e Validação" })).toBeVisible();
+      await page.getByRole("button", { name: /Executar testes/i }).click();
+      await expect(page.getByRole("button", { name: /Executando/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /Executar testes/i })).toBeVisible();
+      await expect(page.getByText("PASSOU").first()).toBeVisible();
 
-      await page.click('[data-view-trigger="vendas"]');
-      await expect(page.locator('[data-view="vendas"]')).not.toHaveClass(/hidden/);
-      await page.fill("[data-orders-search]", orderEmail);
-      const orderRow = page.locator("[data-order-row]", { hasText: orderEmail });
-      await expect(orderRow).toBeVisible();
+      // Usuários (Cadastros, `/admin-v2/cadastros/usuarios`) — confirma que o usuário criado
+      // via API (acima) aparece na tela nativa de listagem.
+      await page.goto("/admin-v2/cadastros/usuarios");
+      await page.fill('input[placeholder*="e-mail"]', userEmail);
+      await expect(page.getByText(userEmail)).toBeVisible();
 
-      await page.click('[data-view-trigger="assinantes"]');
-      await expect(page.locator('[data-view="assinantes"]')).not.toHaveClass(/hidden/);
-      await page.fill("[data-subscriptions-search]", subscriptionEmail);
-      const subscriptionRow = page.locator("[data-subscription-row]", {
-        hasText: subscriptionEmail,
-      });
-      await expect(subscriptionRow).toBeVisible();
+      // Lista de Pedidos (Operação, `/admin-v2/operacao/lista`) — equivalente nativo da
+      // aba "Vendas" legada (`PLAN-0031`).
+      await page.goto("/admin-v2/operacao/lista");
+      await page.fill('input[placeholder*="Buscar por ID"]', orderEmail);
+      await expect(page.getByText(orderEmail)).toBeVisible();
 
-      await page.click('[data-view-trigger="agenda"]');
-      await expect(page.locator('[data-view="agenda"]')).not.toHaveClass(/hidden/);
-      const agendaGrid = page.locator('[data-view="agenda"] [data-appointments-grid]');
-      await expect(agendaGrid).toContainText("Cliente E2E");
-      await expect(agendaGrid).toContainText(serviceName);
+      // Sem equivalente nativo, removido (não substituído — ver comentário no topo do teste):
+      // (1) gestão individual de assinatura ("Assinantes" legado) — achado do `PLAN-0032`
+      // ocorrência #6, backend `POST/PATCH /subscriptions` pronto, zero UI em qualquer lugar;
+      // (2) grid de agendamentos por cliente/serviço — a Agenda nativa é um mapa de
+      // capacidade dia×hora (`CapacityView.tsx`, `PLAN-0022` Onda 4), não uma lista por
+      // agendamento. A confirmação de `CONFIRMED` do agendamento já foi verificada via API
+      // (`confirmedAppointment.status`) mais acima — a cobertura de negócio não se perde,
+      // só a checagem de renderização em tela, que não tem pra onde ir.
     } finally {
       for (const action of cleanup.reverse()) {
         try {

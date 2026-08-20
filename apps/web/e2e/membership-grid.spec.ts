@@ -12,7 +12,13 @@ type AuthResponse = {
   };
 };
 
-test("admin memberships grid renders persisted plans", async ({ page, request }) => {
+/**
+ * `PLAN-0033` — reescrito pra Admin V2 (`/admin-v2/cadastros/planos`, tela nativa do
+ * `PLAN-0026`). O Admin legado (`/admin`, `[data-view-trigger="planos"]`) foi aposentado —
+ * a asserção agora é sobre a contagem "N plano(s)" do subtítulo da tela nativa, já que
+ * `PlansListView.tsx` não usa atributos `data-*` como o legado usava.
+ */
+test("admin-v2 memberships grid renders persisted plans", async ({ page, request }) => {
   const login = await request.post(`${API_BASE_URL}/api/auth/login`, {
     data: { identifier: "admin@jlrbeauty.com", password: "Admin@1234" },
   });
@@ -27,12 +33,12 @@ test("admin memberships grid renders persisted plans", async ({ page, request })
     { token: auth.token, user: auth.user }
   );
 
-  await page.goto("/admin");
-  await page.click('[data-view-trigger="planos"]');
+  await page.goto("/admin-v2/cadastros/planos");
+  await expect(page.getByRole("heading", { name: "Planos", exact: true })).toBeVisible();
 
-  const membershipList = page.locator("[data-membership-list]");
-  await expect(membershipList).toBeVisible();
-
-  await expect.poll(async () => membershipList.locator("> div").count()).toBeGreaterThan(0);
-  await expect(page.locator("[data-membership-count]").first()).not.toHaveText("0");
+  await expect.poll(async () => {
+    const text = await page.getByText(/plano\(s\)$/).first().textContent();
+    const match = text?.match(/(\d+)\s+plano\(s\)/);
+    return match ? Number(match[1]) : 0;
+  }).toBeGreaterThan(0);
 });

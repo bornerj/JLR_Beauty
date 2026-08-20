@@ -19,15 +19,9 @@
  * O próprio comando sobrescreve este cabeçalho — reescrevê-lo é parte obrigatória da
  * regeneração, não opcional.
  *
- * Regenerado em 2026-08-20 (`PLAN-0032` ocorrência #5) — os 6 stat tiles coloridos do
- * "Onde está o dinheiro?" (`MoneyView.tsx`) introduziram `border-l-4`, `border-state-critical`,
- * `bg-primary/10`/`bg-state-critical/10`/`bg-gold-accent/10`/`bg-state-info/10`/`bg-state-attention/10`
- * e `max-h-[420px]` no painel das abas de detalhamento. **Achado durante esta regeneração**:
- * a primeira tentativa usou `/8` (opacidade fora da escala padrão do Tailwind — só existem os
- * steps 0/5/10/20/25/30/40/50/60/70/75/80/90/95/100; `/8` simplesmente não gera classe nenhuma,
- * silenciosamente, sem erro) — corrigido pra `/10` (step válido mais próximo) antes deste
- * rebuild. Checagem proativa (checklist `ERR-0070`/`0071`) confirmou ausência das classes
- * corretas antes do rebuild Docker.
+ * Regenerado em 2026-08-20 (`PLAN-0033` Onda 1) — `DockerStatusButton.tsx` (widget de status
+ * de infra portado do Admin legado pro Admin V2) introduziu `top-9` no popover — checagem
+ * proativa (checklist `ERR-0070`/`0071`) confirmou ausência antes do rebuild Docker.
  */
 
 .pointer-events-none {
@@ -225,6 +219,10 @@
 
 .top-8 {
   top: 2rem
+}
+
+.top-9 {
+  top: 2.25rem
 }
 
 .top-full {

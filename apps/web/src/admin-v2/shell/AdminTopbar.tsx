@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { PERIOD_PRESET_LABELS, type AdminScope, type AdminScopePeriodPreset } from "./adminScope";
 import type { AdminV2Unit } from "../panorama/types";
+import { DockerStatusButton } from "./DockerStatusButton";
 
 const PRESETS: AdminScopePeriodPreset[] = ["TODAY", "LAST_7D", "LAST_30D", "LAST_90D"];
 
@@ -18,8 +19,9 @@ export function AdminTopbar({
   return (
     <header className="admin-v2-topbar flex flex-wrap items-center justify-between gap-3 border-b border-gold/40 bg-cream-sidebar px-5 py-3 dark:bg-forest-green">
       <div className="flex items-center gap-3">
-        <Link to="/admin" className="rounded-full border border-gold/60 px-3 py-1 text-xs font-bold uppercase tracking-widest text-forest hover:bg-gold/10">
-          ← Admin
+        {/* PLAN-0033 — Admin legado aposentado; "Voltar" leva pra SPA pública, não mais pro /admin. */}
+        <Link to="/" className="rounded-full border border-gold/60 px-3 py-1 text-xs font-bold uppercase tracking-widest text-forest hover:bg-gold/10">
+          ← Voltar
         </Link>
         <span className="text-sm font-bold uppercase tracking-[0.2em] text-forest">
           JLR Beauty <span className="text-primary">Admin V2</span>
@@ -58,6 +60,9 @@ export function AdminTopbar({
             </button>
           ))}
         </div>
+
+        {/* PLAN-0033 — status de infra portado do Admin legado (ícone pequeno, canto direito). */}
+        <DockerStatusButton />
       </div>
     </header>
   );

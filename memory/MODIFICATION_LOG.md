@@ -9852,3 +9852,16 @@ Sessão encerrada a pedido do usuário ("feche o plano atual, está completo. sa
 | Git Governance | PASS — Pre-commit review preenchido no `PLAN-0032`; commit/push autorizados explicitamente pelo usuário |
 
 Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260820_162602-PASS.md`.
+
+## 2026-08-20 — Registro de EXECUÇÃO (PLAN-0033 — aposentar o Admin legado, Ondas 0-3)
+
+Usuário decidiu aposentar o Admin legado (`DECISION-017`, supera `DECISION-013` regras #1/#3) e pediu brainstorm + plano formal antes de executar (`@project-planner`). `PLAN-0033` criado com 6 ondas; ondas 0-3 executadas nesta sessão:
+
+- **Onda 0 (rede de segurança):** branch `archive/admin-legado` criada a partir de `14d5531` (status limpo, `origin/main` sincronizado confirmado) e pushada pro GitHub — confirmado via `git ls-remote`.
+- **Onda 1 (portar widget de status):** `useDockerHealth.ts` relocado pra `admin-v2/shared/`; `DockerStatusButton.tsx` novo (círculo com ícone `info`, popover ao clicar) substitui o widget de barra do legado, 100% tokens `state-*` já existentes.
+- **Onda 2 (fix do topbar):** botão "← Admin" virou "← Voltar", aponta pra `/` (SPA pública).
+- **Onda 3 (specs E2E):** `flows.spec.ts` "Admin flows" e `membership-grid.spec.ts` reescritos contra o Admin V2 nativo, zero acoplamento com DOM do legado. Achada e corrigida uma cadeia de 4 bugs pré-existentes na suíte (`ERR-0072`, autorizado pelo usuário investigar) — `unitId` obrigatório faltando, 6 enums em inglês vs. schema real PT-BR, `POST /appointments` exigindo vínculo profissional-serviço + turno cobrindo o horário.
+
+**Validações:** `tsc -b` (web) PASS em cada onda; rebuild Docker + validação visual real (popover de infra, botão Voltar); suíte E2E rodada de verdade contra o Docker ao vivo (`membership-grid` PASS, `flows` "Admin flows" PASS, `flows` "franquias form" PASS — 1 falha fora de escopo não tocada, "home cart and checkout flow", área não relacionada).
+
+**Status:** Ondas 0-3 commitadas e pushadas (aprovação explícita do usuário). Onda 4 (remoção física dos 24 módulos legados) e Onda 5 (validação final) seguem pendentes pra próxima etapa da sessão.
