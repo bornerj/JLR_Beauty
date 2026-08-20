@@ -179,7 +179,7 @@ export function ManualSaleModal({
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Nome do cliente"
                 disabled={submitting}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
               />
               <input
                 type="email"
@@ -187,7 +187,7 @@ export function ManualSaleModal({
                 onChange={(e) => setCustomerEmail(e.target.value)}
                 placeholder="E-mail"
                 disabled={submitting}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
               />
               <input
                 type="text"
@@ -195,7 +195,7 @@ export function ManualSaleModal({
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="Telefone/WhatsApp"
                 disabled={submitting}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
               />
             </div>
 
@@ -208,7 +208,7 @@ export function ManualSaleModal({
                   value={unitId}
                   onChange={(e) => setUnitId(e.target.value ? Number(e.target.value) : "")}
                   disabled={submitting}
-                  className="mt-1 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+                  className="mt-1 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
                 >
                   <option value="">Selecione…</option>
                   {units.map((unit) => (
@@ -224,7 +224,7 @@ export function ManualSaleModal({
                   value={markAsPaid ? "1" : "0"}
                   onChange={(e) => setMarkAsPaid(e.target.value === "1")}
                   disabled={submitting}
-                  className="mt-1 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+                  className="mt-1 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
                 >
                   <option value="1">Sim</option>
                   <option value="0">Não</option>
@@ -239,7 +239,7 @@ export function ManualSaleModal({
                   value={selectedItemKey}
                   onChange={(e) => setSelectedItemKey(e.target.value)}
                   disabled={submitting}
-                  className="min-w-[200px] flex-1 rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+                  className="min-w-[200px] flex-1 rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
                 >
                   <option value="">Produto ou serviço…</option>
                   {catalog.map((item) => (
@@ -254,7 +254,7 @@ export function ManualSaleModal({
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
                   disabled={submitting}
-                  className="w-20 rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+                  className="w-20 rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
                 />
                 <button
                   type="button"

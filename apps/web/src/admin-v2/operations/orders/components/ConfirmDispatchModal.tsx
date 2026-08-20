@@ -83,7 +83,7 @@ export function ConfirmDispatchModal({
               onChange={(event) => setCarrier(event.target.value)}
               disabled={submitting}
               placeholder="ex.: Correios, motoboy…"
-              className="mt-1.5 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+              className="mt-1.5 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
             />
             <label className="mt-3 block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
               Data do despacho
@@ -93,7 +93,7 @@ export function ConfirmDispatchModal({
               value={date}
               onChange={(event) => setDate(event.target.value)}
               disabled={submitting}
-              className="mt-1.5 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+              className="mt-1.5 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
             />
           </>
         )}

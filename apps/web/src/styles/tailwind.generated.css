@@ -16,28 +16,18 @@
  *   echo '@tailwind utilities;' > /tmp/tw-input.css
  *   npx tailwindcss@3.4.17 -c tailwind.config.js -i /tmp/tw-input.css \
  *     -o apps/web/src/styles/tailwind.generated.css
- * Confirmado nesta sessão: `npx tailwindcss@3.4.17` funciona neste ambiente sem instalação
- * prévia (fetch on-demand). Gerado em 2026-08-15, regenerado nas Ondas 6/7/11/12 e de novo
- * na Onda 13 (Profissionais) do `PLAN-0026` — checagem proativa antes do rebuild Docker
- * virou padrão desde a Onda 7: `min-w-[1080px]`, `grid-cols-[1fr_100px_100px]`,
- * `grid-cols-[1fr_140px]` usados nesta onda não estavam nesta versão do arquivo. **Nota de
- * processo**: o próprio comando de regeneração sobrescreve este cabeçalho (o Tailwind CLI
- * substitui o arquivo inteiro, comentário incluso) — reescrever este bloco é parte
- * obrigatória do passo de regeneração, não opcional.
+ * O próprio comando sobrescreve este cabeçalho — reescrevê-lo é parte obrigatória da
+ * regeneração, não opcional.
  *
- * Regenerado de novo em 2026-08-18 (`ERR-0070`) — o Board Operacional (`PLAN-0030`) usou
- * `xl:grid-cols-5`/`xl:grid-cols-6`/`lg:grid-cols-3` pela primeira vez em qualquer tela do
- * projeto; a checagem proativa (nota acima, padrão desde a Onda 7 do `PLAN-0026`) **não foi
- * feita** antes do rebuild Docker daquela sessão — o board foi validado só via
- * `PointerEvent`/DOM (sem checar o grid computado nem o CSS servido), então passou "verde"
- * mesmo com `xl:grid-cols-5` ausente do CSS. Usuário reportou o board quebrado (2 colunas
- * largas) numa sessão seguinte. `xl:grid-cols-5` confirmado ausente via `grep` no CSS
- * servido antes deste fix (mesmo sintoma do `ERR-0040`/`ERR-0049`/`ERR-0051`).
- *
- * Regenerado de novo em 2026-08-18 (`PLAN-0031`, Onda 1 — Lista de Pedidos) — desta vez a
- * checagem proativa **foi feita** (checklist do `ERR-0070`): `min-w-[200px]` (select de
- * catálogo do `ManualSaleModal.tsx`) era a única classe genuinamente nova introduzida pela
- * migração; grepada e confirmada ausente antes de regenerar, presente depois.
+ * Regenerado em 2026-08-20 (`PLAN-0032` ocorrência #5) — os 6 stat tiles coloridos do
+ * "Onde está o dinheiro?" (`MoneyView.tsx`) introduziram `border-l-4`, `border-state-critical`,
+ * `bg-primary/10`/`bg-state-critical/10`/`bg-gold-accent/10`/`bg-state-info/10`/`bg-state-attention/10`
+ * e `max-h-[420px]` no painel das abas de detalhamento. **Achado durante esta regeneração**:
+ * a primeira tentativa usou `/8` (opacidade fora da escala padrão do Tailwind — só existem os
+ * steps 0/5/10/20/25/30/40/50/60/70/75/80/90/95/100; `/8` simplesmente não gera classe nenhuma,
+ * silenciosamente, sem erro) — corrigido pra `/10` (step válido mais próximo) antes deste
+ * rebuild. Checagem proativa (checklist `ERR-0070`/`0071`) confirmou ausência das classes
+ * corretas antes do rebuild Docker.
  */
 
 .pointer-events-none {
@@ -103,6 +93,10 @@
 
 .-left-\[56px\] {
   left: -56px
+}
+
+.-left-\[5px\] {
+  left: -5px
 }
 
 .-right-1\.5 {
@@ -203,6 +197,10 @@
 
 .top-0 {
   top: 0px
+}
+
+.top-1\.5 {
+  top: 0.375rem
 }
 
 .top-1\/2 {
@@ -777,6 +775,10 @@
   max-height: 400px
 }
 
+.max-h-\[420px\] {
+  max-height: 420px
+}
+
 .max-h-\[68vh\] {
   max-height: 68vh
 }
@@ -1066,16 +1068,16 @@
   min-width: 480px
 }
 
-.min-w-\[540px\] {
-  min-width: 540px
-}
-
 .min-w-\[560px\] {
   min-width: 560px
 }
 
 .min-w-\[640px\] {
   min-width: 640px
+}
+
+.min-w-\[760px\] {
+  min-width: 760px
 }
 
 .min-w-\[820px\] {
@@ -1415,6 +1417,10 @@
   grid-template-columns: minmax(0,1fr) 90px auto
 }
 
+.grid-cols-\[repeat\(6\2c minmax\(0\2c 1fr\)\)_minmax\(0\2c 1\.6fr\)\] {
+  grid-template-columns: repeat(6,minmax(0,1fr)) minmax(0,1.6fr)
+}
+
 .flex-col {
   flex-direction: column
 }
@@ -1550,6 +1556,10 @@
 
 .gap-y-1 {
   row-gap: 0.25rem
+}
+
+.gap-y-1\.5 {
+  row-gap: 0.375rem
 }
 
 .gap-y-14 {
@@ -1746,6 +1756,16 @@
 
 .rounded-xl {
   border-radius: 0.75rem
+}
+
+.rounded-l-lg {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem
+}
+
+.rounded-r-lg {
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem
 }
 
 .rounded-t-2xl {
@@ -2053,6 +2073,10 @@
   border-color: rgb(0 150 127 / 0.2)
 }
 
+.border-primary\/25 {
+  border-color: rgb(0 150 127 / 0.25)
+}
+
 .border-primary\/30 {
   border-color: rgb(0 150 127 / 0.3)
 }
@@ -2093,12 +2117,22 @@
   border-color: rgb(186 230 253 / var(--tw-border-opacity, 1))
 }
 
+.border-state-attention {
+  --tw-border-opacity: 1;
+  border-color: rgb(217 119 6 / var(--tw-border-opacity, 1))
+}
+
 .border-state-attention\/40 {
   border-color: rgb(217 119 6 / 0.4)
 }
 
 .border-state-attention\/50 {
   border-color: rgb(217 119 6 / 0.5)
+}
+
+.border-state-critical {
+  --tw-border-opacity: 1;
+  border-color: rgb(220 38 38 / var(--tw-border-opacity, 1))
 }
 
 .border-state-critical\/30 {
@@ -2120,6 +2154,11 @@
 
 .border-state-healthy\/30 {
   border-color: rgb(0 150 127 / 0.3)
+}
+
+.border-state-info {
+  --tw-border-opacity: 1;
+  border-color: rgb(37 99 235 / var(--tw-border-opacity, 1))
 }
 
 .border-state-info\/40 {
@@ -2539,6 +2578,10 @@
   background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1))
 }
 
+.bg-state-info\/10 {
+  background-color: rgb(37 99 235 / 0.1)
+}
+
 .bg-state-info\/15 {
   background-color: rgb(37 99 235 / 0.15)
 }
@@ -2932,6 +2975,10 @@
 .py-8 {
   padding-top: 2rem;
   padding-bottom: 2rem
+}
+
+.pb-1\.5 {
+  padding-bottom: 0.375rem
 }
 
 .pb-10 {
@@ -4514,6 +4561,10 @@
   border-color: rgb(16 34 22 / 0.4)
 }
 
+.dark\:border-primary\/40:is(.dark *) {
+  border-color: rgb(0 150 127 / 0.4)
+}
+
 .dark\:border-stone-600:is(.dark *) {
   --tw-border-opacity: 1;
   border-color: rgb(87 83 78 / var(--tw-border-opacity, 1))
@@ -4639,6 +4690,10 @@
 .dark\:bg-primary:is(.dark *) {
   --tw-bg-opacity: 1;
   background-color: rgb(0 150 127 / var(--tw-bg-opacity, 1))
+}
+
+.dark\:bg-primary\/10:is(.dark *) {
+  background-color: rgb(0 150 127 / 0.1)
 }
 
 .dark\:bg-purple-900\/30:is(.dark *) {

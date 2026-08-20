@@ -148,7 +148,7 @@ export function CommissionProfileManagerModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex.: Sênior"
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -160,13 +160,13 @@ export function CommissionProfileManagerModal({
               step={0.01}
               value={percent}
               onChange={(e) => setPercent(e.target.value)}
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             />
           </div>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as "ACTIVE" | "INACTIVE")}
-            className="rounded-lg border border-gold/40 bg-white px-2 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="rounded-lg border border-primary/60 bg-white px-2 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>

@@ -57,7 +57,7 @@ export function OrderEditModal({
             value={status}
             onChange={(event) => setStatus(event.target.value)}
             disabled={submitting}
-            className="mt-1.5 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+            className="mt-1.5 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
           >
             {ORDER_STATUS_OPTIONS.map((value) => (
               <option key={value} value={value} disabled={blocked && PROGRESSING_ORDER_STATUSES.has(value)}>
@@ -83,7 +83,7 @@ export function OrderEditModal({
             value={fulfillmentStatus}
             onChange={(event) => setFulfillmentStatus(event.target.value)}
             disabled={submitting}
-            className="mt-1.5 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+            className="mt-1.5 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
           >
             {FULFILLMENT_STATUS_OPTIONS.map((value) => (
               <option key={value} value={value} disabled={blocked && PROGRESSING_FULFILLMENT_STATUSES.has(value)}>
@@ -99,7 +99,7 @@ export function OrderEditModal({
             onChange={(event) => setCarrier(event.target.value)}
             disabled={submitting}
             placeholder="ex.: Correios, motoboy…"
-            className="mt-1.5 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+            className="mt-1.5 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
           />
 
           <label className="mt-2.5 block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">Código de rastreio</label>
@@ -108,7 +108,7 @@ export function OrderEditModal({
             value={tracking}
             onChange={(event) => setTracking(event.target.value)}
             disabled={submitting}
-            className="mt-1.5 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+            className="mt-1.5 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
           />
 
           <label className="mt-2.5 block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">Notas</label>
@@ -117,7 +117,7 @@ export function OrderEditModal({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             disabled={submitting}
-            className="mt-1.5 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+            className="mt-1.5 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
           />
 
           <div className="mt-2 flex justify-end">

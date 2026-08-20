@@ -209,14 +209,14 @@ export function CategoryStatusManagerModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={kind === "category" ? "Ex.: Cabelos" : "Ex.: Ativo"}
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             />
           </div>
           {kind === "category" ? (
             <select
               value={statusValue}
               onChange={(e) => setStatusValue(e.target.value as ServiceCategoryStatus)}
-              className="rounded-lg border border-gold/40 bg-white px-2 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-2 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             >
               {CATEGORY_STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -228,7 +228,7 @@ export function CategoryStatusManagerModal({
             <select
               value={colorValue}
               onChange={(e) => setColorValue(e.target.value as ServiceStatusColor)}
-              className="rounded-lg border border-gold/40 bg-white px-2 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-2 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             >
               {COLOR_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>

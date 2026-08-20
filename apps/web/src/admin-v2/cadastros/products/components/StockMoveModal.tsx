@@ -110,7 +110,7 @@ export function StockMoveModal({
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value as StockMovementKind)}
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             >
               {KIND_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -125,7 +125,7 @@ export function StockMoveModal({
             <select
               value={unitId}
               onChange={(e) => setUnitId(e.target.value)}
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             >
               <option value="">Selecione a unidade</option>
               {units.map((unit) => (
@@ -145,7 +145,7 @@ export function StockMoveModal({
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="0"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </label>
             {kind === "entry" && (
@@ -158,7 +158,7 @@ export function StockMoveModal({
                   value={unitCost}
                   onChange={(e) => setUnitCost(e.target.value)}
                   placeholder="0,00"
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </label>
             )}
@@ -170,7 +170,7 @@ export function StockMoveModal({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Obrigatória em ajuste; recomendada nos demais"
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             />
           </label>
         </div>

@@ -226,7 +226,7 @@ export function ServiceFormModal({
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Ex.: Escova Premium"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>
@@ -238,7 +238,7 @@ export function ServiceFormModal({
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Resumo rápido do serviço e benefícios principais."
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             />
           </div>
 
@@ -249,7 +249,7 @@ export function ServiceFormModal({
                 <select
                   value={form.serviceCategoryId}
                   onChange={(e) => setForm({ ...form, serviceCategoryId: e.target.value })}
-                  className="w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 >
                   <option value="">Selecione</option>
                   {categories.map((c) => (
@@ -278,7 +278,7 @@ export function ServiceFormModal({
                 value={form.durationMin}
                 onChange={(e) => setForm({ ...form, durationMin: e.target.value })}
                 placeholder="60"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>
@@ -295,7 +295,7 @@ export function ServiceFormModal({
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
                 placeholder="0,00"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -309,7 +309,7 @@ export function ServiceFormModal({
                 value={form.cost}
                 onChange={(e) => setForm({ ...form, cost: e.target.value })}
                 placeholder="0,00"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -323,7 +323,7 @@ export function ServiceFormModal({
                 value={form.commissionPercent}
                 onChange={(e) => setForm({ ...form, commissionPercent: e.target.value })}
                 placeholder="15"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>
@@ -335,7 +335,7 @@ export function ServiceFormModal({
                 <select
                   value={form.serviceStatusId}
                   onChange={(e) => setForm({ ...form, serviceStatusId: e.target.value })}
-                  className="w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 >
                   <option value="">Selecione</option>
                   {statuses.map((s) => (
@@ -374,7 +374,7 @@ export function ServiceFormModal({
                 value={form.imageUrl}
                 onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
                 placeholder="URL da imagem ou envie um arquivo"
-                className="w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
               <input
                 ref={fileInputRef}
@@ -414,7 +414,7 @@ export function ServiceFormModal({
                     value={form.highlightLabel}
                     onChange={(e) => setForm({ ...form, highlightLabel: e.target.value })}
                     placeholder="Ex.: Lashes"
-                    className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                    className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -425,7 +425,7 @@ export function ServiceFormModal({
                     value={form.highlightBackLabel}
                     onChange={(e) => setForm({ ...form, highlightBackLabel: e.target.value })}
                     placeholder="Ex.: Extensão de Cílios"
-                    className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                    className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -439,7 +439,7 @@ export function ServiceFormModal({
                     onChange={(e) => setForm({ ...form, highlightOrder: e.target.value })}
                     placeholder="1"
                     title="Posição do card na grade de Destaque (1 a 9). Deixe em branco pra ordenar por nome."
-                    className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                    className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                   />
                 </div>
               </div>
@@ -451,7 +451,7 @@ export function ServiceFormModal({
                   value={form.highlightTagline}
                   onChange={(e) => setForm({ ...form, highlightTagline: e.target.value })}
                   placeholder="Frase curta abaixo do rótulo, ex.: Corte preciso e tratamentos restauradores"
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -463,7 +463,7 @@ export function ServiceFormModal({
                   value={form.highlightDescription}
                   onChange={(e) => setForm({ ...form, highlightDescription: e.target.value })}
                   placeholder="Texto exibido no verso do card, ao passar o mouse/tocar."
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </div>
             </div>

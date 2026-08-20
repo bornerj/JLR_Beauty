@@ -120,7 +120,7 @@ export function DeliverySettingsView() {
             step="0.01"
             value={fee}
             onChange={(e) => setFee(Number(e.target.value))}
-            className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           />
           <p className="text-xs text-stone-500 dark:text-stone-400">Usado quando a modalidade escolhida for Entrega local.</p>
         </div>
@@ -135,7 +135,7 @@ export function DeliverySettingsView() {
             step="1"
             value={threshold}
             onChange={(e) => setThreshold(Number(e.target.value))}
-            className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           />
           <p className="text-xs text-stone-500 dark:text-stone-400">Compras iguais ou acima desse valor: entrega local grátis.</p>
         </div>

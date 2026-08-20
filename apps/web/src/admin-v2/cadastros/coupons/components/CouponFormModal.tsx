@@ -136,7 +136,7 @@ export function CouponFormModal({
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value })}
                 placeholder="VIP30"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -145,7 +145,7 @@ export function CouponFormModal({
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Cupom VIP"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>
@@ -156,7 +156,7 @@ export function CouponFormModal({
               <select
                 value={form.discountType}
                 onChange={(e) => setForm({ ...form, discountType: e.target.value as DiscountType })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               >
                 <option value="PERCENT">Percentual</option>
                 <option value="FIXED">Valor fixo</option>
@@ -174,7 +174,7 @@ export function CouponFormModal({
                   value={form.percentOff}
                   onChange={(e) => setForm({ ...form, percentOff: e.target.value })}
                   placeholder="10"
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </div>
             ) : (
@@ -189,7 +189,7 @@ export function CouponFormModal({
                   value={form.amountOff}
                   onChange={(e) => setForm({ ...form, amountOff: e.target.value })}
                   placeholder="30"
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </div>
             )}
@@ -206,7 +206,7 @@ export function CouponFormModal({
               value={form.minSubtotal}
               onChange={(e) => setForm({ ...form, minSubtotal: e.target.value })}
               placeholder="150"
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             />
           </div>
 
@@ -219,7 +219,7 @@ export function CouponFormModal({
                 type="datetime-local"
                 value={form.startsAt}
                 onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -230,7 +230,7 @@ export function CouponFormModal({
                 type="datetime-local"
                 value={form.endsAt}
                 onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>

@@ -195,7 +195,7 @@ export function UserFormModal({
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -204,7 +204,7 @@ export function UserFormModal({
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>
@@ -219,7 +219,7 @@ export function UserFormModal({
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder={editing ? "Deixe em branco pra manter a atual" : "Mínimo 8 caracteres"}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -227,7 +227,7 @@ export function UserFormModal({
               <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               >
                 {roleOptions.map((role) => (
                   <option key={role} value={role}>
@@ -244,7 +244,7 @@ export function UserFormModal({
               <input
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -254,7 +254,7 @@ export function UserFormModal({
               <input
                 value={form.phone2}
                 onChange={(e) => setForm({ ...form, phone2: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>
@@ -265,7 +265,7 @@ export function UserFormModal({
               <input
                 value={form.city}
                 onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -273,7 +273,7 @@ export function UserFormModal({
               <input
                 value={form.neighborhood}
                 onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>
@@ -284,7 +284,7 @@ export function UserFormModal({
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               >
                 {USER_STATUSES.map((status) => (
                   <option key={status} value={status}>
@@ -298,7 +298,7 @@ export function UserFormModal({
               <select
                 value={form.emailVerified ? "true" : "false"}
                 onChange={(e) => setForm({ ...form, emailVerified: e.target.value === "true" })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               >
                 <option value="false">Não</option>
                 <option value="true">Sim</option>
@@ -313,7 +313,7 @@ export function UserFormModal({
                 value={form.rating}
                 onChange={(e) => setForm({ ...form, rating: e.target.value })}
                 placeholder="Opcional"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>

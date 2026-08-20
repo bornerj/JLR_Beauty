@@ -43,7 +43,7 @@ export function StageChangeReasonModal({
           onChange={(event) => setReason(event.target.value)}
           disabled={submitting}
           placeholder="ex.: reunião realizada em 15/08, proposta enviada por e-mail…"
-          className="mt-1.5 w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
+          className="mt-1.5 w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 dark:bg-forest-green"
         />
         {error && <p className="mt-2 text-xs font-semibold text-state-critical">{error}</p>}
         <div className="mt-4 flex justify-end gap-2">

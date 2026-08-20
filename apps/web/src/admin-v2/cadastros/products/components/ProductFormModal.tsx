@@ -247,7 +247,7 @@ export function ProductFormModal({
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Ex.: Shampoo Argan Premium"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
 
@@ -258,7 +258,7 @@ export function ProductFormModal({
                   <select
                     value={form.productCategoryId}
                     onChange={(e) => setForm({ ...form, productCategoryId: e.target.value })}
-                    className="w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                    className="w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                   >
                     <option value="">Selecione</option>
                     {categories.map((c) => (
@@ -283,7 +283,7 @@ export function ProductFormModal({
                   value={form.sku}
                   onChange={(e) => setForm({ ...form, sku: e.target.value })}
                   placeholder="JLR-ARG-01"
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </div>
             </div>
@@ -298,7 +298,7 @@ export function ProductFormModal({
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   placeholder="0,00"
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -310,7 +310,7 @@ export function ProductFormModal({
                   value={form.costPrice}
                   onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
                   placeholder="0,00 (p/ CMV e margem)"
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -321,7 +321,7 @@ export function ProductFormModal({
                   value={form.minStock}
                   onChange={(e) => setForm({ ...form, minStock: e.target.value })}
                   placeholder="Alerta de reposição"
-                  className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
               </div>
             </div>
@@ -336,7 +336,7 @@ export function ProductFormModal({
                     value={form.initialStock}
                     onChange={(e) => setForm({ ...form, initialStock: e.target.value })}
                     placeholder="Somente no cadastro"
-                    className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                    className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -344,7 +344,7 @@ export function ProductFormModal({
                   <select
                     value={form.initialStockUnitId}
                     onChange={(e) => setForm({ ...form, initialStockUnitId: e.target.value })}
-                    className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                    className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                   >
                     <option value="">Selecione a unidade</option>
                     {units.map((unit) => (
@@ -408,7 +408,7 @@ export function ProductFormModal({
                   <select
                     value={form.productStatusId}
                     onChange={(e) => setForm({ ...form, productStatusId: e.target.value })}
-                    className="w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                    className="w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                   >
                     <option value="">Selecione</option>
                     {statuses.map((s) => (
@@ -445,7 +445,7 @@ export function ProductFormModal({
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Detalhes do produto, benefícios e modo de uso."
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
 
@@ -461,7 +461,7 @@ export function ProductFormModal({
                     value={benefit}
                     onChange={(e) => setBenefit(index, e.target.value)}
                     placeholder={`Benefício ${index + 1}`}
-                    className="w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                    className="w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                   />
                   <button
                     type="button"
@@ -492,7 +492,7 @@ export function ProductFormModal({
                   value={form.imageUrl}
                   onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
                   placeholder="URL da imagem ou envie um arquivo"
-                  className="w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                  className="w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                 />
                 <input
                   ref={fileInputRef}

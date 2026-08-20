@@ -116,7 +116,7 @@ export function ProfessionalFormModal({
             <input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             />
           </div>
 
@@ -126,7 +126,7 @@ export function ProfessionalFormModal({
               <select
                 value={form.unitId}
                 onChange={(e) => setForm({ ...form, unitId: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               >
                 <option value="">Sem unidade</option>
                 {units.map((unit) => (
@@ -141,7 +141,7 @@ export function ProfessionalFormModal({
               <select
                 value={form.employmentStatus}
                 onChange={(e) => setForm({ ...form, employmentStatus: e.target.value as "ACTIVE" | "INACTIVE" })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               >
                 <option value="ACTIVE">Ativo</option>
                 <option value="INACTIVE">Inativo</option>
@@ -156,7 +156,7 @@ export function ProfessionalFormModal({
                 type="date"
                 value={form.startedAt}
                 onChange={(e) => setForm({ ...form, startedAt: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -165,7 +165,7 @@ export function ProfessionalFormModal({
                 type="date"
                 value={form.endedAt}
                 onChange={(e) => setForm({ ...form, endedAt: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>
@@ -180,7 +180,7 @@ export function ProfessionalFormModal({
             <select
               value={form.workProfileId}
               onChange={(e) => setForm({ ...form, workProfileId: e.target.value })}
-              className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
             >
               <option value="">Sem perfil de trabalho</option>
               {workProfiles.map((profile) => (
@@ -201,7 +201,7 @@ export function ProfessionalFormModal({
                 step={0.01}
                 value={form.commissionPercent}
                 onChange={(e) => setForm({ ...form, commissionPercent: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -213,7 +213,7 @@ export function ProfessionalFormModal({
                 min={1}
                 value={form.linkedUserId}
                 onChange={(e) => setForm({ ...form, linkedUserId: e.target.value })}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>
           </div>

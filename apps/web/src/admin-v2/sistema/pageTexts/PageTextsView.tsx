@@ -275,7 +275,7 @@ export function PageTextsView() {
                             value={typeof currentValue === "string" ? currentValue : ""}
                             onChange={(e) => handleSimpleChange(entry.key, e.target.value)}
                             rows={currentValue && String(currentValue).length > 80 ? 3 : 1}
-                            className="min-h-[2.5rem] w-full resize-y rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                            className="min-h-[2.5rem] w-full resize-y rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
                           />
                         ) : (
                           <SegmentEditor

@@ -257,7 +257,7 @@ export function BrandingSettingsView() {
                 value={form.fullName}
                 onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
                 placeholder="Ex.: JLR Beauty"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </label>
 
@@ -270,7 +270,7 @@ export function BrandingSettingsView() {
                 value={form.shortName}
                 onChange={(event) => setForm((current) => ({ ...current, shortName: event.target.value }))}
                 placeholder="Ex.: JLR"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </label>
 
@@ -283,7 +283,7 @@ export function BrandingSettingsView() {
                 value={form.logoUrl}
                 onChange={(event) => setForm((current) => ({ ...current, logoUrl: event.target.value }))}
                 placeholder="Ex.: https://cdn.exemplo.com/logo.webp"
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </label>
 

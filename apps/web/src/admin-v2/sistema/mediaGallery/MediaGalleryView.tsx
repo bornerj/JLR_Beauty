@@ -354,7 +354,7 @@ export function MediaGalleryView() {
                 onChange={(event) => setSlotValue(editorSlot.id, event.target.value)}
                 placeholder={editorSlot.fallbackUrl}
                 disabled={controlsDisabled}
-                className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-xs text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-xs text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </label>
 

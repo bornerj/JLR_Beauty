@@ -11,7 +11,7 @@ import prisma from "../lib/prisma";
 import { logger } from "../utils/logger";
 import { withDetail, formatZodDetail } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
-import { applyStockMovement, StockError, MAX_MOVEMENT_QUANTITY } from "../lib/stockLedger";
+import { applyStockMovement, applyStockAdjustment, StockError, MAX_MOVEMENT_QUANTITY } from "../lib/stockLedger";
 import { releaseReservation } from "../lib/stockReservation";
 import { recordAudit, type AuditAction } from "../lib/auditLog";
 import { getSalesInsights, getInventoryOverview } from "../modules/admin/kpis";
@@ -172,43 +172,16 @@ inventoryRouter.post(
       return;
     }
     try {
-      const result = await prisma.$transaction(async (tx) => {
-        const current = await tx.productStock.findUnique({
-          where: { productId_unitId: { productId, unitId } },
-          select: { stock: true },
-        });
-        const currentStock = current?.stock ?? 0;
-        const delta = parsed.data.targetStock - currentStock;
-        if (delta === 0) return { balanceAfter: currentStock, changed: false };
-        const movement = await applyStockMovement(tx, {
+      const result = await prisma.$transaction((tx) =>
+        applyStockAdjustment(tx, {
           productId,
           unitId,
-          type: "AJUSTE",
-          quantity: Math.abs(delta),
+          targetStock: parsed.data.targetStock,
           reason: parsed.data.reason,
           note: parsed.data.note ?? null,
           userId: req.user?.id ?? null,
-        });
-        // AJUSTE pode ser para cima ou para baixo — applyStockMovement trata
-        // AJUSTE como saída; para ajuste positivo corrigimos somando 2x o delta.
-        if (delta > 0) {
-          await tx.productStock.update({
-            where: { productId_unitId: { productId, unitId } },
-            data: { stock: parsed.data.targetStock },
-          });
-          await tx.stockMovement.update({
-            where: { id: movement.movementId },
-            data: { balanceAfter: parsed.data.targetStock },
-          });
-          await tx.$executeRaw`
-            UPDATE "Product" p
-            SET "stock" = COALESCE((SELECT SUM(ps."stock") FROM "ProductStock" ps WHERE ps."productId" = p."id"), 0)
-            WHERE p."id" = ${productId}
-          `;
-          return { balanceAfter: parsed.data.targetStock, changed: true };
-        }
-        return { balanceAfter: movement.balanceAfter, changed: true };
-      });
+        })
+      );
       recordAudit("STOCK_ADJUST", {
         userId: req.user?.id,
         req,

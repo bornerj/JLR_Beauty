@@ -168,7 +168,7 @@ export function CouponsListView() {
         <select
           value={validityFilter}
           onChange={(e) => setValidityFilter(e.target.value as ValidityFilter)}
-          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+          className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
         >
           {VALIDITY_FILTER_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>

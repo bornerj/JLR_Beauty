@@ -44,12 +44,12 @@ export function SegmentEditor({
             value={seg.text}
             onChange={(e) => update(index, "text", e.target.value)}
             placeholder="Texto da parte..."
-            className="flex-1 rounded-lg border border-gold/40 bg-white px-3 py-1.5 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="flex-1 rounded-lg border border-primary/60 bg-white px-3 py-1.5 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           />
           <select
             value={seg.style}
             onChange={(e) => update(index, "style", e.target.value)}
-            className="rounded-lg border border-gold/40 bg-white px-2 py-1.5 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="rounded-lg border border-primary/60 bg-white px-2 py-1.5 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           >
             {STYLE_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>

@@ -171,3 +171,59 @@ export const sellStockDirect = async (
     reason: "venda",
   });
 };
+
+/**
+ * Ajusta o saldo REAL da unidade para um valor alvo (inventário/contagem física).
+ * Ao contrário de `applyStockMovement` (que só conhece entrada/saída e bloqueia
+ * saldo negativo), AJUSTE define o saldo diretamente — o alvo já vem validado
+ * como >= 0 (Zod), então "estoque insuficiente" nunca se aplica aqui. Escreve o
+ * `balanceAfter` correto de uma vez (sem escrita intermediária incorreta).
+ *
+ * ERR-0071: a implementação anterior (inline em `routes/inventory.ts`) chamava
+ * `applyStockMovement` tratando todo AJUSTE como saída e "corrigia" ajustes pra
+ * cima com uma segunda escrita — para aumentos grandes (targetStock > 2×saldo
+ * atual), o passo intermediário calculava um saldo negativo e disparava
+ * `insufficient_stock` mesmo sendo um ajuste válido.
+ */
+export const applyStockAdjustment = async (
+  tx: Prisma.TransactionClient,
+  input: {
+    productId: number;
+    unitId: number;
+    targetStock: number;
+    reason: string;
+    note?: string | null;
+    userId?: number | null;
+  }
+): Promise<{ balanceAfter: number; changed: boolean; movementId: number | null }> => {
+  if (!Number.isInteger(input.targetStock) || input.targetStock < 0) {
+    throw new StockError("invalid_quantity", `saldo alvo invalido: ${input.targetStock}`);
+  }
+  const row = await lockProductStockRow(tx, input.productId, input.unitId);
+  const delta = input.targetStock - row.stock;
+  if (delta === 0) {
+    return { balanceAfter: row.stock, changed: false, movementId: null };
+  }
+
+  await tx.productStock.update({
+    where: { id: row.id },
+    data: { stock: input.targetStock },
+  });
+
+  const movement = await tx.stockMovement.create({
+    data: {
+      productId: input.productId,
+      unitId: input.unitId,
+      type: "AJUSTE",
+      quantity: Math.abs(delta),
+      balanceAfter: input.targetStock,
+      reason: input.reason,
+      note: input.note || null,
+      createdByUserId: input.userId || null,
+    },
+    select: { id: true },
+  });
+
+  await syncProductGlobalStock(tx, input.productId);
+  return { balanceAfter: input.targetStock, changed: true, movementId: movement.id };
+};

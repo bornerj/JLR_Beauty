@@ -9814,3 +9814,41 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260818_234842-PASS.md`.
 - Nenhuma pendência de código aberta desta leva.
 - Itens de sessões anteriores, ainda sem decisão do usuário (não bloqueiam nada): remover/limpar as chaves órfãs de Textos das Páginas/Galeria de Mídias dos antigos flip-cards (`PLAN-0028`); risco de duplicação equivalente ao `ERR-0058` em `unit-health/service.ts`/`dashboardSalesInsights.ts` (não verificado).
 - Planos pré-existentes sem `-DONE-`, não tocados nesta sessão: `PLAN-0019` (TLS/HTTPS, bloqueado por domínio), `PLAN-0021` (Menu Admin — falta só commit/push).
+
+## 2026-08-20 — Registro de ABERTURA (PLAN-0032 — revalidação guiada, foco PLAN-0020)
+- Usuário pediu uma rodada de revalidação ao vivo: vai reportar bugs/melhorias conforme for usando o sistema, com foco principal no que o `PLAN-0020` (Estoque Multi-Unidade/Ledger/Vendas Multicanal/BI) entregou e em tudo que foi migrado sobre essa base (`PLAN-0026` Cadastros→Produtos, `PLAN-0031` Operação→Lista/Kanban, `PLAN-0022`/`0023` Panorama/BI).
+- Plano aberto: `memory/plans/PLAN-0032-REVALIDACAO-PLAN-0020-BUGS-MELHORIAS.md` — funciona como fila viva de ocorrências (tabela + diário de execução por item), cada uma triada como bug/melhoria e ponto-a-ponto/estrutural antes de corrigir, seguindo a Anti-Scope-Drift Layer do kernel. Fechamento (`-DONE-`) só quando o usuário confirmar o fim da rodada.
+- Nenhum código alterado ainda — sessão em espera do primeiro item reportado.
+
+## 2026-08-20 — Registro de FECHAMENTO (PLAN-0032 — revalidação guiada, 6 ocorrências)
+
+**Resumo:** rodada de revalidação ao vivo, foco `PLAN-0020` e tudo migrado sobre ele no Admin V2. 6 ocorrências reportadas e tratadas na mesma sessão, uma por vez, cada uma validada ao vivo (browser real + rebuild Docker, ou `curl`/Postgres direto) antes de seguir pra próxima.
+
+1. **Histórico de movimentação de estoque sem consistência aparente** — investigado e não era bug de cálculo (ledger de "Sampoo de Ervas" batia certinho); a leitura confundia por falta de coluna "Saldo anterior" + ordenação mais-novo-primeiro. Bug real achado na mesma investigação (`ERR-0071`): AJUSTE de estoque pra cima podia falhar com "estoque insuficiente" (falso negativo) por passar pela lógica de saída de `applyStockMovement`. Corrigido com `applyStockAdjustment` novo (escrita única); `StockHistoryModal.tsx` ganhou coluna "Saldo anterior" + validação visual de consistência linha a linha. Achado colateral: `Product.stock` (cache global) dessincronizado em 2/9 produtos por reversões manuais de sessões anteriores sem resync — corrigido; nota de processo registrada. 5 testes novos (`stockLedger.test.ts`), 167/167 PASS.
+2. **Contorno dos campos de formulário sem contraste** — `border-gold/40` (dourado clarinho, 1px) trocado em 134 campos reais (input/select/textarea, 32 arquivos) do Admin V2 inteiro por `border-primary/60` (verde da marca). Ajuste fino ao vivo: 2px inicial revertido pra 1px, mantendo a cor.
+3. **Operação→Lista: resumo em 2 linhas + navegação mal posicionada; Produtos sem paginação** — resumo de 7 indicadores virou 1 linha só (nomes completos, ajuste fino revertendo uma abreviação de 5 posições pedida e depois descartada ao ver que cabia), Receita por último; paginação movida de baixo da grid pra logo após os filtros; mesma paginação adicionada à grid de Produtos (Cadastros), que nunca teve.
+4. **Detalhes do Pedido "branco, pálido"** (`@frontend-specialist`) — reformulado com chunking por seção (Miller's Law), faixa de destaque pro status+total (Von Restorff), timeline no histórico — 100% tokens de marca já existentes, sem "reescrita radical" (decisão deliberada, `DECISION-013` regra #6).
+5. **"Onde está o dinheiro?" — unificar em cards + abas + cor** (`@frontend-specialist` + skill `dataviz`) — cascata+origens viraram 6 stat tiles coloridos (paleta validada com `scripts/validate_palette.js`, ALL CHECKS PASS); as 6 decomposições "gigantes" viraram abas com painel de altura fixa + rolagem vertical.
+6. **Auditoria de fechamento: Admin legado × Admin V2** — 12/15 telas do menu legado já migradas; 3 sem equivalente (Metas/Performance — zero API, zero model, conteúdo de template fake, nada real pra migrar; Assinantes — único gap real, backend `POST/PATCH /subscriptions` funcional sem UI em lugar nenhum). Achado colateral: `admin-leads` órfão do menu legado, candidato a limpeza.
+
+**Validações:** `apps/api` `tsc -b` + `npm run test` 167/167 PASS; `apps/web` `tsc -b` + `npm run build` PASS; `tailwind.generated.css` regenerado 5x (checklist `ERR-0070`/`0071` aplicado proativamente em toda ocorrência visual); rebuild Docker + validação ao vivo via browser real em cada mudança de UI; `ERR-0071` registrado em `DEBUG-HISTORY.md`.
+
+**Status:** `PLAN-0032` fechado `DONE` (usuário confirmou fim da rodada), renomeado pra `memory/plans/PLAN-0032-DONE-REVALIDACAO-PLAN-0020-BUGS-MELHORIAS.md`. Commit e push autorizados explicitamente pelo usuário na mesma instrução — Git Record completado a seguir.
+
+**Pendente para a próxima sessão:** usuário quer revisar em seguida a pendência de aposentar o Admin legado e usar só o Admin V2 (não existe `PLAN-XXXX` formal pra isso ainda — só a nota em `DECISION-013` regra #3, "não decidida agora", e a menção de `RETROFIT-022` como fora de escopo no `PLAN-0024`). Itens de sessões anteriores continuam pendentes, sem mudança: chaves órfãs de Textos das Páginas/Galeria de Mídias (`PLAN-0028`); risco de duplicação `ERR-0058`-like em `unit-health/service.ts`/`dashboardSalesInsights.ts` (não verificado); `PLAN-0019` (TLS, bloqueado por domínio); `PLAN-0021` (Menu Admin, falta só commit/push — não tocado nesta sessão).
+
+## 2026-08-20 — SESSION AUDIT — PASS
+
+Sessão encerrada a pedido do usuário ("feche o plano atual, está completo. salve, commit e push").
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — nenhuma `DECISION-*` tocada; `DECISION-013` regra #6 respeitada nas 3 ocorrências de UI |
+| State Integrity | PASS — `PLAN-0032` fechado `DONE`; `PLAN-0019`/`0021` seguem com seu estado pré-existente, não tocados |
+| Operational Memory | PASS — `MODIFICATION_LOG` e plano atualizados a cada ocorrência |
+| Debug Memory | PASS — `ERR-0071` registrado no formato padrão |
+| Technical Validation | PASS — `tsc -b`/build/testes (167/167) limpos nos dois apps; lint com 29 erros pré-existentes (mesmo padrão sistêmico já tolerado em sessões anteriores, nenhuma categoria nova) |
+| Regression Risk | PASS — motor de estoque tocado (ocorrência #1) coberto por 5 testes novos; nenhuma área sensível (auth/pagamento/agendamento) alterada |
+| Git Governance | PASS — Pre-commit review preenchido no `PLAN-0032`; commit/push autorizados explicitamente pelo usuário |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260820_162602-PASS.md`.

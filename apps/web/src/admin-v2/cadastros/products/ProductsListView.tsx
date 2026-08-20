@@ -23,8 +23,11 @@ import type { Product, ProductInput, ProductStatusColorValue } from "./types";
  *    etc.) eram **números estáticos fabricados no JSX**, nunca calculados por
  *    `behavior.ts` — não portados (não é regra de negócio real, é dado fake que nunca
  *    existiu de verdade).
- * 3. Paginação numerada do legado não reproduzida — mesmo padrão das Ondas 4/8 (tabela
- *    rolável com busca + filtros).
+ * 3. ~~Paginação numerada do legado não reproduzida — mesmo padrão das Ondas 4/8 (tabela
+ *    rolável com busca + filtros).~~ Revertido no `PLAN-0032` ocorrência #3 (pedido
+ *    explícito do usuário): paginação client-side adicionada, mesmo componente/posição
+ *    da Lista de Pedidos (`operations/orders/OrdersListView.tsx`) — linha de navegação
+ *    logo após os filtros, acima da grid.
  *
  * **Achado de backend confirmado por E2E real (fora do escopo desta onda, `DECISION-014`
  * regra #2 — sem mudança de backend)**: `DELETE /products/:id` falha com 500 (não 409) pra
@@ -46,6 +49,9 @@ type FormModalState = { mode: "create" } | { mode: "edit"; product: Product } | 
 type DeleteModalState = { product: Product } | null;
 type MutationState = { submitting: boolean; error: string | null };
 
+// PLAN-0032 ocorrência #3 — mesmo padrão de paginação client-side da Lista de Pedidos.
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
 const parseDecimal = (value: string | null): number | null => {
   if (value === null) return null;
   const parsed = Number(value);
@@ -60,6 +66,8 @@ export function ProductsListView() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -108,6 +116,17 @@ export function ProductsListView() {
       return matchesQuery && matchesCategory && matchesStatus;
     });
   }, [state.data, search, categoryFilter, statusFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const pageProducts = useMemo(
+    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, categoryFilter, statusFilter, pageSize]);
 
   const handleSubmit = useCallback(
     async (input: ProductInput) => {
@@ -195,12 +214,12 @@ export function ProductsListView() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nome, SKU ou descrição…"
-          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+          className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
         />
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+          className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
         >
           <option value="">Todas as categorias</option>
           {categories.map(([id, name]) => (
@@ -212,7 +231,7 @@ export function ProductsListView() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+          className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
         >
           <option value="">Todos os status</option>
           {statuses.map(([id, s]) => (
@@ -221,6 +240,63 @@ export function ProductsListView() {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* PLAN-0032 ocorrência #3: mesma linha de navegação/paginação da Lista de Pedidos,
+          logo após os filtros, acima da grid. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-stone-600 dark:text-stone-400">
+        <div className="flex items-center gap-2">
+          <span>Itens por página:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="rounded-lg border border-gold/40 bg-white px-2 py-1 text-sm text-forest dark:bg-forest-green"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p>
+          Mostrando {filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filtered.length)} de {filtered.length} produtos ·
+          página {currentPage} de {pageCount}
+        </p>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setPage(1)}
+            disabled={currentPage === 1}
+            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            «
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+            disabled={currentPage === pageCount}
+            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ›
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage(pageCount)}
+            disabled={currentPage === pageCount}
+            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            »
+          </button>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -243,7 +319,7 @@ export function ProductsListView() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((product) => {
+              {pageProducts.map((product) => {
                 const price = parseDecimal(product.price);
                 const cost = parseDecimal(product.costPrice);
                 return (

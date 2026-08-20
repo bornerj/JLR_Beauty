@@ -262,21 +262,32 @@ export function OrdersListView() {
       </div>
 
       {summary && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: "Total", value: summary.totalOrders },
-            { label: "Em progresso", value: summary.inProgress },
-            { label: "Despachados", value: summary.dispatched },
-            { label: "Entregues", value: summary.delivered },
-            { label: "Cancelados", value: summary.cancelled },
-            { label: "Pagamento pendente", value: summary.pendingPayment },
-            { label: "Receita confirmada", value: formatCurrencyBRL(summary.confirmedRevenue) },
-          ].map((item) => (
-            <div key={item.label} className="rounded-lg border border-gold/30 bg-cream-sidebar px-3 py-2 dark:border-forest-green dark:bg-forest-green">
-              <p className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">{item.label}</p>
-              <p className="text-lg font-bold text-forest">{item.value}</p>
-            </div>
-          ))}
+        // PLAN-0032 ocorrência #3: uma linha só (a maioria é número, cabe), "Receita
+        // confirmada" por último (é o único valor tipicamente largo). Rótulo completo
+        // (usuário confirmou ao vivo que o quadro tem espaço de sobra — abreviação de
+        // 5 posições virou desnecessária) — 7 colunas, a última (receita) mais larga que
+        // as demais; overflow-x-auto como reserva pra telas bem estreitas, mesmo padrão já
+        // usado na tabela abaixo (`min-w-[880px]`).
+        <div className="overflow-x-auto">
+          <div className="grid min-w-[760px] grid-cols-[repeat(6,minmax(0,1fr))_minmax(0,1.6fr)] gap-2">
+            {[
+              { label: "Total", value: summary.totalOrders },
+              { label: "Em progresso", value: summary.inProgress },
+              { label: "Despachados", value: summary.dispatched },
+              { label: "Entregues", value: summary.delivered },
+              { label: "Cancelados", value: summary.cancelled },
+              { label: "Pagamento pendente", value: summary.pendingPayment },
+              { label: "Receita confirmada", value: formatCurrencyBRL(summary.confirmedRevenue) },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-lg border border-gold/30 bg-cream-sidebar px-3 py-2 dark:border-forest-green dark:bg-forest-green"
+              >
+                <p className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">{item.label}</p>
+                <p className="text-lg font-bold text-forest">{item.value}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -285,12 +296,12 @@ export function OrdersListView() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por ID, nome ou e-mail…"
-          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+          className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+          className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
         >
           <option value="">Todos os status</option>
           {ORDER_STATUS_OPTIONS.map((value) => (
@@ -302,7 +313,7 @@ export function OrdersListView() {
         <select
           value={fulfillmentFilter}
           onChange={(e) => setFulfillmentFilter(e.target.value)}
-          className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+          className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
         >
           <option value="">Todo o fulfillment</option>
           {FULFILLMENT_STATUS_OPTIONS.map((value) => (
@@ -311,6 +322,63 @@ export function OrdersListView() {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* PLAN-0032 ocorrência #3: linha de navegação/paginação movida pra cima da grid,
+          logo após os filtros (antes ficava abaixo da tabela). */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-stone-600 dark:text-stone-400">
+        <div className="flex items-center gap-2">
+          <span>Itens por página:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="rounded-lg border border-gold/40 bg-white px-2 py-1 text-sm text-forest dark:bg-forest-green"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p>
+          Mostrando {filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filtered.length)} de {filtered.length} pedidos ·
+          página {currentPage} de {pageCount}
+        </p>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setPage(1)}
+            disabled={currentPage === 1}
+            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            «
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+            disabled={currentPage === pageCount}
+            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ›
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage(pageCount)}
+            disabled={currentPage === pageCount}
+            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            »
+          </button>
+        </div>
       </div>
 
       {selectedIds.size > 0 && (
@@ -389,61 +457,6 @@ export function OrdersListView() {
           </table>
         </div>
       )}
-
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-stone-600 dark:text-stone-400">
-        <div className="flex items-center gap-2">
-          <span>Itens por página:</span>
-          <select
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            className="rounded-lg border border-gold/40 bg-white px-2 py-1 text-sm text-forest dark:bg-forest-green"
-          >
-            {PAGE_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
-        <p>
-          Mostrando {filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filtered.length)} de {filtered.length} pedidos ·
-          página {currentPage} de {pageCount}
-        </p>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setPage(1)}
-            disabled={currentPage === 1}
-            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            «
-          </button>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-            disabled={currentPage === pageCount}
-            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            ›
-          </button>
-          <button
-            type="button"
-            onClick={() => setPage(pageCount)}
-            disabled={currentPage === pageCount}
-            className="rounded-lg bg-primary px-2.5 py-1 font-semibold text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            »
-          </button>
-        </div>
-      </div>
 
       {modal?.kind === "detail" && <OrderDetailModal order={modal.order} onClose={() => setModal(null)} />}
 

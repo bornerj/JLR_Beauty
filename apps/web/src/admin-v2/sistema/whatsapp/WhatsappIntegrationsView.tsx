@@ -182,7 +182,7 @@ export function WhatsappIntegrationsView() {
               checked={categoryFirst}
               disabled={settingsState.loading || categoryFirstSaving}
               onChange={(e) => void handleCategoryFirstToggle(e.target.checked)}
-              className="h-4 w-4 rounded border-gold/40 text-primary focus:ring-primary"
+              className="h-4 w-4 rounded border border-primary/60 text-primary focus:ring-primary"
             />
             Mostrar categorias primeiro
           </label>
@@ -204,7 +204,7 @@ export function WhatsappIntegrationsView() {
               value={openingGreeting}
               onChange={(e) => setOpeningGreeting(e.target.value)}
               disabled={settingsState.loading}
-              className="min-h-[84px] w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="min-h-[84px] w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               placeholder={DEFAULT_OPENING_GREETING}
             />
             <p className="text-[11px] text-stone-500 dark:text-stone-400">O bot sempre prefixa com Bom Dia, Boa Tarde ou Boa Noite.</p>
@@ -217,7 +217,7 @@ export function WhatsappIntegrationsView() {
               value={completionGreeting}
               onChange={(e) => setCompletionGreeting(e.target.value)}
               disabled={settingsState.loading}
-              className="min-h-[84px] w-full rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+              className="min-h-[84px] w-full rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               placeholder={DEFAULT_COMPLETION_GREETING}
             />
             <p className="text-[11px] text-stone-500 dark:text-stone-400">Mensagem enviada ao final do agendamento no WhatsApp.</p>
@@ -248,12 +248,12 @@ export function WhatsappIntegrationsView() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar nome, telefone, serviço, unidade…"
-            className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           >
             <option value="">Todos os status</option>
             <option value="ACTIVE">Ativo</option>
@@ -264,13 +264,13 @@ export function WhatsappIntegrationsView() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           />
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-lg border border-gold/40 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-1 focus:ring-primary dark:bg-forest-green"
+            className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
           />
           <button
             type="button"
