@@ -9887,3 +9887,24 @@ Usuário decidiu aposentar o Admin legado (`DECISION-017`, supera `DECISION-013`
 **Commits:** leva 1 (Ondas 0-3) `94c016e`, leva 2 (Ondas 4-5) `1572e31`, ambas commitadas e pushadas com aprovação explícita e separada do usuário.
 
 **Status:** `PLAN-0033` fechado `DONE`, renomeado pra `memory/plans/PLAN-0033-DONE-APOSENTAR-ADMIN-LEGADO.md`. Admin V2 é agora a única superfície administrativa do sistema.
+
+## 2026-08-20 — PLAN-0021 fechado como SUPERADO (sem reexecução)
+
+**O quê:** `PLAN-0021` (reorganização do menu Admin legado + tela "Seções Telas") fechado
+com status **SUPERADO**, a pedido explícito do usuário, depois de ser levantado no guia
+de pendências pós-sessão (`PENDENCIAS-2026-08-20.md`).
+
+**Por quê:** o `progress.md` ainda listava o plano como "falta commit/push" — desatualizado.
+O código já estava commitado (`9422f64`), só nunca ganhou rename `-DONE-` nem Git Record
+formal por faltar validação visual do usuário. Antes disso acontecer, o `PLAN-0033`
+(mesma sessão, mais cedo) removeu fisicamente os 4 arquivos que o `PLAN-0021` alterava
+(`AdminContent.tsx`, `admin-core/behavior.ts`, `AdminSectionTogglesView.tsx`,
+`admin-tests/behavior.ts` — commit `1572e31`). Não sobrou superfície ativa para validar
+ou reexecutar.
+
+**Ação:** nenhuma linha de código mudou. Só registro: status do plano atualizado pra
+`🗄️ SUPERADO`, pendências marcadas N/A com justificativa, Git Record preenchido
+apontando pros commits originais (`9422f64` código, `1572e31` remoção do alvo), arquivo
+renomeado `PLAN-0021-SUPERADO-REORGANIZACAO-MENU-ADMIN-SECOES-TELAS.md`.
+
+**Status:** fechado. Nenhum próximo passo pendente para este plano.

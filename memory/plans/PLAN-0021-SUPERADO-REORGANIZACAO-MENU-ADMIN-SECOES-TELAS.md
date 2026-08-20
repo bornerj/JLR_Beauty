@@ -1,6 +1,6 @@
 # PLAN-0021 — Reorganização do Menu Admin e da Tela Seções Telas (ex-Seções SPA)
 
-**Status:** ✅ EXECUTADO (2026-07-22) — plano formalizado retroativamente. A execução técnica (edições + validações) foi concluída antes da criação deste arquivo, sem plano prévio nem registro em tempo real; regularizado com anuência explícita do usuário quando questionado sobre aderência ao protocolo do kernel. Falta commit/push (dupla autorização) para virar DONE.
+**Status:** 🗄️ SUPERADO (fechado em 2026-08-20, sem reexecução) — a entrega original (2026-07-22) já estava commitada (`9422f64`), mas nunca ganhou rename `-DONE-` nem Git Record formal por faltar validação visual explícita do usuário. Antes disso acontecer, o `PLAN-0033` (aposentadoria do Admin legado, 2026-08-20) **removeu fisicamente** os 4 arquivos que este plano alterava (`AdminContent.tsx`, `admin-core/behavior.ts`, `AdminSectionTogglesView.tsx`, `admin-tests/behavior.ts` — commit `1572e31`, Onda 4). O código deste plano segue no histórico do Git e na branch `archive/admin-legado`, mas não há mais superfície ativa para validar ou reexecutar: o Admin V2 tem sua própria estrutura de menu, entregue em outros planos. Fechado como superado por decisão explícita do usuário, sem nova validação visual e sem novo commit/push de código (nenhuma linha de código mudou nesta reabertura — só registro).
 **Data:** 2026-07-22
 **Escopo macro:** `apps/web` (menu lateral admin, tela de toggles de seções públicas, gating de views por papel, suíte de auto-teste de views)
 **Agentes de apoio:** `@frontend-specialist` (aplicado inline, sem sub-agente dedicado)
@@ -93,19 +93,23 @@ Usuário pediu, em seguida: (a) mover o grupo Master para ser a **última** opç
 
 **Fora do escopo automatizado:** não há teste automatizado (Vitest/RTL) para ordem de itens de menu ou para `toSortedToggleMap` — validado via `tsc` + inspeção de código + rebuild, sem suíte de testes de UI no projeto para este componente.
 
-**Pendências para DONE:**
-- [ ] Validação visual do usuário na tela real (posições e agrupamentos conforme esperado).
-- [ ] Fluxo Git completo (commit + push autorizados) → Git Record abaixo.
+**Pendências para DONE — N/A, plano superado antes de serem cumpridas:**
+- [x] ~~Validação visual do usuário na tela real~~ — alvo removido pelo `PLAN-0033` antes da validação acontecer; não aplicável.
+- [x] ~~Fluxo Git completo (commit + push autorizados)~~ — o código já estava commitado (`9422f64`); não há Git Record dedicado a fazer porque não há código novo para commitar nesta reabertura.
 
-## Git Record of Delivery (a preencher ao final)
-- **Step 1 (Pre-commit review):** [pendente]
-- **Step 2 (Commit authorization):** [pendente]
-- **Step 3 (Commit confirmation):** [pendente]
-- **Step 4 (Push authorization e resultado):** [pendente]
-- **Push status:** PENDING
+## Git Record of Delivery
+- **Código original:** já commitado em `9422f64` ("Atualiza Dockerfiles e documentação de planos"), sem mensagem/registro dedicado ao `PLAN-0021` na época.
+- **Remoção do alvo:** `1572e31` (`PLAN-0033`, Onda 4) — os 4 arquivos que este plano alterava foram deletados fisicamente; código preservado na branch `archive/admin-legado`.
+- **Fechamento deste registro (documentação apenas):** ver commit apontado em `MODIFICATION_LOG.md` na entrada de fechamento do `PLAN-0021`.
+- **Push status:** N/A para este fechamento (só documentação; será incluído no próximo commit/push autorizado da sessão).
 
 ---
 
-## Próximos Passos
-1. Usuário valida visualmente o menu e a tela Seções Telas.
-2. Após validação → decidir sobre commit/push (junto ou não com o fix do PLAN de DNS/Docker pendente) → Git Record.
+## Encerramento (2026-08-20)
+
+Fechado como **superado pelo `PLAN-0033`**, por decisão explícita do usuário, sem
+reexecução de código. Nada do que este plano descrevia continua ativo na base: o Admin
+V2 tem sua própria árvore de menu, entregue de forma nativa em outros planos
+(`PLAN-0024`/`0026`/`0027`/`0031`/etc.), e o Admin legado — alvo deste plano — não existe
+mais na base local (removido, preservado só em `archive/admin-legado` e no histórico de
+commits). Nenhum próximo passo pendente.
