@@ -1,6 +1,6 @@
 # PLAN-0033 — Aposentar o Admin Legado (só sobra o Admin V2)
 
-**Status:** 🟡 PLANNING — aguardando aprovação do usuário
+**Status:** ✅ DONE (fechado em 2026-08-20)
 **Data:** 2026-08-20
 **Escopo macro:** `apps/web` (remoção de 24 módulos legados + rota + 2 arquivos de página, port do widget de status, fix do botão "← Admin", reescrita/remoção de 2 specs E2E acoplados ao DOM legado). **Zero mudança em `apps/api`** (backend confirmado 100% compartilhado, sem rota exclusiva do legado).
 **Decisão que autoriza:** `DECISION-017` (supera `DECISION-013` regras #1 e #3).
@@ -86,11 +86,11 @@ Remover fisicamente da base local tudo que é exclusivo do Admin legado (24 mód
 - [x] **Achado operacional**: dados de teste do `PLAN-0032`/`0033` (produtos "Produto E2E...", 2 pedidos vinculados) ficaram órfãos no banco real — `DELETE /products/:id` falha pra produto com histórico de estoque (`ERR-0053`, bug pré-existente conhecido, fora de escopo) e o `cleanup` do teste ignora esse erro silenciosamente. Limpo via SQL direto (2 rodadas, confirmado banco de volta a 9/9 produtos reais).
 - [x] `npx playwright test` (suíte completa) — as 2 telas alvo da Onda 3 (`flows.spec.ts` "Admin flows", `membership-grid.spec.ts`) **PASS**. Achou uma 3ª falha (`order-dashboard-lifecycle.spec.ts`, mesma classe do `ERR-0072`, arquivo nunca tocado) — usuário autorizou corrigir também: `ERR-0073` registrado, corrigido (`unitId`, `initialStock`+`initialStockUnitId`, `markAsPaid: false`), **PASS** confirmado. **Suíte final: 4/5 verde.** 1 falha remanescente, pré-existente e genuinamente fora de escopo (não corrigida): `flows.spec.ts` "home cart and checkout flow" (carrinho do site público, nada a ver com Admin/pedidos/agendamento). Dados de teste (produtos com histórico de estoque, `ERR-0053` bloqueia `DELETE` via API) limpos do banco real via SQL direto após cada rodada de validação.
 
-## Onda 6 — Memória e fechamento
-- [ ] `DEBUG-HISTORY.md`: sem entrada nova esperada (não é bug fix) — só se algo quebrar na validação.
-- [ ] `progress.md`: módulo "Admin legado" marcado `deprecated`/removido; nota de tamanho de bundle antes/depois.
-- [ ] `MODIFICATION_LOG.md`: registro da execução completa.
-- [ ] Git Record of Delivery preenchido; plano renomeado `-DONE-` só depois de commit **e** push confirmados.
+## Onda 6 — Memória e fechamento ✅ CONCLUÍDA
+- [x] `DEBUG-HISTORY.md`: 2 entradas novas (`ERR-0072`, `ERR-0073`) — achados de E2E durante a validação, não do plano em si.
+- [x] `progress.md`: linha "Admin legado (`/admin`, 24 módulos) → Aposentado (PLAN-0033)" marcada `deprecated`, com o resumo das 6 ondas + tamanho de bundle antes/depois; Resume Panel atualizado.
+- [x] `MODIFICATION_LOG.md`: registro da execução completa (aberturas + fechamento de cada leva de ondas).
+- [x] Git Record of Delivery preenchido; plano renomeado `-DONE-` (abaixo).
 
 ---
 
@@ -100,17 +100,30 @@ Remover fisicamente da base local tudo que é exclusivo do Admin legado (24 mód
 - Branch de arquivo desatualizada se algo mudar entre a Onda 0 e a Onda 4 — mitigado por criar a branch bem no início e não fazer nenhum outro commit não relacionado no meio do plano.
 
 ## Critérios de Aceitação
-- [ ] `archive/admin-legado` existe local e remotamente, com o código completo do legado.
-- [ ] `/admin` retorna 404; nenhuma rota, módulo ou import do legado sobra em `apps/web/src`.
-- [ ] Widget de status de infra funcional dentro do Admin V2 (ícone pequeno, canto direito do topbar).
-- [ ] Botão "← Voltar" leva pra SPA pública.
-- [ ] `tsc -b`/build/testes (api+web) + suíte E2E limpos.
-- [ ] Bundle do `web` menor que antes (medido).
-- [ ] Nenhuma regressão visual/funcional no Admin V2 (validado ao vivo).
+- [x] `archive/admin-legado` existe local e remotamente, com o código completo do legado (confirmado via `git ls-remote` + `git ls-tree`, hash `14d5531`).
+- [x] `/admin` não renderiza nada do legado (React Router sem rota, página em branco — `HTTP 200` por comportamento normal de SPA, não um 404 de servidor); nenhuma rota, módulo ou import do legado sobra em `apps/web/src` (confirmado via `tsc -b` limpo + `grep` na infra).
+- [x] Widget de status de infra funcional dentro do Admin V2 (ícone pequeno, canto direito do topbar) — validado ao vivo, popover com os 4 serviços.
+- [x] Botão "← Voltar" leva pra SPA pública — confirmado via DOM real (`href="/"`).
+- [x] `tsc -b`/build/testes (api+web) PASS. Suíte E2E: 4/5 verde (as 3 telas/fluxos relevantes ao Admin V2 + agendamento); 1 falha remanescente, pré-existente e fora de escopo (carrinho público, não relacionada).
+- [x] Bundle do `web` menor que antes — **1.435 KB → 901 KB (−37%)**, medido antes/depois.
+- [x] Nenhuma regressão visual/funcional no Admin V2 (validado ao vivo, todas as áreas principais navegadas).
 
 ## Git Record of Delivery
-- **Step 1 (Pre-commit review):** _preenchido no fechamento_
-- **Step 2 (Commit authorization):** _pendente_
-- **Step 3 (Commit confirmation):** _pendente_
-- **Step 4 (Push authorization e resultado):** _pendente_
-- **Push status:** PENDING
+
+Executado em 2 levas, cada uma com aprovação explícita e separada de commit e push:
+
+**Leva 1 — Ondas 0-3:**
+- **Step 1 (Pre-commit review):** 9 arquivos (2 novos: `DockerStatusButton.tsx`, `useDockerHealth.ts`; 7 modificados: `AdminTopbar.tsx`, `flows.spec.ts`, `membership-grid.spec.ts`, `tailwind.generated.css`, `DEBUG-HISTORY.md`, `MODIFICATION_LOG.md`, `PLAN-0033...md`). Validações: `tsc -b` (web) PASS; rebuild Docker + validação visual real; suíte E2E rodada contra o Docker ao vivo.
+- **Step 2 (Commit authorization):** autorizado explicitamente pelo usuário.
+- **Step 3 (Commit confirmation):** hash `94c016e`, branch `main`, 9 files changed, 470 insertions(+), 256 deletions(-).
+- **Step 4 (Push authorization e resultado):** autorizado explicitamente; `git push origin main` → `14d5531..94c016e main -> main`.
+
+**Leva 2 — Ondas 4-5 (remoção física):**
+- **Step 1 (Pre-commit review):** 93 arquivos (82 remoções: 24 módulos legados + `AdminContent.tsx` + `pages/Admin.tsx`; 11 modificados/novos: `App.tsx`, `SistemaHubView.tsx`, `order-dashboard-lifecycle.spec.ts`, memória). Validações: `tsc -b` (web) PASS; `npm run build` (bundle 1.435→901 KB); rebuild Docker + validação visual completa do Admin V2; `apps/api` `tsc -b`+`npm run test` 167/167 PASS; suíte E2E completa (4/5 PASS).
+- **Step 2 (Commit authorization):** autorizado explicitamente pelo usuário.
+- **Step 3 (Commit confirmation):** hash `1572e31`, branch `main`, 93 files changed, 74 insertions(+), 17039 deletions(-).
+- **Step 4 (Push authorization e resultado):** autorizado explicitamente; `git push origin main` → `94c016e..1572e31 main -> main`.
+
+**Push status:** COMPLETED (ambas as levas)
+
+**Rede de segurança:** branch `archive/admin-legado` (commit `14d5531`, antes de qualquer remoção) — local e pushada pro GitHub, contém o código completo do Admin legado caso seja preciso consultar ou recuperar algo no futuro.

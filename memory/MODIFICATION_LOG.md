@@ -9879,3 +9879,11 @@ Usuário decidiu aposentar o Admin legado (`DECISION-017`, supera `DECISION-013`
 - Suíte E2E completa rodada contra o Docker ao vivo — achou uma 3ª falha fora do escopo original (`order-dashboard-lifecycle.spec.ts`, mesma classe do `ERR-0072` — `unitId`/`initialStock` faltando + `markAsPaid` default; usuário autorizou corrigir também, `ERR-0073`). **Suíte final: 4/5 verde** (`membership-grid`, `flows` "Admin flows", `flows` "franquias form", `order-dashboard-lifecycle`). 1 falha remanescente, genuinamente pré-existente e fora de escopo, não tocada: `flows.spec.ts` "home cart and checkout flow" (carrinho do site público).
 
 **Status:** `PLAN-0033` — Ondas 0-5 completas. Falta só Onda 6 (fechamento formal: Git Record, rename `-DONE-`) e a aprovação de commit/push desta leva (82 remoções + 2 achados extras).
+
+## 2026-08-20 — Registro de FECHAMENTO (PLAN-0033 — Admin legado aposentado, DONE)
+
+**Resumo:** `DECISION-017` autorizou aposentar o Admin legado (supera `DECISION-013` regras #1/#3). `PLAN-0033` executado ponta a ponta na mesma sessão, 6 ondas: **(0)** branch de arquivo `archive/admin-legado` criada e pushada pro GitHub. **(1)** widget de status de infra portado pro Admin V2 (ícone no topbar). **(2)** botão "← Admin" virou "← Voltar" (SPA pública). **(3)** 2 specs E2E acoplados ao DOM legado reescritos, achada e corrigida uma cadeia de 4 bugs pré-existentes na suíte (`ERR-0072`). **(4)** remoção física — 82 arquivos (24 módulos + `AdminContent.tsx` + `pages/Admin.tsx` + rota `/admin`), `tsc -b` limpo de primeira. **(5)** validação final — bundle 1.435→901 KB (−37%), Admin V2 inteiro navegado ao vivo, card "Infra" do hub Sistema corrigido, 3ª falha de E2E (`order-dashboard-lifecycle.spec.ts`) corrigida a pedido do usuário (`ERR-0073`), suíte final 4/5 verde (1 falha pré-existente não relacionada, carrinho público). **(6)** fechamento formal — Git Record completo, plano renomeado `-DONE-`.
+
+**Commits:** leva 1 (Ondas 0-3) `94c016e`, leva 2 (Ondas 4-5) `1572e31`, ambas commitadas e pushadas com aprovação explícita e separada do usuário.
+
+**Status:** `PLAN-0033` fechado `DONE`, renomeado pra `memory/plans/PLAN-0033-DONE-APOSENTAR-ADMIN-LEGADO.md`. Admin V2 é agora a única superfície administrativa do sistema.
