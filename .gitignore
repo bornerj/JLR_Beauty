@@ -49,9 +49,10 @@ arvore.txt
 # AI tool caches (locais, não versionados)
 /.codex/
 
-# SFK skills/rules sincronizados automaticamente pelo framework — não são
-# produto deste projeto, não devem ser versionados aqui (achado 2026-08-24)
-.sfk/kernel/skills/memsession/
+# SFK skills sincronizadas automaticamente pelo framework — não são produto
+# deste projeto, destrackeadas do git em 2026-08-24 (git rm --cached, ficam
+# só em disco local)
+.sfk/kernel/skills/
 .cursor/rules/memsession.md
 
 
