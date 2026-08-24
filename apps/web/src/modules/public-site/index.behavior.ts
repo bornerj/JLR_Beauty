@@ -9,7 +9,7 @@ import {
   requestLoginModal,
   register,
 } from "../../lib/auth";
-import { resolveUploadedAssetUrl } from "../../lib/assetUrls";
+import { resolveUploadedAssetUrl, NO_PRODUCT_IMAGE_URL } from "../../lib/assetUrls";
 import { setAuthNavUser } from "./auth.behavior";
 import { getBrandingSnapshot } from "./branding.runtime";
 import {
@@ -67,7 +67,7 @@ export function initIndexPage(): Cleanup {
   const DEFAULT_FREE_SHIPPING_THRESHOLD = 150;
   const CHECKOUT_POLICY_API_URL = import.meta.env.VITE_API_URL || "";
   let freeShippingThreshold = DEFAULT_FREE_SHIPPING_THRESHOLD;
-  const DEFAULT_CART_IMAGE = "/images/products/jlr_argan.webp";
+  const DEFAULT_CART_IMAGE = NO_PRODUCT_IMAGE_URL;
 
   const escapeHtml = (value: string): string =>
     value
@@ -749,8 +749,9 @@ export function initIndexPage(): Cleanup {
     "[data-membership-subscribe-save]"
   ) as HTMLButtonElement | null;
   const API_URL = import.meta.env.VITE_API_URL || "";
-  const WHATSAPP_PHONE = "5511978935812";
-  //const WHATSAPP_PHONE = "5511989261279";
+  // PLAN-0034 (Fase 5) — antes tinha 2 números de WhatsApp hardcoded e divergentes
+  // entre este arquivo e CheckoutContent.tsx. Fonte única agora: branding.runtime.ts
+  // (que busca de /api/public/branding, env var CONCIERGE_SUMMARY_PHONE no backend).
   let publicMemberships: HomeMembershipRow[] = [];
 
   const planIcon = (name: string) => {
@@ -769,7 +770,7 @@ export function initIndexPage(): Cleanup {
     value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const buildWhatsappUrl = (text?: string) => {
-    const base = `https://api.whatsapp.com/send?phone=${WHATSAPP_PHONE}`;
+    const base = `https://api.whatsapp.com/send?phone=${getBrandingSnapshot().whatsappPhone}`;
     if (!text) return base;
     return `${base}&text=${encodeURIComponent(text)}`;
   };

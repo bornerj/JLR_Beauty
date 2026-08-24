@@ -42,6 +42,7 @@ const normalizeBrandingSnapshot = (value: unknown): PublicBranding => {
     fullName: normalizeBrandingString(candidate.fullName, DEFAULT_BRANDING.fullName),
     shortName: normalizeBrandingString(candidate.shortName, DEFAULT_BRANDING.shortName),
     logoUrl: normalizeBrandingString(candidate.logoUrl, DEFAULT_BRANDING.logoUrl),
+    whatsappPhone: normalizeBrandingString(candidate.whatsappPhone, DEFAULT_BRANDING.whatsappPhone),
   };
 };
 
@@ -70,6 +71,17 @@ const persistBrandingSnapshot = (value: PublicBranding): void => {
   }
 };
 
+// PLAN-0034 (achado de branding, DECISION-018) — o <title> estático em index.html
+// fica correto para ESTE deploy (nome real no HTML ajuda SEO/crawlers sem JS); esta
+// função mantém a aba do navegador sincronizada com o branding real assim que ele
+// carrega/muda, sem exigir editar index.html a cada alteração feita no Admin.
+const SITE_TITLE_SUFFIX = "Salão & Spa de Luxo";
+
+const applyDocumentTitle = (value: PublicBranding): void => {
+  if (typeof document === "undefined") return;
+  document.title = `${value.fullName} | ${SITE_TITLE_SUFFIX}`;
+};
+
 const hydrateBrandingSnapshot = (): void => {
   const persisted = readPersistedBrandingSnapshot();
   if (!persisted) return;
@@ -80,10 +92,12 @@ const applyBrandingSnapshot = (next: PublicBranding): void => {
   brandingSnapshot = cloneBranding(next);
   persistBrandingSnapshot(brandingSnapshot);
   brandingVersion += 1;
+  applyDocumentTitle(brandingSnapshot);
   notifySubscribers();
 };
 
 hydrateBrandingSnapshot();
+applyDocumentTitle(brandingSnapshot);
 
 export const bootstrapBrandingOnce = async (): Promise<void> => {
   if (brandingBootstrapPromise) {

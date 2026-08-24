@@ -9,6 +9,7 @@ import {
   type AuthRequest,
 } from "../middleware/auth";
 import prisma from "../lib/prisma";
+import { getPublicBranding } from "../modules/branding/service";
 import { sellStockDirect, StockError } from "../lib/stockLedger";
 import { reserveStock } from "../lib/stockReservation";
 import { recordAudit } from "../lib/auditLog";
@@ -528,10 +529,14 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
     return;
   }
 
+  // PLAN-0034 (Fase 5, achado de branding) — descrição do Stripe usava "JLR" hardcoded,
+  // aparecendo pro cliente no checkout mesmo sem nenhum vínculo com o sistema de
+  // branding editável (Admin V2 > Sistema > Branding).
+  const checkoutBranding = await getPublicBranding();
   const checkoutLineItems = [
     {
       name: `Pedido ${createdOrder.publicCode || `#${createdOrder.id}`}`,
-      description: "Pagamento de compra no site JLR",
+      description: `Pagamento de compra no site ${checkoutBranding.shortName}`,
       quantity: 1,
       unitAmount: total,
     },

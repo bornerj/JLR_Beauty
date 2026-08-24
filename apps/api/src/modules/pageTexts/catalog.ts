@@ -48,55 +48,29 @@ export const PAGE_TEXT_CATALOG: ReadonlyArray<PageTextEntry> = [
   { key: "home.services.title",        page: "home", section: "services", label: "Título da seção",   type: "simple", defaultValue: "Tratamentos Personalizados" },
   { key: "home.services.catalog_link", page: "home", section: "services", label: "Link catálogo",     type: "simple", defaultValue: "Ver Menu Completo" },
 
-  { key: "home.services.card_1_front_label",   page: "home", section: "services", label: "Card 1 — título (frente)",    type: "simple", defaultValue: "Arte Capilar" },
-  { key: "home.services.card_1_front_tagline", page: "home", section: "services", label: "Card 1 — tagline (frente)",   type: "simple", defaultValue: "Corte preciso e tratamentos restauradores" },
-  { key: "home.services.card_1_back_label",    page: "home", section: "services", label: "Card 1 — título (verso)",     type: "simple", defaultValue: "Arte Capilar" },
-  { key: "home.services.card_1_back_desc",     page: "home", section: "services", label: "Card 1 — descrição (verso)",  type: "simple", defaultValue: "Coloracao sob medida, reconstrucoes e finalizacao profissional para cada estilo." },
+  { key: "home.services.catalog_modal_eyebrow",  page: "home", section: "services", label: "Modal catálogo — eyebrow",  type: "simple", defaultValue: "Menu Completo" },
+  { key: "home.services.catalog_modal_title",    page: "home", section: "services", label: "Modal catálogo — título",   type: "simple", defaultValue: "Tratamentos por Categoria" },
+  { key: "home.services.catalog_modal_subtitle", page: "home", section: "services", label: "Modal catálogo — subtítulo", type: "simple", defaultValue: "Explore todas as categorias e veja os serviços com duração e valor estimado." },
 
-  { key: "home.services.card_2_front_label",   page: "home", section: "services", label: "Card 2 — título (frente)",    type: "simple", defaultValue: "Pele Clinica" },
-  { key: "home.services.card_2_front_tagline", page: "home", section: "services", label: "Card 2 — tagline (frente)",   type: "simple", defaultValue: "Faciais avançados e peelings" },
-  { key: "home.services.card_2_back_label",    page: "home", section: "services", label: "Card 2 — título (verso)",     type: "simple", defaultValue: "Pele Clínica" },
-  { key: "home.services.card_2_back_desc",     page: "home", section: "services", label: "Card 2 — descrição (verso)",  type: "simple", defaultValue: "Protocolos de rejuvenescimento e cuidados intensivos para cada necessidade da pele." },
-
-  { key: "home.services.card_3_front_label",   page: "home", section: "services", label: "Card 3 — título (frente)",    type: "simple", defaultValue: "Terapia de Bem-Estar" },
-  { key: "home.services.card_3_front_tagline", page: "home", section: "services", label: "Card 3 — tagline (frente)",   type: "simple", defaultValue: "Massagens e aromaterapia" },
-  { key: "home.services.card_3_back_label",    page: "home", section: "services", label: "Card 3 — título (verso)",     type: "simple", defaultValue: "Terapia de Bem-Estar" },
-  { key: "home.services.card_3_back_desc",     page: "home", section: "services", label: "Card 3 — descrição (verso)",  type: "simple", defaultValue: "Experiências sensoriais para restaurar energia, equilíbrio e relaxamento profundo." },
-
-  { key: "home.services.card_4_front_label",   page: "home", section: "services", label: "Card 4 — título (frente)",    type: "simple", defaultValue: "Terapia Capilar" },
-  { key: "home.services.card_4_front_tagline", page: "home", section: "services", label: "Card 4 — tagline (frente)",   type: "simple", defaultValue: "Saúde dos fios" },
-  { key: "home.services.card_4_back_label",    page: "home", section: "services", label: "Card 4 — título (verso)",     type: "simple", defaultValue: "Spa Capilar" },
-  { key: "home.services.card_4_back_desc",     page: "home", section: "services", label: "Card 4 — descrição (verso)",  type: "simple", defaultValue: "Tratamentos para couro cabeludo, controle de queda e reconstrução profunda." },
-
-  { key: "home.services.card_5_front_label",   page: "home", section: "services", label: "Card 5 — título (frente)",    type: "simple", defaultValue: "Lashes" },
-  { key: "home.services.card_5_front_tagline", page: "home", section: "services", label: "Card 5 — tagline (frente)",   type: "simple", defaultValue: "Extensão de cílios" },
-  { key: "home.services.card_5_back_label",    page: "home", section: "services", label: "Card 5 — título (verso)",     type: "simple", defaultValue: "Extensão de Cílios" },
-  { key: "home.services.card_5_back_desc",     page: "home", section: "services", label: "Card 5 — descrição (verso)",  type: "simple", defaultValue: "Fio a fio clássico e volume para um olhar marcante e elegante." },
-
-  { key: "home.services.card_6_front_label",   page: "home", section: "services", label: "Card 6 — título (frente)",    type: "simple", defaultValue: "Brows" },
-  { key: "home.services.card_6_front_tagline", page: "home", section: "services", label: "Card 6 — tagline (frente)",   type: "simple", defaultValue: "Sobrancelhas" },
-  { key: "home.services.card_6_back_label",    page: "home", section: "services", label: "Card 6 — título (verso)",     type: "simple", defaultValue: "Micropigmentação" },
-  { key: "home.services.card_6_back_desc",     page: "home", section: "services", label: "Card 6 — descrição (verso)",  type: "simple", defaultValue: "Design estratégico, lamination e técnica shadow para realce natural." },
-
-  { key: "home.services.card_7_front_label",   page: "home", section: "services", label: "Card 7 — título (frente)",    type: "simple", defaultValue: "Facial Spa" },
-  { key: "home.services.card_7_front_tagline", page: "home", section: "services", label: "Card 7 — tagline (frente)",   type: "simple", defaultValue: "Estética facial" },
-  { key: "home.services.card_7_back_label",    page: "home", section: "services", label: "Card 7 — título (verso)",     type: "simple", defaultValue: "Harmonização" },
-  { key: "home.services.card_7_back_desc",     page: "home", section: "services", label: "Card 7 — descrição (verso)",  type: "simple", defaultValue: "Limpeza profunda, peelings e protocolos de rejuvenescimento personalizados." },
-
-  { key: "home.services.card_8_front_label",   page: "home", section: "services", label: "Card 8 — título (frente)",    type: "simple", defaultValue: "Nails" },
-  { key: "home.services.card_8_front_tagline", page: "home", section: "services", label: "Card 8 — tagline (frente)",   type: "simple", defaultValue: "Mãos e pés" },
-  { key: "home.services.card_8_back_label",    page: "home", section: "services", label: "Card 8 — título (verso)",     type: "simple", defaultValue: "Manicure" },
-  { key: "home.services.card_8_back_desc",     page: "home", section: "services", label: "Card 8 — descrição (verso)",  type: "simple", defaultValue: "Esmaltação em gel, alongamentos e spa dos pés." },
-
-  { key: "home.services.card_9_front_label",   page: "home", section: "services", label: "Card 9 — título (frente)",    type: "simple", defaultValue: "Smooth" },
-  { key: "home.services.card_9_front_tagline", page: "home", section: "services", label: "Card 9 — tagline (frente)",   type: "simple", defaultValue: "Depilação" },
-  { key: "home.services.card_9_back_label",    page: "home", section: "services", label: "Card 9 — título (verso)",     type: "simple", defaultValue: "Depilação" },
-  { key: "home.services.card_9_back_desc",     page: "home", section: "services", label: "Card 9 — descrição (verso)",  type: "simple", defaultValue: "Técnicas confortáveis e ceras especiais para uma pele lisa." },
+  // PLAN-0034 (Fase 2) — 36 chaves "home.services.card_{1-9}_{front_label,
+  // front_tagline,back_label,back_desc}" removidas daqui: órfãs confirmadas
+  // (migraram pra Service.name/highlightLabel/highlightTagline/highlightDescription
+  // no PLAN-0028/ERR-0062), valores no banco idênticos ao defaultValue, sem edição
+  // real perdida. Dado antigo permanece na tabela Setting por decisão do usuário.
 
   // ─── HOME / MEMBERSHIP ────────────────────────────────────────────────────────
   { key: "home.membership.label",    page: "home", section: "membership", label: "Label da seção",  type: "simple", defaultValue: "Assinaturas Exclusivas" },
   { key: "home.membership.title",    page: "home", section: "membership", label: "Título da seção", type: "simple", defaultValue: "Quer fazer uma Assinatura e Economizar?" },
   { key: "home.membership.subtitle", page: "home", section: "membership", label: "Subtítulo",       type: "simple", defaultValue: "Escolha o plano que melhor se adapta ao seu estilo de vida e desfrute de benefícios exclusivos, descontos e experiências premium." },
+  { key: "home.membership.empty_state", page: "home", section: "membership", label: "Mensagem quando não há planos cadastrados (fallback — sem preço/nome fictício)", type: "simple", defaultValue: "Nenhum plano de assinatura disponível no momento." },
+
+  // ─── HOME / PRODUCTS ──────────────────────────────────────────────────────────
+  { key: "home.products.label",           page: "home", section: "products", label: "Label da seção (eyebrow)", type: "simple", defaultValue: "Luxo em Casa" },
+  { key: "home.products.title",           page: "home", section: "products", label: "Título da seção",          type: "simple", defaultValue: "Produtos em Destaque" },
+  { key: "home.products.cta_view_all",    page: "home", section: "products", label: "Botão \"ver todos\"",       type: "simple", defaultValue: "Ver Todos os Produtos" },
+  { key: "home.products.shipping_note",   page: "home", section: "products", label: "Nota de frete/devolução (editar manualmente se a política de frete mudar)", type: "simple", defaultValue: "Frete gratis em pedidos acima de R$ 150,00. Devolucao em 30 dias." },
+  { key: "home.products.collection_eyebrow", page: "home", section: "products", label: "Título da coleção — linha 1", type: "simple", defaultValue: "Outros Produtos para seu conforto" },
+  { key: "home.products.collection_title",   page: "home", section: "products", label: "Título da coleção — linha 2", type: "simple", defaultValue: "Coleção Completa" },
 
   // ─── HOME / TESTIMONIALS ──────────────────────────────────────────────────────
   { key: "home.testimonials.label",    page: "home", section: "testimonials", label: "Label da seção",  type: "simple", defaultValue: "Depoimentos" },
@@ -127,6 +101,7 @@ export const PAGE_TEXT_CATALOG: ReadonlyArray<PageTextEntry> = [
   { key: "franquias.models.label",    page: "franquias", section: "models", label: "Label da seção",  type: "simple", defaultValue: "Escolha Seu Caminho" },
   { key: "franquias.models.title",    page: "franquias", section: "models", label: "Título da seção", type: "simple", defaultValue: "Modelos de Franquia" },
   { key: "franquias.models.subtitle", page: "franquias", section: "models", label: "Subtítulo",       type: "simple", defaultValue: "Oportunidades de investimento sob medida para atender diferentes mercados e ambições." },
+  { key: "franquias.models.investment_label", page: "franquias", section: "models", label: "Label \"Investimento Inicial\" (compartilhado pelos 3 cards)", type: "simple", defaultValue: "Investimento Inicial" },
 
   { key: "franquias.models.card_1_name",       page: "franquias", section: "models", label: "Modelo 1 — nome",             type: "simple", defaultValue: "Esmalteria" },
   { key: "franquias.models.card_1_subtitle",   page: "franquias", section: "models", label: "Modelo 1 — subtítulo",        type: "simple", defaultValue: "Compacto e Boutique" },

@@ -64,6 +64,9 @@ export const HomeServicesSection = (): ReactElement => {
   const label       = usePageText("home.services.label");
   const title       = usePageText("home.services.title");
   const catalogLink = usePageText("home.services.catalog_link");
+  const catalogModalEyebrow  = usePageText("home.services.catalog_modal_eyebrow");
+  const catalogModalTitle    = usePageText("home.services.catalog_modal_title");
+  const catalogModalSubtitle = usePageText("home.services.catalog_modal_subtitle");
 
   const [featuredServices, setFeaturedServices] = useState<FeaturedService[]>([]);
   const [featuredLoadState, setFeaturedLoadState] = useState<FeaturedLoadState>("loading");
@@ -277,15 +280,15 @@ export const HomeServicesSection = (): ReactElement => {
 
           <div className="relative flex items-start justify-between gap-4 border-b border-gold-accent/20 px-5 py-5 sm:px-7">
             <div>
-              <p className="text-[11px] tracking-[0.25em] uppercase text-gold/80">Menu Completo</p>
+              <p className="text-[11px] tracking-[0.25em] uppercase text-gold/80"><RichText value={catalogModalEyebrow} /></p>
               <h3
                 className="mt-2 text-2xl sm:text-3xl font-serif italic text-gold leading-tight"
                 id="services-catalog-modal-title"
               >
-                Tratamentos por Categoria
+                <RichText value={catalogModalTitle} />
               </h3>
               <p className="mt-2 text-xs sm:text-sm text-white/75 max-w-2xl">
-                Explore todas as categorias e veja os serviços com duração e valor estimado.
+                <RichText value={catalogModalSubtitle} />
               </p>
             </div>
             <button

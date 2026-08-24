@@ -27,6 +27,7 @@ const normalizeBranding = (value: PublicBranding): PublicBranding => {
   const shortName = value.shortName.trim();
   const logoUrl = value.logoUrl.trim();
   return {
+    ...value, // preserva whatsappPhone — não editável por este form (config de env var)
     fullName: fullName || DEFAULT_BRANDING.fullName,
     shortName: shortName || DEFAULT_BRANDING.shortName,
     logoUrl: logoUrl || DEFAULT_BRANDING.logoUrl,

@@ -8,9 +8,10 @@ export const FranquiasModelsSection = ({ alt }: { alt?: boolean } = {}): ReactEl
   const modelCardImage02 = useMediaSlot("franquias_models_card_img_02");
   const modelCardImage03 = useMediaSlot("franquias_models_card_img_03");
 
-  const label    = usePageText("franquias.models.label");
-  const title    = usePageText("franquias.models.title");
-  const subtitle = usePageText("franquias.models.subtitle");
+  const label           = usePageText("franquias.models.label");
+  const title           = usePageText("franquias.models.title");
+  const subtitle        = usePageText("franquias.models.subtitle");
+  const investmentLabel = usePageText("franquias.models.investment_label");
 
   const c1Name       = usePageText("franquias.models.card_1_name");
   const c1Subtitle   = usePageText("franquias.models.card_1_subtitle");
@@ -64,7 +65,7 @@ export const FranquiasModelsSection = ({ alt }: { alt?: boolean } = {}): ReactEl
                         <h3 className="display-hero text-xl text-primary mb-1"><RichText value={c1Name} /></h3>
                         <p className="text-sm text-forest/60 mb-5"><RichText value={c1Subtitle} /></p>
                         <div className="mb-6">
-                            <p className="text-sm text-forest/60 dark:text-white/60 mb-1">Investimento Inicial</p>
+                            <p className="text-sm text-forest/60 dark:text-white/60 mb-1"><RichText value={investmentLabel} /></p>
                             <p className="text-3xl display-number text-shadow-strong text-gold"><RichText value={c1Investment} /></p>
                         </div>
                         <ul className="mb-8 space-y-3 flex-1">
@@ -105,7 +106,7 @@ export const FranquiasModelsSection = ({ alt }: { alt?: boolean } = {}): ReactEl
                         <h3 className="display-hero text-xl text-primary mb-1"><RichText value={c2Name} /></h3>
                         <p className="text-sm text-forest/60 mb-5"><RichText value={c2Subtitle} /></p>
                         <div className="mb-6">
-                            <p className="text-sm text-forest/60 dark:text-white/60 mb-1">Investimento Inicial</p>
+                            <p className="text-sm text-forest/60 dark:text-white/60 mb-1"><RichText value={investmentLabel} /></p>
                             <p className="text-3xl display-number text-shadow-strong text-gold"><RichText value={c2Investment} /></p>
                         </div>
                         <ul className="mb-8 space-y-3 flex-1">
@@ -146,7 +147,7 @@ export const FranquiasModelsSection = ({ alt }: { alt?: boolean } = {}): ReactEl
                         <h3 className="display-hero text-xl text-primary mb-1"><RichText value={c3Name} /></h3>
                         <p className="text-sm text-forest/60 mb-5"><RichText value={c3Subtitle} /></p>
                         <div className="mb-6">
-                            <p className="text-sm text-forest/60 dark:text-white/60 mb-1">Investimento Inicial</p>
+                            <p className="text-sm text-forest/60 dark:text-white/60 mb-1"><RichText value={investmentLabel} /></p>
                             <p className="text-3xl display-number text-shadow-strong text-gold"><RichText value={c3Investment} /></p>
                         </div>
                         <ul className="mb-8 space-y-3 flex-1">

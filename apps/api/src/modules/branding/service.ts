@@ -58,6 +58,21 @@ const readBrandingFromSettings = async (): Promise<PublicBranding | null> => {
   return cloneBranding(parsed.data);
 };
 
+// PLAN-0034 (Fase 5, achado pós-revisão) — número de WhatsApp de suporte/checkout
+// estava hardcoded e DIVERGENTE em 2 arquivos do frontend (5511989261279 vs
+// 5511978935812), sem nenhuma fonte configurável. Confirmado com o usuário: o número
+// correto é 5511978935812. Fonte única agora: mesma env var já usada pelo backend
+// pro resumo do concierge (`CONCIERGE_SUMMARY_PHONE`), exposta também via
+// `/api/public/branding` pro frontend parar de hardcodar.
+const DEFAULT_WHATSAPP_SUPPORT_PHONE = "5511978935812";
+
+const sanitizePhoneDigits = (value: string): string => value.replace(/\D/g, "");
+
+export const resolveWhatsappSupportPhone = (): string => {
+  const fromEnv = sanitizePhoneDigits((process.env.CONCIERGE_SUMMARY_PHONE || "").trim());
+  return fromEnv || DEFAULT_WHATSAPP_SUPPORT_PHONE;
+};
+
 export const getPublicBranding = async (): Promise<PublicBranding> => {
   const now = Date.now();
   if (brandingCacheValue && now < brandingCacheExpiresAt) {

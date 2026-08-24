@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { PERIOD_PRESET_LABELS, type AdminScope, type AdminScopePeriodPreset } from "./adminScope";
 import type { AdminV2Unit } from "../panorama/types";
 import { DockerStatusButton } from "./DockerStatusButton";
+import { useBranding } from "../../modules/public-site/branding.runtime";
 
 const PRESETS: AdminScopePeriodPreset[] = ["TODAY", "LAST_7D", "LAST_30D", "LAST_90D"];
 
@@ -16,6 +17,8 @@ export function AdminTopbar({
   onPresetChange: (preset: AdminScopePeriodPreset) => void;
   onUnitChange: (unitId: number | null) => void;
 }) {
+  const branding = useBranding();
+
   return (
     <header className="admin-v2-topbar flex flex-wrap items-center justify-between gap-3 border-b border-gold/40 bg-cream-sidebar px-5 py-3 dark:bg-forest-green">
       <div className="flex items-center gap-3">
@@ -23,8 +26,10 @@ export function AdminTopbar({
         <Link to="/" className="rounded-full border border-gold/60 px-3 py-1 text-xs font-bold uppercase tracking-widest text-forest hover:bg-gold/10">
           ← Voltar
         </Link>
+        {/* PLAN-0034 — nome da marca via branding.fullName (mesma fonte do site público),
+            "Admin V2" é rótulo fixo da ferramenta, não muda por tenant. */}
         <span className="text-sm font-bold uppercase tracking-[0.2em] text-forest">
-          JLR Beauty <span className="text-primary">Admin V2</span>
+          {branding.fullName} <span className="text-primary">Admin V2</span>
         </span>
       </div>
 

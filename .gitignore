@@ -49,6 +49,11 @@ arvore.txt
 # AI tool caches (locais, não versionados)
 /.codex/
 
+# SFK skills/rules sincronizados automaticamente pelo framework — não são
+# produto deste projeto, não devem ser versionados aqui (achado 2026-08-24)
+.sfk/kernel/skills/memsession/
+.cursor/rules/memsession.md
+
 
 # Claude Code local settings
 .claude/

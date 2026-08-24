@@ -26,17 +26,35 @@ const PAGE_LABELS: Record<string, string> = {
   global: "Missão & Valores",
 };
 
+// PLAN-0034 (Fase 1c, achado de nomenclatura) — só 10/23 seções reais do catálogo
+// tinham rótulo aqui; as outras 13 caíam no fallback `?? section` e apareciam com a
+// chave técnica crua (snake_case) pra quem edita. Lista completa a partir de
+// `grep -oE 'section: "[a-z_0-9]+"' catalog.ts | sort -u` — mantenha em sincronia
+// ao adicionar uma seção nova ao catálogo.
 const SECTION_LABELS: Record<string, string> = {
   hero: "Hero",
   about: "Sobre",
   cta: "CTA",
   services: "Serviços",
-  membership: "Assinaturas",
+  membership: "Assinaturas (Home)",
   testimonials: "Depoimentos",
   models: "Modelos",
   vision: "Visão",
   contact: "Contato",
   mission: "Missão",
+  products: "Produtos",
+  benefits: "Benefícios",
+  founder: "Fundadora",
+  fran01: "Modelo Master (detalhes)",
+  fran02: "Modelo Prime (detalhes)",
+  fran03: "Modelo Essencial (detalhes)",
+  gestao_app: "Gestão via App",
+  fluxo_caixa: "Fluxo de Caixa",
+  marketing_crm: "Marketing & CRM",
+  expansao: "Expansão",
+  perfil: "Perfil do Franqueado",
+  suporte: "Suporte da Franqueadora",
+  etapas: "Etapas de Abertura",
 };
 
 type LoadState = { loading: boolean; error: string | null };

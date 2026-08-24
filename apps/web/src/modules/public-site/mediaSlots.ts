@@ -56,81 +56,11 @@ export const mediaSlotCatalog = [
     label: "Home About - Colagem 6",
     fallbackUrl: "/images/about_img6.webp",
   },
-  {
-    id: "home_services_card_img_01",
-    page: "home",
-    section: "services",
-    order: 1,
-    label: "Home Serviços - Card 1",
-    fallbackUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuARr5EhNnwTTjU5vlGCN2g-k5I4Fk5IbzkhY7M2Z7hNSuHgjw72-n7jYz2nIL6kEYaEr2QMUh4UDzmoecfSlC9o6BrycwyRf7ATUC-faqNXHToAzrZteugibFPTXoxqaRaIQj1P-JvEWa4qsYuJKZ58dbph3ZWOGnXE34Y8S0_mtkPdyXssxJk8jwC0K4lgGNt7Q9v7f5AsQL1I8ftDD1qGZSMTDeTg1Il52tMs_XMMyUJnSxUw_O4b_90g_rEfz7CLKsjmV5eiPFE",
-  },
-  {
-    id: "home_services_card_img_02",
-    page: "home",
-    section: "services",
-    order: 2,
-    label: "Home Serviços - Card 2",
-    fallbackUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFlMndGMRtfTguABIfBDd-3hHe5OvlsSXybdKCqkXMA1jrp2pijAYz9lJ-BPbiTp3zymW0erEQrQntmBsMYNX3ML5Q204mA5E2M5KV6YeXS8N-RRuyta2yFPAwbBfbuaoOZT09JQzAWDDPyMCZAxaIayvB-rDCfgOn-h3u4V5uMGeSVtUUNnY-q4zadhEYJjXh6VT0ExNFxzjpD_lrWvNaNaMRHqKXa3foc2lyFvd-7F9mUP7lYJN-6_PrpmV42rzWXbAokEJngJg",
-  },
-  {
-    id: "home_services_card_img_03",
-    page: "home",
-    section: "services",
-    order: 3,
-    label: "Home Serviços - Card 3",
-    fallbackUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC2j8nn6oj-qs-X2-WzwFVCFw_DmIPuHqaw6dMKzBxhxjmw59gYuClCcw1vAtnLmEEqwXvygjNJ7PTYy7dDm3Nsq1D3MdV-29TqJ2pMELeGmPK597YuPmNSP1rQSqIlVfjWnIkHkm6MB47xHYs_VE-EFkemKe4-hF37Frz8Q04wbN2OxdLgF9bTj4QqmbSLtBZg9zDKe0CTceA95qlG-_y1AQLybppm3kgiEv1qeNDURTzmAlJirpGFLyM1h5UjHWF_RKUh_Vffadk",
-  },
-  {
-    id: "home_services_card_img_04",
-    page: "home",
-    section: "services",
-    order: 4,
-    label: "Home Serviços - Card 4",
-    fallbackUrl: "/images/hidra.webp",
-  },
-  {
-    id: "home_services_card_img_05",
-    page: "home",
-    section: "services",
-    order: 5,
-    label: "Home Serviços - Card 5",
-    fallbackUrl: "/images/Services/servico3.webp",
-  },
-  {
-    id: "home_services_card_img_06",
-    page: "home",
-    section: "services",
-    order: 6,
-    label: "Home Serviços - Card 6",
-    fallbackUrl: "/images/Services/servico2.webp",
-  },
-  {
-    id: "home_services_card_img_07",
-    page: "home",
-    section: "services",
-    order: 7,
-    label: "Home Serviços - Card 7",
-    fallbackUrl: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=1000&auto=format&fit=crop",
-  },
-  {
-    id: "home_services_card_img_08",
-    page: "home",
-    section: "services",
-    order: 8,
-    label: "Home Serviços - Card 8",
-    fallbackUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=1000&auto=format&fit=crop",
-  },
-  {
-    id: "home_services_card_img_09",
-    page: "home",
-    section: "services",
-    order: 9,
-    label: "Home Serviços - Card 9",
-    fallbackUrl: "https://images.unsplash.com/photo-1552693673-1bf958298935?q=80&w=1000&auto=format&fit=crop",
-  },
+  // PLAN-0034 (Fase 2) — 9 entradas "home_services_card_img_01..09" removidas daqui:
+  // órfãs confirmadas (nenhuma tela usa mais, migraram pra Service.imageUrl no
+  // PLAN-0028/ERR-0062), valores no banco idênticos ao fallbackUrl, sem edição real
+  // perdida. Dado antigo permanece na tabela Setting (ContentEntry) por decisão do
+  // usuário — só o código foi limpo.
   {
     id: "home_testimonials_avatar_01",
     page: "home",

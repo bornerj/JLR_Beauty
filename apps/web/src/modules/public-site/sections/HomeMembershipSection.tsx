@@ -3,9 +3,10 @@ import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
 export const HomeMembershipSection = (): ReactElement => {
-  const label    = usePageText("home.membership.label");
-  const title    = usePageText("home.membership.title");
-  const subtitle = usePageText("home.membership.subtitle");
+  const label      = usePageText("home.membership.label");
+  const title      = usePageText("home.membership.title");
+  const subtitle   = usePageText("home.membership.subtitle");
+  const emptyState = usePageText("home.membership.empty_state");
 
   return (
     <>
@@ -20,88 +21,12 @@ export const HomeMembershipSection = (): ReactElement => {
                 <p className="text-forest/70 dark:text-gray-300 text-lg"><RichText value={subtitle} /></p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start" data-membership-grid>
-                <div className="bg-white dark:bg-forest border border-champagne-dark dark:border-white/10 rounded-2xl p-8 hover:shadow-2xl hover:shadow-gold/10 transition-all duration-300 transform hover:-translate-y-2 relative group h-full flex flex-col">
-                    <div className="mb-6">
-                        <span className="inline-block py-1 px-3 bg-gray-100 dark:bg-white/10 rounded-full text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-300 mb-4">Silver</span>
-                        <h4 className="display-title text-shadow-strong text-3xl text-forest dark:text-white mb-2">Radiance</h4>
-                        <p className="text-gold font-bold text-xl">R$ 99,00 <span className="text-sm text-gray-400 font-normal">/ mês</span></p>
-                    </div>
-                    <ul className="space-y-4 mb-10 flex-grow">
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">check_circle</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">10% de desconto em serviços</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">check_circle</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Acesso antecipado a agenda</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">check_circle</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Tratamento capilar mensal</span>
-                        </li>
-                    </ul>
-                    <button className="w-full py-4 rounded-lg bg-forest text-white hover:bg-primary hover:text-forest font-bold uppercase tracking-widest text-xs transition-colors mt-auto" type="button" data-membership-join data-membership-name="Silver" data-membership-title="Radiance">
-                        Entrar no Clube
-                    </button>
-                </div>
-                <div className="bg-white dark:bg-forest border-2 border-gold rounded-2xl p-8 shadow-xl shadow-gold/10 transform scale-105 z-10 relative h-full flex flex-col">
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold text-white text-xs font-bold uppercase px-4 py-1 rounded-full tracking-widest">
-                        Mais Popular</div>
-                    <div className="mb-6">
-                        <span className="inline-block py-1 px-3 bg-gold/10 rounded-full text-xs font-bold uppercase tracking-widest text-gold mb-4">Gold</span>
-                        <h4 className="display-title text-shadow-strong text-3xl text-forest dark:text-white mb-2">Luminosity</h4>
-                        <p className="text-gold font-bold text-xl">R$ 189,00 <span className="text-sm text-gray-400 font-normal">/ mês</span></p>
-                    </div>
-                    <ul className="space-y-4 mb-10 flex-grow">
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">verified</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm font-medium">15% de desconto em todos os serviços</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">verified</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Priority booking garantido</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">verified</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Facial mensal gratuito</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">verified</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Presente de aniversário exclusivo</span>
-                        </li>
-                    </ul>
-                    <button className="w-full py-4 rounded-lg bg-forest text-white hover:bg-primary hover:text-forest font-bold uppercase tracking-widest text-xs transition-colors mt-auto" type="button" data-membership-join data-membership-name="Gold" data-membership-title="Luminosity">
-                        Entrar no Clube
-                    </button>
-                </div>
-                <div className="bg-white dark:bg-forest border border-champagne-dark dark:border-white/10 rounded-2xl p-8 hover:shadow-2xl hover:shadow-gold/10 transition-all duration-300 transform hover:-translate-y-2 relative h-full flex flex-col">
-                    <div className="mb-6">
-                        <span className="inline-block py-1 px-3 bg-gray-100 dark:bg-white/10 rounded-full text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-300 mb-4">Platinum</span>
-                        <h4 className="display-title text-shadow-strong text-3xl text-forest dark:text-white mb-2">Ethereal</h4>
-                        <p className="text-gold font-bold text-xl">R$ 299,00 <span className="text-sm text-gray-400 font-normal">/ mês</span></p>
-                    </div>
-                    <ul className="space-y-4 mb-10 flex-grow">
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">diamond</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">20% de desconto ilimitado</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">diamond</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Massagem corporal mensal</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">diamond</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Serviço de concierge dedicado</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-gold text-lg mt-0.5">diamond</span>
-                            <span className="text-forest/80 dark:text-gray-300 text-sm">Convites para eventos VIP</span>
-                        </li>
-                    </ul>
-                    <button className="w-full py-4 rounded-lg bg-forest text-white hover:bg-primary hover:text-forest font-bold uppercase tracking-widest text-xs transition-colors mt-auto" type="button" data-membership-join data-membership-name="Platinum" data-membership-title="Ethereal">
-                        Entrar no Clube
-                    </button>
-                </div>
+                {/* Fallback genérico — sem plano/preço fictício, ver PLAN-0034 achado #6 / DECISION-018.
+                    Substituído em runtime por renderMembershipsFromDb() (index.behavior.ts) quando há
+                    >=3 planos reais cadastrados em Cadastros > Assinaturas. */}
+                <p className="col-span-1 md:col-span-3 text-center text-sm text-forest/70 dark:text-gray-300 py-10">
+                    <RichText value={emptyState} />
+                </p>
             </div>
         </div>
     </section>

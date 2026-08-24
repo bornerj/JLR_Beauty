@@ -1,5 +1,12 @@
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+// PLAN-0034 (Fase 1b, achado de imagem) — antes cada tela (HomeProductsSection,
+// CheckoutContent, index.behavior.ts/cart) tinha seu próprio fallback hardcoded
+// apontando pra uma foto real de produto da JLR (jlr_argan.webp), o que mostrava o
+// produto errado de verdade quando outro produto não tinha imagem cadastrada. Fonte
+// única agora: placeholder genérico neutro, sem depender de nenhum produto real.
+export const NO_PRODUCT_IMAGE_URL = "/images/no-product-image.svg";
+
 const getApiOrigin = (): string => {
   try {
     return new URL(API_URL).origin;

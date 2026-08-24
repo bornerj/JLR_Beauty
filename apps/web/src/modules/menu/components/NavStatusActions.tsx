@@ -56,12 +56,26 @@ export default function NavStatusActions({ mobileMenuTrigger }: NavStatusActions
               </p>
             </div>
             <div className="relative flex items-center gap-1">
-              <img
-                className="h-10 w-10 rounded-full object-cover border border-forest/10"
-                src={user?.avatarUrl || "/images/about_img1.webp"}
-                alt={user?.name ? `Usuario ${user.name}` : "Usuario logado"}
-                data-auth-user-avatar
-              />
+              {/* PLAN-0034 (Fase 1b, achado de imagem) — antes o fallback sem avatar
+                  mostrava uma foto real da seção "Sobre" (about_img1.webp) como se fosse
+                  a foto de perfil do usuário. Ícone genérico agora, não depende de
+                  nenhuma imagem específica de tenant. */}
+              {user?.avatarUrl ? (
+                <img
+                  className="h-10 w-10 rounded-full object-cover border border-forest/10"
+                  src={user.avatarUrl}
+                  alt={user?.name ? `Usuario ${user.name}` : "Usuario logado"}
+                  data-auth-user-avatar
+                />
+              ) : (
+                <span
+                  className="material-symbols-outlined flex h-10 w-10 items-center justify-center rounded-full border border-forest/10 bg-forest/5 text-[28px] text-forest/60"
+                  aria-label={user?.name ? `Usuario ${user.name}` : "Usuario logado"}
+                  data-auth-user-avatar
+                >
+                  account_circle
+                </span>
+              )}
               <span className="material-symbols-outlined text-forest/60 text-base">expand_more</span>
             </div>
           </div>

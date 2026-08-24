@@ -17,6 +17,7 @@ import {
   getPublicBranding,
   invalidatePublicBrandingCache,
   PUBLIC_BRANDING_SETTING_KEY,
+  resolveWhatsappSupportPhone,
   savePublicBranding,
 } from "../modules/branding/service";
 import {
@@ -342,7 +343,9 @@ adminRouter.put("/admin/branding", requireAdmin, async (req, res) => {
 adminRouter.get("/public/branding", async (_req, res) => {
   try {
     const branding = await getPublicBranding();
-    res.json({ branding });
+    // PLAN-0034 (Fase 5) — whatsappPhone é config (env var), não faz parte do
+    // schema editável de branding (nome/logo) — só anexado na resposta pública.
+    res.json({ branding: { ...branding, whatsappPhone: resolveWhatsappSupportPhone() } });
   } catch (error) {
     logger.error("Falha ao ler branding publico", { error });
     res.status(500).json({

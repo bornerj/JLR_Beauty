@@ -9908,3 +9908,468 @@ apontando pros commits originais (`9422f64` código, `1572e31` remoção do alvo
 renomeado `PLAN-0021-SUPERADO-REORGANIZACAO-MENU-ADMIN-SECOES-TELAS.md`.
 
 **Status:** fechado. Nenhum próximo passo pendente para este plano.
+
+## 2026-08-20 — DECISION-018 + PLAN-0034 criados (auditoria textos/imagens hardcoded, ainda não executado)
+
+**Contexto:** usuário questionou se o princípio do `PLAN-0012` ("nenhum texto de
+marketing hardcoded — tudo via banco, editável em Admin") continua valendo depois da
+migração pro Admin V2 (`PLAN-0033`). RAG desta sessão confirmou que o catálogo de
+`pageTexts` cresceu de ~52 para 333 campos, que 24/30 seções públicas usam
+`usePageText()` (as 6 restantes são majoritariamente casos legítimos — dados reais de
+`Product`/props repassadas — não regressão), e que `DEBUG-HISTORY.md` já documentava
+esse mesmo tipo de achado antes (`ERR-0060`, `ERR-0062`), inclusive a pendência de
+chaves órfãs levantada pelo usuário no início desta conversa.
+
+**Ampliação de escopo (pedido explícito do usuário):** o objetivo real não é só
+limpeza de dívida técnica — é preparar a base para revender a mesma plataforma a
+outros clientes no futuro (JLR/JLR Beauty é marca de uma cliente específica), via uma
+rotina futura `saas-initialize` que reseta conteúdo pra defaults genéricos. Isso
+ampliou o plano pra cobrir também imagens (`mediaSlots`, mesmo padrão de banco que
+texto) e levantamento (não correção) de branding "JLR" hardcoded fora do sistema
+editável.
+
+**Registrado:**
+- `memory/decisions/DECISION-018.md` — objetivo máximo (portabilidade SaaS/white-label),
+  `Status: ACTIVE`
+- `memory/plans/PLAN-0034-AUDITORIA-TEXTOS-HARDCODED-POS-ADMIN-V2.md` — `Status: PLANEJADO`,
+  7 fases (auditoria de texto, imagem, consistência de nomenclatura Admin→Admin V2,
+  cruzamento de órfãos, correção, revalidação dos 2 editores no Admin V2, levantamento
+  de branding), aguardando aprovação do usuário antes de iniciar execução
+
+**Achado colateral:** o log deste `MODIFICATION_LOG.md` referencia um arquivo
+`PENDENCIAS-2026-08-20.md` (fechamento do `PLAN-0021`) que não existe mais em disco —
+provavelmente scratch de sessão anterior, já descartado. Sem impacto no `PLAN-0034`.
+
+**Próximo passo:** aguardando o usuário confirmar/ajustar o `PLAN-0034` antes de
+iniciar a Fase 1 (auditoria tela por tela).
+
+## 2026-08-20 — Diretiva de conteúdo (DB-driven) fixada em `sfk.toml`
+
+**O quê:** pedido explícito do usuário para não deixar essa diretiva só na conversa —
+adicionada seção `[content_architecture]` em `sfk.toml`, com o princípio "nenhum
+texto/imagem de marketing hardcoded — tudo via banco, editável em Admin V2",
+apontando pra origem (`PLAN-0012`), pra auditoria em andamento (`PLAN-0034`), pro
+racional de portabilidade (`DECISION-018`) e pras exceções já conhecidas (dados de
+`Product`/`Service`/`Membership`, UI técnica).
+
+**Por quê:** `sfk.toml` é carregado em toda sessão (Layer 0) — garante que a diretiva
+sobrevive mesmo que o histórico de conversa não seja lido, evitando que uma sessão
+futura reintroduza texto/imagem hardcoded por desconhecimento do padrão.
+
+**Arquivo alterado:** `sfk.toml` (seção nova, nenhuma outra alterada).
+
+## 2026-08-20 — PLAN-0034 Fase 1 + Fase 3 (texto): 7 achados encontrados e corrigidos
+
+**Fase 1 (auditoria):** varredura grep-assisted dos 30 arquivos de seção pública +
+4 wrappers de página. `FranquiasModelDetailSection.tsx` confirmado 100% correto
+(exemplo de implementação ideal — todo conteúdo vem via props de `usePageText`/
+`useMediaSlot` dos 3 callers `FranquiasFran0{1,2,3}Section.tsx`). Auth/Cart/Concierge/
+AccessDenied/labels de formulário/Checkout classificados como UI técnica legítima
+(fora do escopo do `pageTexts` por desenho do `PLAN-0012`, mesmo precedente de sempre).
+
+**7 achados `D` reais, concentrados em componentes que não existiam no catálogo
+original do `PLAN-0012`** (adicionados depois, sem seguir o padrão):
+- `HomeProductsSection.tsx` — eyebrow/título da seção, CTA "Ver Todos os Produtos"
+  (2x), nota de frete/devolução (hardcoded e **desconectada** do valor real que já
+  existe em `checkout.freeShippingThreshold`), títulos da coleção — 4 achados
+- `HomeServicesSection.tsx` — modal "Menu Completo" inteiro (eyebrow/título/subtítulo)
+- `HomeMembershipSection.tsx` — **achado mais relevante pro objetivo do `DECISION-018`**:
+  fallback de 3 cards de plano 100% fictícios e JLR-específicos (Silver/Radiance R$99,
+  Gold/Luminosity R$189, Platinum/Ethereal R$299 + benefícios), exibido pro cliente
+  final quando a API falha ou há <3 planos reais cadastrados
+- `FranquiasModelsSection.tsx` — label "Investimento Inicial" duplicado hardcoded 3x
+
+**Fase 3 (correção, a pedido explícito do usuário — "corrigir os achados agora"):**
+7 novas chaves adicionadas a `apps/api/src/modules/pageTexts/catalog.ts`
+(`home.products.*` ×5, `home.services.catalog_modal_*` ×3, `home.membership.empty_state`,
+`franquias.models.investment_label`), 4 componentes migrados para `usePageText()` +
+`RichText`. `seed.ts` não precisou de edição (deriva do catálogo automaticamente).
+**Decisão de design no achado #6:** o fallback de planos foi trocado por uma mensagem
+genérica editável ("Nenhum plano de assinatura disponível no momento."), não por 3
+registros paralelos de plano em `pageTexts` — evita criar uma 2ª fonte de verdade
+concorrendo com a tabela `Membership` (que já é a fonte real via
+`renderMembershipsFromDb()`).
+
+**Validações:** `apps/api` `tsc -b` PASS, `npm run test` 134/134 PASS; `apps/web`
+`tsc -b` + `vite build` PASS (215 módulos, sem warning novo), `npm run lint` sem erro
+novo nos arquivos tocados (28 erros pré-existentes em arquivos não relacionados a
+este plano, confirmados via `git status`).
+
+**Observação registrada, não corrigida (fora de escopo):** `index.behavior.ts` só
+substitui o fallback de planos quando há >=3 planos reais cadastrados — um cliente
+com 1-2 planos reais hoje veria a mensagem genérica em vez dos planos que já tem.
+Fica anotado no `PLAN-0034` como item para decisão futura, não é texto hardcoded.
+
+**Arquivos alterados:** `apps/api/src/modules/pageTexts/catalog.ts`,
+`apps/web/src/modules/public-site/sections/{HomeProductsSection,HomeServicesSection,HomeMembershipSection,FranquiasModelsSection}.tsx`.
+
+**Status:** `PLAN-0034` Fases 1 e 3 (texto) concluídas. Faltam Fases 1b/1c (imagens,
+nomenclatura), 2 (chaves/slots órfãos), 4 (revalidação funcional no browser), 5
+(levantamento de branding). Sem commit/push (aguardando aprovação do usuário).
+
+## 2026-08-20 — PLAN-0034 Fase 5 (parcial): varredura de branding "JLR" em Admin V2 + correção de 2 achados
+
+**Contexto:** usuário perguntou se a auditoria já tinha coberto as telas do Admin V2.
+Esclarecido que Admin V2 fica fora da Fase 1 por desenho (rótulos como "Cadastros"/
+"Sistema" são a ferramenta em si, não conteúdo de tenant) — mas isso é diferente de
+branding "JLR" hardcoded dentro do próprio chrome do Admin, que é achado válido da
+Fase 5. Rodada varredura `grep -rniE "\bjlr\b"` em `admin-v2/` + resto do frontend.
+
+**2 achados reais corrigidos (a pedido explícito do usuário):**
+- `apps/web/index.html` `<title>` — mantido estático (correto para SEO/crawlers sem
+  JS neste deploy), mas `branding.runtime.ts` passou a sincronizar `document.title`
+  em runtime com o branding real (`${branding.fullName} | Salão & Spa de Luxo`) assim
+  que carrega/muda — reflete edições feitas no Admin sem precisar editar o HTML
+- `admin-v2/shell/AdminTopbar.tsx` — `"JLR Beauty Admin V2"` hardcoded trocado por
+  `branding.fullName` + `"Admin V2"` fixo (ferramenta, não tenant)
+
+**Achados cosméticos, não corrigidos (baixa prioridade, sem visibilidade real):**
+placeholders "Ex.: JLR..." em `BrandingSettingsView.tsx`; prefixo `jlr.`/`jlr:` em
+chaves de `localStorage`/nomes de evento JS internos; 1 comentário de código em
+`PublicMenu.tsx`.
+
+**Validações:** `apps/web` `tsc -b` + `vite build` PASS (215 módulos), `npm run lint`
+sem erro novo nos arquivos tocados.
+
+**Arquivos alterados:** `apps/web/src/admin-v2/shell/AdminTopbar.tsx`,
+`apps/web/src/modules/public-site/branding.runtime.ts`.
+
+**Status:** Fase 5 ainda parcial (faltam meta tags adicionais, `seed.ts`, templates de
+e-mail/WhatsApp, `sfk.toml`). Sem commit/push.
+
+## 2026-08-20 — PLAN-0034 Fase 1b concluída: auditoria de imagens hardcoded
+
+**Método:** os 30 arquivos de seção pública foram checados por `<img>`/
+`backgroundImage`/caminho literal `/images/` fora de `useMediaSlot`. 18/30 usam
+`useMediaSlot` corretamente; `FranquiasModelDetailSection.tsx` recebe imagem via prop
+(já confirmado Class A na Fase 1); `HomeServicesSection.tsx` (flip-cards) confirma
+`Service.imageUrl` real (Class B, pattern correto pós-`ERR-0062`); `PublicMenu.tsx`
+(logo) já 100% dinâmico via `branding.logoUrl`.
+
+**2 achados `D` reais, corrigidos:**
+- **Fallback "sem imagem" de produto** duplicado hardcoded em 3 lugares
+  (`HomeProductsSection.tsx`, `CheckoutContent.tsx`, `index.behavior.ts`), todos
+  apontando pra uma foto real de produto da JLR (`jlr_argan.webp`) — mostrava
+  literalmente o produto errado quando outro produto não tinha foto. Corrigido:
+  constante única `NO_PRODUCT_IMAGE_URL` em `apps/web/src/lib/assetUrls.ts`, apontando
+  pra SVG neutro novo (`apps/web/public/images/no-product-image.svg`)
+- **Fallback de avatar do usuário** (`NavStatusActions.tsx`) hardcoded pra uma foto
+  real da seção "Sobre" (`about_img1.webp`) — usuário sem foto de perfil via a foto
+  do salão como se fosse a própria. Corrigido: ícone genérico Material Symbols
+  (`account_circle`)
+
+**Não é achado (esclarecido, não é bug):** os 78 `fallbackUrl` em `mediaSlots.ts` são
+fotos reais da JLR, mas isso é o **mesmo padrão** do `defaultValue` em
+`pageTexts/catalog.ts` — conteúdo atual do tenant, editável via Admin, não hardcoded
+fora do sistema. Só relevante pro futuro `saas-initialize` (`DECISION-018`), não é
+"violação" no sentido desta auditoria.
+
+**Validações:** `apps/web` `tsc -b` + `vite build` PASS (215 módulos), `npm run lint`
+sem erro novo.
+
+**Arquivos alterados:** `apps/web/src/lib/assetUrls.ts`,
+`apps/web/public/images/no-product-image.svg` (novo),
+`apps/web/src/modules/public-site/sections/HomeProductsSection.tsx`,
+`apps/web/src/components/pages/CheckoutContent.tsx`,
+`apps/web/src/modules/public-site/index.behavior.ts`,
+`apps/web/src/modules/menu/components/NavStatusActions.tsx`.
+
+**Status:** `PLAN-0034` Fases 1, 1b, 3 (texto) e 5 (parcial) concluídas. Faltam Fase 1c
+(nomenclatura Admin→Admin V2), Fase 2 (chaves/slots órfãos), Fase 4 (revalidação
+funcional no browser), resto da Fase 5. Sem commit/push.
+
+## 2026-08-20 — PLAN-0034 Fase 1c concluída: consistência de nomenclatura Admin V2
+
+**Achado real:** `apps/web/src/admin-v2/sistema/pageTexts/PageTextsView.tsx` mapeia
+seção→rótulo amigável (`SECTION_LABELS`) pra só 10 das 23 seções reais do catálogo
+(`grep -oE 'section: "[a-z_0-9]+"' catalog.ts | sort -u`). As outras 13 caíam no
+fallback `?? section` e mostravam a chave técnica crua no acordeão pra quem edita —
+inclusive a seção `products` que a própria Fase 3 deste plano acabou de criar hoje.
+**Corrigido:** 13 rótulos adicionados (Modelo Master/Prime/Essencial, Gestão via App,
+Fluxo de Caixa, Marketing & CRM, Expansão, Perfil do Franqueado, Suporte da
+Franqueadora, Etapas de Abertura, Benefícios, Fundadora, Produtos).
+
+**Achado colateral corrigido:** rótulo da seção `membership` ("Assinaturas") colidia
+com o rótulo da página `assinaturas` (`PAGE_LABELS`) — ambíguo pra quem está editando
+(é a seção de assinaturas *dentro* da Home, não a página Assinaturas). Renomeado pra
+"Assinaturas (Home)".
+
+**Checado, sem achado:** `MediaGalleryView.tsx` usa `slot.label` já pronto por item
+(não uma tabela de rótulos separada), não sofre do mesmo problema. Varredura por
+referência morta a telas do Admin legado dentro de `admin-v2/` — só comentários de
+código documentando a migração (não visíveis ao usuário), nenhuma referência quebrada.
+`"Seções Telas"` é tela nativa e funcional do Admin V2 (`PLAN-0026`), não resquício.
+
+**Validações:** `apps/web` `tsc -b` + `vite build` PASS, `npm run lint` sem erro novo.
+
+**Arquivo alterado:** `apps/web/src/admin-v2/sistema/pageTexts/PageTextsView.tsx`.
+
+**Status:** `PLAN-0034` Fases 1, 1b, 1c, 3 e 5 (parcial) concluídas. Faltam Fase 2
+(chaves/slots órfãos), Fase 4 (revalidação funcional no browser), resto da Fase 5.
+Sem commit/push.
+
+## 2026-08-20 — PLAN-0034 Fase 2 concluída: 45 chaves/slots órfãos confirmados (só 1 cluster)
+
+**Método:** extraídas as 342 chaves de `catalog.ts` e os 78 slots de `mediaSlots.ts`;
+cross-reference automatizado contra todo `apps/web/src` (`grep -rl`, confirmado que
+nenhuma chamada usa chave dinâmica via template string, então o cross-reference é
+exaustivo/confiável).
+
+**Achado:** 45 órfãos, **todos no mesmo cluster** — os 9 flip-cards de Serviços da
+Home, exatamente o que `ERR-0062` já tinha sinalizado como pendência não resolvida
+(mesma pendência que o usuário trouxe no início desta conversa). 36 chaves de texto
+(`home.services.card_{1-9}_{front_label,front_tagline,back_label,back_desc}`) + 9
+slots de imagem (`home_services_card_img_{01-09}`). **Zero órfãos em qualquer outro
+lugar** do catálogo (306 campos + 69 slots restantes, todos com uso confirmado).
+
+**Consultado o Docker Postgres ao vivo** pra saber se removê-los perderia edição real
+da dona do site: os 45 valores em `ContentEntry` foram comparados byte-a-byte contra
+`defaultValue`/`fallbackUrl` do catálogo — **100% idênticos**, nenhum foi editado
+antes da migração pra `Service.imageUrl`/`highlightLabel` (`PLAN-0028`). Remover não
+perde histórico editorial nenhum.
+
+**Sem ação de exclusão tomada** — é dado de produção (mesmo de baixo risco
+confirmado), decisão fica com o usuário, apresentada nesta sessão.
+
+**Status:** `PLAN-0034` Fases 1, 1b, 1c, 2, 3 e 5 (parcial) concluídas. Falta decisão
+do usuário sobre os órfãos (execução, se aprovada), Fase 4 (revalidação funcional no
+browser), resto da Fase 5. Sem commit/push.
+
+## 2026-08-20 — PLAN-0034 Fase 2 executada: 45 órfãos removidos do código (banco intocado)
+
+**Decisão do usuário:** remover as 45 entradas órfãs (36 chaves de texto + 9 slots de
+imagem, cluster único dos flip-cards de Serviços) só do código, deixando os valores
+como estão no Postgres.
+
+**Execução:**
+- `apps/api/src/modules/pageTexts/catalog.ts` — 36 chaves `home.services.card_*`
+  removidas (342 → 306 chaves)
+- `apps/api/src/modules/mediaSlots/service.ts` — 9 ids removidos de **duas** listas
+  internas (`MEDIA_SLOT_IDS` + `PUBLIC_MEDIA_SLOT_CATALOG`)
+- `apps/web/src/modules/public-site/mediaSlots.ts` — 9 slots removidos (78 → 69)
+- `seed.ts` não precisou de edição (deriva do catálogo automaticamente)
+- Os 45 valores antigos **permanecem intactos** em `ContentEntry.value` no Postgres —
+  chaves órfãs dentro do JSON armazenado, inofensivas (catálogo é quem define o que é
+  exposto/editável, não o conteúdo do JSON em si)
+
+**Achado extra registrado (não corrigido, fora de escopo):** `mediaSlots/service.ts`
+duplica o catálogo de media slots em 2 listas internas (`MEDIA_SLOT_IDS` +
+`PUBLIC_MEDIA_SLOT_CATALOG`) que precisam ficar manualmente em sincronia com uma 3ª
+cópia no frontend (`mediaSlots.ts`) — diferente do padrão de `pageTexts`, onde o
+catálogo mora só no backend e o frontend consome via API. Existe um self-check em
+runtime que lança erro se as duas listas do backend saírem de sincronia (confirmado
+funcionando: `npm run test` passou 134/134 depois da remoção). Fica registrado como
+candidato a um plano futuro de consolidação, não é bug hoje.
+
+**Validações:** `apps/api` `tsc -b` + `npm run build` + `npm run test` 134/134 PASS;
+`apps/web` `tsc -b` + `vite build` PASS (bundle 895→893 KB), `npm run lint` sem erro
+novo. Contagem final confirmada: 306 chaves de texto, 69 slots de imagem em ambos os
+catálogos frontend/backend.
+
+**Arquivos alterados:** `apps/api/src/modules/pageTexts/catalog.ts`,
+`apps/api/src/modules/mediaSlots/service.ts`,
+`apps/web/src/modules/public-site/mediaSlots.ts`.
+
+**Status:** `PLAN-0034` Fases 1, 1b, 1c, 2, 3 e 5 (parcial) concluídas. Faltam Fase 4
+(revalidação funcional no browser) e resto da Fase 5. Sem commit/push.
+
+## 2026-08-20 — PLAN-0034 Fase 4 concluída: validação real no browser (rebuild Docker)
+
+**Método:** `docker compose build api web` (imagens rebuildadas com todo o código já
+corrigido pelas Fases 1-3) + `docker compose up -d --no-deps api web` (recreate) +
+teste ponta a ponta no Chrome, logado como `master`/Administrador.
+
+**Confirmado visualmente, ao vivo:**
+- Editor "Textos das Páginas": **306 campos** (bate com 342−36 da Fase 2), 4 abas
+  carregando; seção "SERVIÇOS" agora com 6 campos (não 42 — órfãs sumiram); seção
+  "PRODUTOS" com rótulo amigável (não a chave crua, achado da Fase 1c); "ASSINATURAS
+  (HOME)" desambiguada da aba "Assinaturas" (achado colateral da Fase 1c)
+- Edição real testada e revertida: 1 campo simples (título da seção Produtos) e 1
+  campo segmentado (parte "Eternizada" do H1, estilo dourado gradiente) — ambos
+  salvos, refletidos na home pública com hard-reload, depois revertidos ao valor
+  original e salvos de novo. Nenhum dado de teste ficou para trás.
+- Histórico ("Restaurar versão anterior"): botão presente/habilitado, confirma que o
+  backend disponibiliza snapshot — teste ativo pulado por segurança (risco de
+  reintroduzir valor de teste numa cadeia de restaurações)
+- Editor "Galeria de Mídias": **69 slots** (bate com 78−9 da Fase 2), grupo HOME com
+  11 slots (20−9, sem as miniaturas dos 9 flip-cards antigos), modal de edição de slot
+  testado (abre, mostra preview/URL/fallback, fecha sem salvar)
+- Console do browser sem erros durante toda a sessão
+
+**Status:** `PLAN-0034` Fases 1, 1b, 1c, 2, 3, 4 e 5 (parcial) concluídas. Falta só o
+resto da Fase 5 (`seed.ts`, templates de e-mail/WhatsApp, `sfk.toml`). Sem commit/push.
+
+## 2026-08-20 — PLAN-0034 Fase 5 concluída (100%): checkout Stripe corrigido, resto sem achado
+
+**Checado (sem achado, documentado):**
+- `apps/web/index.html` — só tem `<title>` (já corrigido antes) + viewport + fontes;
+  não existe nenhuma outra meta tag (og/description/twitter) no arquivo
+- `apps/api/prisma/seed.ts` — 1 achado cosmético (`@jlr.local` em e-mail fake de
+  profissional seedado, dado de demo, nunca visível a usuário real) — não corrigido,
+  baixa prioridade
+- Templates de e-mail/WhatsApp (`lib/zapi.ts`, `modules/chatbot/**`) — zero
+  ocorrências de "JLR", limpo
+- `sfk.toml` — "JLR" ali é identidade do projeto/repositório em si (por desenho do
+  SFK, um cliente novo teria seu próprio arquivo) — não é achado
+
+**1 achado real, fora do escopo original da varredura, corrigido:**
+`apps/api/src/routes/orders.ts` — a descrição da linha de item enviada ao Stripe
+Checkout tinha `"Pagamento de compra no site JLR"` hardcoded — aparece pro cliente
+real durante o pagamento e no extrato/dashboard do Stripe, sem vínculo nenhum com o
+branding editável. Corrigido: agora busca `getPublicBranding()` em tempo de
+requisição e usa `branding.shortName` na descrição.
+
+**Validações:** `apps/api` `tsc -b` + `npm run build` + `npm run test` 134/134 PASS.
+
+**Arquivo alterado:** `apps/api/src/routes/orders.ts`.
+
+**Resumo geral do `PLAN-0034`:** todas as 7 fases concluídas nesta sessão — 7 achados
+de texto + 2 de imagem + 2 de nomenclatura no Admin V2 + 3 de branding (título,
+topbar, Stripe) corrigidos; 45 chaves/slots órfãos removidos do código (banco
+intocado); tudo revalidado ao vivo no browser (build/rebuild Docker real). Falta só o
+fechamento formal do plano (Fase 6: memória de encerramento, possível
+`DECISION-019` sobre os órfãos, rename `-DONE-`, Git Record) e a aprovação de
+commit/push do usuário.
+
+**Status:** `PLAN-0034` — Fases 1 a 5 completas. Falta Fase 6 (fechamento formal) e
+aprovação de commit/push. Sem commit/push ainda.
+
+## 2026-08-20 — ERR-0074: número de WhatsApp hardcoded e divergente entre 2 arquivos (achado pós-Fase 5)
+
+**Contexto:** usuário perguntou se a tela "Textos das Páginas" não estaria faltando
+alguma página/seção. Resposta direta foi não (Checkout é overlay da Home, conteúdo
+majoritariamente transacional, consistente com a Fase 1) — mas ao reconferir o
+Checkout por completo por causa da pergunta, achado um bug real que nenhuma fase
+anterior tinha buscado: número de WhatsApp de contato hardcoded em 3 lugares, **2
+deles com valores diferentes** (`CheckoutContent.tsx`: `5511989261279`;
+`index.behavior.ts` + `conciergeFlow.ts`: `5511978935812`, com uma linha morta
+comentada contendo o outro número — evidência de correção anterior mal resolvida).
+
+**Confirmado com o usuário:** número correto é `5511978935812`.
+
+**Correção (fonte única, ponta a ponta):** `branding/service.ts` ganhou
+`resolveWhatsappSupportPhone()` (env var `CONCIERGE_SUMMARY_PHONE`, mesmo padrão já
+usado pelo concierge), exposta em `GET /api/public/branding` como `whatsappPhone`
+(config, não editável pelo form de Branding). Frontend (`PublicBranding`,
+`CheckoutContent.tsx`, `index.behavior.ts`) passou a ler de lá. `conciergeFlow.ts`
+reusa a mesma função (removida duplicação local). `sfk.toml` ganhou o registro da env
+var (gap encontrado no caminho).
+
+**Registrado:** `ERR-0074` em `DEBUG-HISTORY.md`.
+
+**Validações:** `apps/api` build+test 134/134 PASS; `apps/web` build+lint sem erro
+novo; rebuild Docker real + confirmado no browser (`curl /api/public/branding` →
+`whatsappPhone: "5511978935812"`; link "Fale Conosco" do Checkout real com `href`
+correto; console sem erros).
+
+**Arquivos alterados:** `apps/api/src/modules/branding/service.ts`,
+`apps/api/src/modules/chatbot/flow/conciergeFlow.ts`, `apps/api/src/routes/admin.ts`,
+`apps/web/src/modules/public-site/branding.ts`,
+`apps/web/src/modules/public-site/branding.runtime.ts`,
+`apps/web/src/modules/public-site/index.behavior.ts`,
+`apps/web/src/components/pages/CheckoutContent.tsx`,
+`apps/web/src/admin-v2/sistema/branding/BrandingSettingsView.tsx`, `sfk.toml`.
+
+**Status:** `PLAN-0034` — todas as fases completas, incluindo este achado adicional.
+Falta Fase 6 (fechamento formal) e aprovação de commit/push. Sem commit/push ainda.
+
+## 2026-08-20 — PAUSA DE SESSÃO (usuário: "salve tudo e amanhã continuamos")
+
+**O que foi feito hoje (resumo completo):** sessão inteira dedicada ao `PLAN-0034`
+(auditoria de textos/imagens hardcoded pós-Admin V2), motivada pelo `DECISION-018`
+(objetivo de portabilidade SaaS/white-label — JLR/JLR Beauty é marca de uma cliente
+específica). Todas as 7 fases técnicas completas nesta sessão:
+
+- **Fase 1** (texto): 7 achados `D` corrigidos (`HomeProductsSection`,
+  `HomeServicesSection`, `HomeMembershipSection`, `FranquiasModelsSection`) — destaque
+  pro fallback de 3 planos fictícios da JLR trocado por mensagem genérica
+- **Fase 1b** (imagem): 2 achados corrigidos (fallback de produto/avatar apontando
+  pra fotos reais da JLR → placeholder/ícone genéricos)
+- **Fase 1c** (nomenclatura Admin V2): 13 seções sem rótulo amigável no editor
+  corrigidas (mostravam chave técnica crua)
+- **Fase 2** (órfãos): 45 chaves/slots órfãos identificados (cluster único, flip-cards
+  de Serviços) e removidos do código por decisão do usuário (`DECISION-019`) — banco
+  Postgres intocado
+- **Fase 3**: execução das correções da Fase 1
+- **Fase 4**: revalidação real no browser via rebuild Docker (build+restart dos
+  containers `api`/`web`), edição de campo simples e segmentado testada e revertida
+- **Fase 5** (branding): 3 achados de branding hardcoded corrigidos (título da página,
+  topbar Admin V2, descrição do Stripe) **+ 1 bug real fora do escopo original**:
+  número de WhatsApp hardcoded e divergente entre 2 arquivos (`ERR-0074`), corrigido
+  com fonte única (`branding.whatsappPhone`)
+
+**Registros criados/atualizados:** `DECISION-018`, `DECISION-019`, `ERR-0074`,
+`PLAN-0034` (7 fases documentadas), este `MODIFICATION_LOG.md` (atualizado em tempo
+real), `progress.md` (Resume Panel), `AUDIT_CHECKLIST_20260820_233641-PASS.md`.
+
+**Validações finais:** `apps/api` `tsc -b`+`build`+`test` 134/134 PASS; `apps/web`
+`tsc -b`+`build`+`lint` sem erro novo (28 pré-existentes, não relacionados). Rebuild
+Docker real feito 2x nesta sessão, tudo confirmado ao vivo no browser.
+
+**Pendente para a próxima sessão:**
+1. Decidir fechamento formal do `PLAN-0034` (rename `-DONE-`, Git Record)
+2. Aprovação explícita de commit (24 arquivos modificados + 4 novos, listados no
+   audit checklist) — **nenhum commit foi feito nesta sessão**
+3. Aprovação separada de push, se/quando o commit for aprovado
+4. Itens que ficaram fora do escopo do `PLAN-0034`, registrados mas não corrigidos:
+   contagem duplicada suspeita em `unit-health/service.ts` (não verificada), tela
+   "Assinantes" (candidata a feature nova), `flows.spec.ts` "home cart and checkout
+   flow" quebrado (pré-existente, não investigado)
+
+**Status:** Sessão pausada a pedido do usuário. Auditoria de fechamento de sessão:
+**PASS** (`AUDIT_CHECKLIST_20260820_233641-PASS.md`) — único item em aberto é a
+aprovação de commit/push, deliberadamente adiada, não é falha.
+
+## 2026-08-20 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — nenhuma decisão ativa contradita; `DECISION-018`/`019` novas, coerentes |
+| State Integrity | PASS — `PLAN-0034` aberto intencionalmente, desvio documentado |
+| Operational Memory | PASS — `MODIFICATION_LOG` e plano atualizados em tempo real |
+| Debug Memory | PASS — `ERR-0074` registrado com template completo |
+| Technical Validation | PASS — build+lint+test limpos (`apps/api` 134/134, `apps/web` sem erro novo) |
+| Regression Risk | PASS — área sensível (pagamento/branding) validada manualmente, sem teste automatizado dedicado (justificado: valor de exibição/config, não lógica) |
+| Git Governance | PENDENTE (deliberado) — sem commit/push nesta sessão, aprovação fica pra retomada |
+
+## 2026-08-24 — FECHAMENTO FORMAL DO PLAN-0034 + achado de gitignore
+
+**Contexto/objetivo:** retomada da sessão pausada em 2026-08-20. Trabalho técnico do
+`PLAN-0034` já estava 100% completo e validado; faltava só o fechamento formal
+(rename `-DONE-` + Git Record) e a decisão de commit/push, ambos adiados
+deliberadamente na sessão anterior.
+
+**Ação executada:**
+- `memory/plans/PLAN-0034-AUDITORIA-TEXTOS-HARDCODED-POS-ADMIN-V2.md` renomeado pra
+  `PLAN-0034-DONE-AUDITORIA-TEXTOS-HARDCODED-POS-ADMIN-V2.md`
+- Status do plano atualizado pra `DONE`, checklist da Fase 6 fechado
+- `Git Record of Delivery` — Step 1 (Pre-commit review) preenchido
+- `memory/progress.md` — Resume Panel atualizado + linha nova na tabela de Modules
+  pro `PLAN-0034`
+
+**Achado colateral (fora do escopo do `PLAN-0034`):** ao revisar o `git status` no
+início desta sessão, encontrado um grupo de mudanças não relacionadas — `.gitignore`
+tinha perdido a regra `/.codex/` (removida por processo externo, provavelmente uma
+atualização do framework SFK rodada fora desta sessão), e apareceram ~15 arquivos
+modificados + 2 diretórios novos dentro de `.sfk/kernel/skills/`/`.cursor/rules/`
+(skill nova `memsession`). Por instrução explícita do usuário ("as skills não precisa
+subir ou dar commit. isso deveria estar em .gitignore"):
+- `.gitignore` restaurado (`/.codex/`, `arvore.txt`) + 2 regras novas:
+  `.sfk/kernel/skills/memsession/` e `.cursor/rules/memsession.md`
+- Esses arquivos foram deixados de fora do commit do `PLAN-0034` (File Boundary Law,
+  `RULES.md` §1.10 — engine e project state não se misturam no mesmo commit)
+- **Pendência não resolvida:** os ~15 arquivos já rastreados pelo git dentro de
+  `.sfk/kernel/skills/*` continuam aparecendo como modificados — `.gitignore` não
+  afeta arquivo já rastreado retroativamente. Decisão sobre reverter o conteúdo local
+  ou destrackear (`git rm --cached`) esses arquivos específicos fica em aberto,
+  não perguntada ainda nesta sessão.
+
+**Validações:** nenhuma mudança de código nesta entrada — só memória/documentação e
+`.gitignore`. Validações técnicas do `PLAN-0034` em si já registradas na entrada de
+2026-08-20 (build+lint+test).
+
+**Arquivos alterados:** `memory/plans/PLAN-0034-DONE-AUDITORIA-TEXTOS-HARDCODED-POS-ADMIN-V2.md`
+(rename), `memory/progress.md`, `.gitignore`, este `MODIFICATION_LOG.md`.
+
+**Status:** `PLAN-0034` fechado formalmente. Commit ainda não realizado — pre-commit
+review apresentado ao usuário nesta mesma interação, aguardando aprovação explícita.

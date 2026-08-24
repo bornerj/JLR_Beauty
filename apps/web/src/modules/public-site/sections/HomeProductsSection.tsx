@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState, type MouseEvent, type ReactElement } from "react";
 import { addCartItem } from "../../cart/store";
 import { useBranding } from "../branding.runtime";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
+import { NO_PRODUCT_IMAGE_URL } from "../../../lib/assetUrls";
 
 type PublicProductRow = {
   id: number;
@@ -16,7 +19,7 @@ type PublicProductRow = {
 };
 
 const API_URL = import.meta.env.VITE_API_URL || "";
-const FALLBACK_IMAGE_URL = "/images/products/jlr_argan.webp";
+const FALLBACK_IMAGE_URL = NO_PRODUCT_IMAGE_URL;
 const MAX_COLLECTION_ITEMS = 8;
 
 const getApiOrigin = (): string => {
@@ -110,6 +113,12 @@ const parsePublicProducts = (payload: unknown): PublicProductRow[] => {
 
 export const HomeProductsSection = (): ReactElement => {
   const branding = useBranding();
+  const sectionLabel      = usePageText("home.products.label");
+  const sectionTitle      = usePageText("home.products.title");
+  const ctaViewAll        = usePageText("home.products.cta_view_all");
+  const shippingNote      = usePageText("home.products.shipping_note");
+  const collectionEyebrow = usePageText("home.products.collection_eyebrow");
+  const collectionTitle   = usePageText("home.products.collection_title");
   const [products, setProducts] = useState<PublicProductRow[]>([]);
   const [spotlightId, setSpotlightId] = useState<number | null>(null);
   const [spotlightQuantity, setSpotlightQuantity] = useState<number>(1);
@@ -206,17 +215,17 @@ export const HomeProductsSection = (): ReactElement => {
         <div className="max-w-[1440px] mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end mb-4 gap-6">
             <div>
-              <h2 className="text-gold text-sm display-label mb-3">Luxo em Casa</h2>
-              <h3 className="text-3xl md:text-5xl display-hero text-shadow-strong text-primary dark:text-white">Produtos em Destaque</h3>
+              <h2 className="text-gold text-sm display-label mb-3"><RichText value={sectionLabel} /></h2>
+              <h3 className="text-3xl md:text-5xl display-hero text-shadow-strong text-primary dark:text-white"><RichText value={sectionTitle} /></h3>
             </div>
             <a className="hidden md:inline-flex items-center gap-2 text-forest dark:text-white font-medium hover:text-gold transition-colors group" href="#spotlightprod">
-              <span>Ver Todos os Produtos</span>
+              <span><RichText value={ctaViewAll} /></span>
               <span className="material-symbols-outlined text-gold group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </a>
           </div>
           <div className="mt-4 text-center md:hidden">
             <a className="inline-flex items-center gap-2 text-forest dark:text-white font-medium hover:text-gold transition-colors group" href="#spotlightprod">
-              <span>Ver Todos os Produtos</span>
+              <span><RichText value={ctaViewAll} /></span>
               <span className="material-symbols-outlined text-gold group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </a>
           </div>
@@ -320,7 +329,7 @@ export const HomeProductsSection = (): ReactElement => {
                         : `Adicionar a Sacola - ${spotlight ? formatPrice(spotlight.price) : "R$ 0,00"}`}
                     </button>
                   </div>
-                  <p className="text-xs text-center text-gray-400 mt-2">Frete gratis em pedidos acima de R$ 150,00. Devolucao em 30 dias.</p>
+                  <p className="text-xs text-center text-gray-400 mt-2"><RichText value={shippingNote} /></p>
                   {loading ? <p className="text-xs text-center text-forest/70">Carregando produtos...</p> : null}
                   {!loading && error ? <p className="text-xs text-center text-red-600">{error}</p> : null}
                 </div>
@@ -331,8 +340,8 @@ export const HomeProductsSection = (): ReactElement => {
 
         <div id="Colecao" className="w-full max-w-[1400px] px-6 lg:px-8 py-8 mx-auto">
           <div className="text-center pt-4 pb-2">
-            <h1 className="font-bold text-4xl mb-4">Outros Produtos para seu conforto</h1>
-            <h1 className="text-3xl">Coleção Completa</h1>
+            <h1 className="font-bold text-4xl mb-4"><RichText value={collectionEyebrow} /></h1>
+            <h1 className="text-3xl"><RichText value={collectionTitle} /></h1>
           </div>
           <section className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 justify-items-center gap-y-16 gap-x-10 mt-6 mb-5 px-2">
             {collection.map((product) => (

@@ -82,6 +82,19 @@ font_family       = "Montserrat (display/headings) / Manrope (body)"  # tailwind
 spacing_unit      = "4px"
 
 # ═══════════════════════════════════════
+# CONTENT ARCHITECTURE — Mandatory directive: DB-driven text & images
+# ═══════════════════════════════════════
+
+[content_architecture]
+principle    = "Nenhum texto ou imagem de marketing fica hardcoded em componentes — tudo vem do banco (tabela Setting), editável via Admin V2 > Sistema. Não esquecer / não regredir em migrações futuras de tela."
+text_source  = "Setting.key = 'public.pageTexts' — apps/api/src/modules/pageTexts/catalog.ts — consumido via usePageText() + <RichText>"
+image_source = "Setting.key = 'public.mediaSlots' — apps/api/src/modules/mediaSlots/service.ts — consumido via useMediaSlot()"
+origin_plan  = "memory/plans/PLAN-0012-DONE-PAGE-TEXTS-EDITOR.md"
+audit_plan   = "memory/plans/PLAN-0034-AUDITORIA-TEXTOS-HARDCODED-POS-ADMIN-V2.md"
+rationale    = "Objetivo máximo: portabilidade futura da plataforma (SaaS multi-tenant/white-label — ver DECISION-018). JLR/JLR Beauty é marca de uma cliente específica; texto/imagem preso ao código trava reuso para outros clientes. Horizonte: rotina futura 'saas-initialize' que reseta conteúdo para defaults genéricos."
+exceptions   = "UI técnica sem intenção editorial (labels de botão, mensagens de erro) e conteúdo já gerido por entidades reais (Product/Service/Membership) ficam fora deste padrão por desenho — ver PLAN-0012 seção 'Out'."
+
+# ═══════════════════════════════════════
 # ENVIRONMENT VARIABLES — Separated by server/platform
 # NEVER put real values here — names only
 # ═══════════════════════════════════════
@@ -114,6 +127,7 @@ vars = [
   "ZAPI_WEBHOOK_SECRET",                # Z-API webhook validation secret
   "CONCIERGE_RETENTION_DAYS",           # concierge session retention (days)
   "CONCIERGE_RETENTION_INTERVAL_HOURS", # cleanup job interval (hours)
+  "CONCIERGE_SUMMARY_PHONE",            # numero de WhatsApp de suporte/checkout (resumo do concierge + link "Fale Conosco") — sem isso, cai no fallback hardcoded (ver PLAN-0034)
 ]
 
 # ═══════════════════════════════════════

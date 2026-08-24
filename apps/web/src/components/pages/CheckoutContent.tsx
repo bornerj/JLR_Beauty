@@ -10,13 +10,14 @@ import {
   setCartItemQuantity,
   type CartItem,
 } from "../../modules/cart/store";
-import { resolveUploadedAssetUrl } from "../../lib/assetUrls";
+import { resolveUploadedAssetUrl, NO_PRODUCT_IMAGE_URL } from "../../lib/assetUrls";
 import { useMediaSlot } from "../../modules/public-site/media.runtime";
+import { useBranding } from "../../modules/public-site/branding.runtime";
 
 const DEFAULT_FREE_SHIPPING_THRESHOLD = 150;
 const DEFAULT_LOCAL_DELIVERY_FEE = 10;
 const TAX_RATE = 0;
-const FALLBACK_IMAGE_URL = "/images/products/jlr_argan.webp";
+const FALLBACK_IMAGE_URL = NO_PRODUCT_IMAGE_URL;
 const API_URL = import.meta.env.VITE_API_URL || "";
 const COUPON_REQUEST_TIMEOUT_MS = 12000;
 const PENDING_STRIPE_ORDER_KEY = "jlr_pending_stripe_order_checkout";
@@ -142,6 +143,7 @@ const getAppliedCouponDiscount = (coupon: AppliedCoupon | null, subtotal: number
 
 export default function CheckoutContent(): ReactElement {
   const checkoutWhatsappIcon = useMediaSlot("checkout_whatsapp_icon_01");
+  const branding = useBranding();
   const initialContact = useMemo(() => parsePendingSubscriptionContact(), []);
   const [items, setItems] = useState<CartItem[]>(() => readCart());
   const [isCartDetailsOpen, setIsCartDetailsOpen] = useState<boolean>(false);
@@ -490,7 +492,7 @@ export default function CheckoutContent(): ReactElement {
               <a
                 className="inline-flex items-center gap-2 rounded-lg border border-green-600 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-green-700 hover:bg-green-50 transition-colors"
                 data-checkout-whatsapp-link
-                href="https://api.whatsapp.com/send?phone=5511989261279"
+                href={`https://api.whatsapp.com/send?phone=${branding.whatsappPhone}`}
                 rel="noopener noreferrer"
                 target="_blank"
               >

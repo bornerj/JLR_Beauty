@@ -10,7 +10,7 @@ import {
 } from "../../../lib/appointmentAvailability";
 import { buildOpeningGreeting, getGreetingByHour } from "../opening/conciergeOpening";
 import { sendZApiTextMessage } from "../integrations/zapi";
-import { getPublicBranding } from "../../branding/service";
+import { getPublicBranding, resolveWhatsappSupportPhone } from "../../branding/service";
 import { logger } from "../../../utils/logger";
 
 type ConciergeOptionItem = {
@@ -99,7 +99,6 @@ type CompleteWebSessionInput = {
   customerPhone: string;
 };
 
-const DEFAULT_SUMMARY_PHONE = "5511978935812";
 const ACTIVE_STATUS_NAMES = ["Ativo", "ACTIVE"];
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"] as const;
 const DEFAULT_SCHEDULE_DAYS = 14;
@@ -133,11 +132,10 @@ const CUSTOMER_PROFILE_SELECT = {
   notes: true,
 } as const;
 
-const resolveSummaryPhone = (): string => {
-  const fromEnv = sanitizePhone((process.env.CONCIERGE_SUMMARY_PHONE || "").trim());
-  if (fromEnv) return fromEnv;
-  return DEFAULT_SUMMARY_PHONE;
-};
+// PLAN-0034 (Fase 5) — resolução do número movida pra branding/service.ts
+// (`resolveWhatsappSupportPhone`), reusada aqui e exposta ao frontend via
+// /api/public/branding — antes era só local a este arquivo, agora é fonte única.
+const resolveSummaryPhone = resolveWhatsappSupportPhone;
 
 const buildSlots = (): string[] => {
   const values: string[] = [];
