@@ -10373,3 +10373,28 @@ subir ou dar commit. isso deveria estar em .gitignore"):
 
 **Status:** `PLAN-0034` fechado formalmente. Commit ainda não realizado — pre-commit
 review apresentado ao usuário nesta mesma interação, aguardando aprovação explícita.
+
+## 2026-08-24 — COMMIT do PLAN-0034 + destrackear skills do SFK
+
+**Aprovação do usuário:** "pode commitar, git rm --cached nos arquivos de skills".
+
+**Ação:** 2 commits separados (File Boundary Law — engine e project state não se
+misturam):
+1. `964ae52` — `fix(plan-0034): auditoria de textos/imagens hardcoded pos-Admin V2`
+   (30 arquivos: o pre-commit review apresentado nesta sessão)
+2. `9ef303b` — `chore: destrackeia .sfk/kernel/skills/ do git` (197 arquivos
+   removidos do índice via `git rm --cached`, permanecem em disco local;
+   `.gitignore` ganhou `.sfk/kernel/skills/` e `.cursor/rules/memsession.md`)
+
+O escopo do `git rm --cached` inicialmente rodou sobre o diretório inteiro (197
+arquivos, não só os ~15 modificados) — confirmado explicitamente com o usuário antes
+de commitar (`AskUserQuestion`), dado que era maior que o previsto.
+
+**Validações:** nenhuma mudança de código nesta entrada. `git status` confirmado
+limpo após os 2 commits.
+
+**Push:** **não realizado** — aprovação de commit não implica push, fica pendente
+de aprovação separada.
+
+**Status:** `PLAN-0034` DONE e commitado. Sessão pode fechar ou seguir para outra
+tarefa, a critério do usuário.
