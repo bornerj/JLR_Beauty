@@ -83,15 +83,19 @@ export function OrdersListView() {
 
   // `?highlight=<id>` — abre o detalhe direto assim que a lista carregar (deep-link novo, ver nota acima).
   useEffect(() => {
-    const highlight = searchParams.get("highlight");
-    if (!highlight || !state.orders) return;
-    const order = state.orders.find((candidate) => candidate.id === Number(highlight));
-    if (order) {
-      setModal({ kind: "detail", order });
-      const next = new URLSearchParams(searchParams);
-      next.delete("highlight");
-      setSearchParams(next, { replace: true });
-    }
+    // ERR-0087 — mesmo fix do ERR-0083/85: adia em 1 tick (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const highlight = searchParams.get("highlight");
+      if (!highlight || !state.orders) return;
+      const order = state.orders.find((candidate) => candidate.id === Number(highlight));
+      if (order) {
+        setModal({ kind: "detail", order });
+        const next = new URLSearchParams(searchParams);
+        next.delete("highlight");
+        setSearchParams(next, { replace: true });
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [searchParams, state.orders, setSearchParams]);
 
   const filtered = useMemo(() => {

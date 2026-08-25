@@ -10568,3 +10568,19 @@ zero erros de lint.
 `useAdminV2Fetch`, deferred por decisão do usuário) + a expansão pros ~10 arquivos
 fora do escopo original + os 5 casos de formato diferente + este último. Sem
 commit/push ainda.
+
+## 2026-08-24 — ERR-0087: fecha o lint do apps/web em zero erros
+
+**Contexto/objetivo:** último erro de lint restante no repo — deep-link
+`?highlight=<id>` em `OrdersListView.tsx`.
+
+**Ação:** mesmo fix de `setTimeout(0)` + cleanup nos demais.
+
+**Validações:** `tsc -b` limpo, `npm run build` PASS (216 módulos), `eslint .`
+no repo inteiro: **zero erros**.
+
+**Status:** encerra a auditoria completa do `code-archaeologist` sobre `admin-v2`
+iniciada nesta sessão. Lint do `apps/web`: 28 → 0. 13 registros em
+`DEBUG-HISTORY.md` (`ERR-0075` a `ERR-0087`). Único item ainda em aberto por
+decisão explícita: extração do hook compartilhado `useAdminV2Fetch` (achado
+#14, deferred, não é bug). Sem commit/push ainda.
