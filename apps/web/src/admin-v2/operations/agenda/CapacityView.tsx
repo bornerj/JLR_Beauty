@@ -42,8 +42,14 @@ export function CapacityView() {
   }, [scope.unitId, scope.days]);
 
   useEffect(() => {
-    void loadHeatmap();
-    setSlotState(null); // trocar de unidade/período invalida o horário selecionado anteriormente
+    // ERR-0085 — adia as 2 chamadas em 1 tick (react-hooks/set-state-in-effect):
+    // setSlotState(null) e o setState inicial de loadHeatmap rodavam síncronos
+    // dentro do commit do efeito.
+    const timer = setTimeout(() => {
+      void loadHeatmap();
+      setSlotState(null); // trocar de unidade/período invalida o horário selecionado anteriormente
+    }, 0);
+    return () => clearTimeout(timer);
   }, [loadHeatmap]);
 
   const loadSlot = useCallback(

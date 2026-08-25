@@ -55,32 +55,37 @@ export function ManualSaleModal({
   const [availability, setAvailability] = useState<{ loading: boolean; total: number | null }>({ loading: false, total: null });
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setLoadError("Sessão expirada. Faça login novamente.");
-      setLoading(false);
-      return;
-    }
-    (async () => {
-      try {
-        const [productList, serviceList, unitList] = await Promise.all([
-          fetchProducts({ token }),
-          fetchServices({ token }),
-          fetchInventoryUnits({ token }),
-        ]);
-        setProducts(productList);
-        setServices(serviceList);
-        const physicalUnits = unitList.filter((unit) => !unit.isOnline);
-        setUnits(physicalUnits);
-        if (physicalUnits.length === 1) setUnitId(physicalUnits[0].id);
+    // ERR-0085 — corpo inteiro adiado em 1 tick (react-hooks/set-state-in-effect):
+    // o branch "sem token" fazia setState direto, síncrono, dentro do efeito.
+    const timer = setTimeout(() => {
+      const token = getToken();
+      if (!token) {
+        setLoadError("Sessão expirada. Faça login novamente.");
         setLoading(false);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Falha ao carregar catálogo.";
-        logger.warn("Falha ao carregar catálogo pra venda manual (Admin V2)", { error: message });
-        setLoadError(message);
-        setLoading(false);
+        return;
       }
-    })();
+      void (async () => {
+        try {
+          const [productList, serviceList, unitList] = await Promise.all([
+            fetchProducts({ token }),
+            fetchServices({ token }),
+            fetchInventoryUnits({ token }),
+          ]);
+          setProducts(productList);
+          setServices(serviceList);
+          const physicalUnits = unitList.filter((unit) => !unit.isOnline);
+          setUnits(physicalUnits);
+          if (physicalUnits.length === 1) setUnitId(physicalUnits[0].id);
+          setLoading(false);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Falha ao carregar catálogo.";
+          logger.warn("Falha ao carregar catálogo pra venda manual (Admin V2)", { error: message });
+          setLoadError(message);
+          setLoading(false);
+        }
+      })();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const catalog = useMemo<CatalogItem[]>(() => {
@@ -98,25 +103,32 @@ export function ManualSaleModal({
   const total = lines.reduce((acc, line) => acc + line.unitPrice * line.quantity, 0);
 
   useEffect(() => {
-    if (!selectedCatalogItem || selectedCatalogItem.kind !== "PRODUCT" || !unitId) {
-      setAvailability({ loading: false, total: null });
-      return;
-    }
-    const token = getToken();
-    if (!token) return;
+    // ERR-0085 — corpo inteiro adiado em 1 tick (react-hooks/set-state-in-effect):
+    // os 2 setAvailability (branch sem produto/unidade, e o "loading:true" antes
+    // do fetch) rodavam síncronos dentro do efeito. `cancelled` protege tanto o
+    // timer quanto o fetch em voo contra uma seleção nova antes de resolver.
     let cancelled = false;
-    setAvailability({ loading: true, total: null });
-    fetchCrossUnitStock({ token, productId: selectedCatalogItem.id })
-      .then((rows) => {
-        if (cancelled) return;
-        const row = rows.find((r) => r.unitId === unitId);
-        setAvailability({ loading: false, total: row?.available ?? 0 });
-      })
-      .catch(() => {
-        if (!cancelled) setAvailability({ loading: false, total: null });
-      });
+    const timer = setTimeout(() => {
+      if (!selectedCatalogItem || selectedCatalogItem.kind !== "PRODUCT" || !unitId) {
+        setAvailability({ loading: false, total: null });
+        return;
+      }
+      const token = getToken();
+      if (!token) return;
+      setAvailability({ loading: true, total: null });
+      fetchCrossUnitStock({ token, productId: selectedCatalogItem.id })
+        .then((rows) => {
+          if (cancelled) return;
+          const row = rows.find((r) => r.unitId === unitId);
+          setAvailability({ loading: false, total: row?.available ?? 0 });
+        })
+        .catch(() => {
+          if (!cancelled) setAvailability({ loading: false, total: null });
+        });
+    }, 0);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [selectedCatalogItem, unitId]);
 

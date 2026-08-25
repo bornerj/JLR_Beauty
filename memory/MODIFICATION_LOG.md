@@ -10520,3 +10520,28 @@ caiu de 17 pra 7 erros (exatamente os 10 esperados, nenhum novo).
 diferente). Ver `ERR-0084` para detalhe de cada um.
 
 **Status:** sem commit/push ainda.
+
+## 2026-08-24 — ERR-0085: os 5 casos restantes de set-state-in-effect (formato diferente)
+
+**Contexto/objetivo:** dos 7 erros mapeados no `ERR-0084`, usuário pediu pra
+corrigir os 5 que eram a mesma família de problema (mas não o padrão mecânico
+"void load()"), deixando de fora só o de `react-hooks/static-components`
+(categoria diferente de problema).
+
+**Ação:** `ERR-0085` — corpo inteiro de cada efeito embrulhado em `setTimeout(0)`
++ cleanup: `CapacityView.tsx` (loadHeatmap + setSlotState juntos),
+`OrdersListView.tsx`/`ProductsListView.tsx` (reset de página em filtro),
+`ManualSaleModal.tsx` (2 efeitos — carregamento de catálogo e disponibilidade
+cross-unit, preservando o flag `cancelled` desta última pra não perder a
+proteção contra race condition entre seleções).
+
+**Validações:** `tsc -b` limpo, `npm run build` PASS (216 módulos), `eslint .`
+caiu de 7 pra 2 erros (exatamente os 5 esperados, nenhum novo).
+
+**Fora deste lote:** `FranquiasEtapasAberturaSection.tsx` (2 erros de
+`react-hooks/static-components`, categoria de problema diferente — componentes
+definidos dentro de componente pai, fix seria mover pra fora do arquivo).
+
+**Status:** com este lote, a auditoria do `code-archaeologist` sobre `admin-v2`
++ o lint de todo o `apps/web` estão praticamente esgotados — restam só os 2
+erros de `static-components`, fora de `admin-v2`. Sem commit/push ainda.

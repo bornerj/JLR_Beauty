@@ -116,7 +116,9 @@ export function OrdersListView() {
   );
 
   useEffect(() => {
-    setPage(1);
+    // ERR-0085 — adia em 1 tick (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => setPage(1), 0);
+    return () => clearTimeout(timer);
   }, [search, statusFilter, fulfillmentFilter, pageSize]);
 
   const allPageSelected = pageOrders.length > 0 && pageOrders.every((order) => selectedIds.has(order.id));

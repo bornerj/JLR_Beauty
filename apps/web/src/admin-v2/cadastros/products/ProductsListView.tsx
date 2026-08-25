@@ -128,7 +128,9 @@ export function ProductsListView() {
   );
 
   useEffect(() => {
-    setPage(1);
+    // ERR-0085 — adia em 1 tick (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => setPage(1), 0);
+    return () => clearTimeout(timer);
   }, [search, categoryFilter, statusFilter, pageSize]);
 
   const handleSubmit = useCallback(
