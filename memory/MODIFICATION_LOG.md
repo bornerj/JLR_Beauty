@@ -10545,3 +10545,26 @@ definidos dentro de componente pai, fix seria mover pra fora do arquivo).
 **Status:** com este lote, a auditoria do `code-archaeologist` sobre `admin-v2`
 + o lint de todo o `apps/web` estão praticamente esgotados — restam só os 2
 erros de `static-components`, fora de `admin-v2`. Sem commit/push ainda.
+
+## 2026-08-24 — ERR-0086: react-hooks/static-components em FranquiasEtapasAberturaSection.tsx
+
+**Contexto/objetivo:** último item da lista de 7 erros de lint mapeados durante a
+auditoria — o único de categoria diferente (`react-hooks/static-components`, não
+`set-state-in-effect`).
+
+**Ação:** `StepBubble`/`Connector` movidos pra fora de `FranquiasEtapasAberturaSection`
+(escopo do módulo) — não capturavam nada do componente pai.
+
+**Correção de contagem:** o "2º erro" atribuído a este arquivo na explicação anterior
+era na verdade `OrdersListView.tsx:90` (`setModal` no deep-link `?highlight=`), item
+já mapeado antes como categoria separada, nunca pedido pra corrigir — segue não
+tocado. `eslint .` no repo inteiro: **1 erro restante** (era 2, um dos dois já não
+era desta família).
+
+**Validações:** `tsc -b` limpo, `npm run build` PASS (216 módulos), arquivo com
+zero erros de lint.
+
+**Status:** achados #7/#14 100% endereçados (exceto o hook compartilhado
+`useAdminV2Fetch`, deferred por decisão do usuário) + a expansão pros ~10 arquivos
+fora do escopo original + os 5 casos de formato diferente + este último. Sem
+commit/push ainda.

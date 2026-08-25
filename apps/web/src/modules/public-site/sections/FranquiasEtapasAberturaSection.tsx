@@ -2,6 +2,28 @@ import { Fragment, type ReactElement } from "react";
 import { usePageText } from "../pageTexts.runtime";
 import { RichText } from "../../../components/ui/RichText";
 
+// ERR-0086 — StepBubble/Connector movidos pra fora do componente pai
+// (react-hooks/static-components): definir componente dentro de outro componente
+// cria um "tipo" novo a cada render, forçando o React a remontar em vez de
+// reconciliar. Nenhum dos dois capturava nada do escopo de
+// FranquiasEtapasAberturaSection, então a extração é direta (só props).
+const StepBubble = ({ num, label }: { num: number; label: ReturnType<typeof usePageText> }) => (
+  <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
+    <div className="shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md">
+      {num}
+    </div>
+    <p className="text-sm text-center text-forest/80 dark:text-white/80 leading-snug max-w-[100px]">
+      <RichText value={label} />
+    </p>
+  </div>
+);
+
+const Connector = ({ flip = false }: { flip?: boolean }) => (
+  <div className={`hidden sm:block self-[28px] mt-7 flex-none w-8 ${flip ? "rotate-180" : ""}`}>
+    <div className="border-t-2 border-dashed border-primary/50 w-full" />
+  </div>
+);
+
 export const FranquiasEtapasAberturaSection = ({ alt }: { alt?: boolean } = {}): ReactElement => {
   const title = usePageText("franquias.etapas.title");
   const step1  = usePageText("franquias.etapas.step_1");
@@ -20,23 +42,6 @@ export const FranquiasEtapasAberturaSection = ({ alt }: { alt?: boolean } = {}):
   const row1 = [step1, step2, step3, step4];
   const row2 = [step8, step7, step6, step5]; // reversed for snake visual
   const row3 = [step9, step10];
-
-  const StepBubble = ({ num, label }: { num: number; label: ReturnType<typeof usePageText> }) => (
-    <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
-      <div className="shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md">
-        {num}
-      </div>
-      <p className="text-sm text-center text-forest/80 dark:text-white/80 leading-snug max-w-[100px]">
-        <RichText value={label} />
-      </p>
-    </div>
-  );
-
-  const Connector = ({ flip = false }: { flip?: boolean }) => (
-    <div className={`hidden sm:block self-[28px] mt-7 flex-none w-8 ${flip ? "rotate-180" : ""}`}>
-      <div className="border-t-2 border-dashed border-primary/50 w-full" />
-    </div>
-  );
 
   return (
     <section className={`w-full ${alt ? 'bg-background-light' : 'bg-white'} dark:bg-background-dark py-20`} id="etapas-abertura">
