@@ -55,18 +55,20 @@ def print_error(text: str):
     print(f"{Colors.RED}❌ {text}{Colors.ENDC}")
 
 # Define priority-ordered checks
+# ERR-0088 — caminho corrigido de .agent/ (nunca existiu neste repo) pra
+# .sfk/kernel/ (convenção real do projeto, ver .sfk/kernel/ARCHITECTURE.md).
 CORE_CHECKS = [
-    ("Security Scan", ".agent/skills/vulnerability-scanner/scripts/security_scan.py", True),
-    ("Lint Check", ".agent/skills/lint-and-validate/scripts/lint_runner.py", True),
-    ("Schema Validation", ".agent/skills/database-design/scripts/schema_validator.py", False),
-    ("Test Runner", ".agent/skills/testing-patterns/scripts/test_runner.py", False),
-    ("UX Audit", ".agent/skills/frontend-design/scripts/ux_audit.py", False),
-    ("SEO Check", ".agent/skills/seo-fundamentals/scripts/seo_checker.py", False),
+    ("Security Scan", ".sfk/kernel/skills/vulnerability-scanner/scripts/security_scan.py", True),
+    ("Lint Check", ".sfk/kernel/skills/lint-and-validate/scripts/lint_runner.py", True),
+    ("Schema Validation", ".sfk/kernel/skills/database-design/scripts/schema_validator.py", False),
+    ("Test Runner", ".sfk/kernel/skills/testing-patterns/scripts/test_runner.py", False),
+    ("UX Audit", ".sfk/kernel/skills/frontend-design/scripts/ux_audit.py", False),
+    ("SEO Check", ".sfk/kernel/skills/seo-fundamentals/scripts/seo_checker.py", False),
 ]
 
 PERFORMANCE_CHECKS = [
-    ("Lighthouse Audit", ".agent/skills/performance-profiling/scripts/lighthouse_audit.py", True),
-    ("Playwright E2E", ".agent/skills/webapp-testing/scripts/playwright_runner.py", False),
+    ("Lighthouse Audit", ".sfk/kernel/skills/performance-profiling/scripts/lighthouse_audit.py", True),
+    ("Playwright E2E", ".sfk/kernel/skills/webapp-testing/scripts/playwright_runner.py", False),
 ]
 
 def check_script_exists(script_path: Path) -> bool:
@@ -87,7 +89,9 @@ def run_script(name: str, script_path: Path, project_path: str, url: Optional[st
     print_step(f"Running: {name}")
     
     # Build command
-    cmd = ["python", str(script_path), project_path]
+    # ERR-0088 — "python" hardcoded não existe neste sistema (só "python3");
+    # sys.executable sempre resolve pro interpretador que está rodando o próprio checklist.
+    cmd = [sys.executable, str(script_path), project_path]
     if url and ("lighthouse" in script_path.name.lower() or "playwright" in script_path.name.lower()):
         cmd.append(url)
     
