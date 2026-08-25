@@ -77,7 +77,6 @@ export function BrandingSettingsView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [revertingLogoUrl, setRevertingLogoUrl] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const logoFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -107,7 +106,7 @@ export function BrandingSettingsView() {
       updateBrandingSnapshot(branding);
       pushLogoHistory([branding.logoUrl]);
     } catch (fetchError) {
-      logger.error("Falha ao carregar branding (Admin V2)", { error: fetchError });
+      logger.warn("Falha ao carregar branding (Admin V2)", { error: fetchError });
       setError(fetchError instanceof Error ? fetchError.message : "Falha ao carregar branding.");
     } finally {
       setLoading(false);
@@ -146,19 +145,22 @@ export function BrandingSettingsView() {
       pushLogoHistory([branding.logoUrl, previousLogoUrl]);
       setSuccess("Branding salvo com sucesso.");
     } catch (saveError) {
-      logger.error("Falha ao salvar branding (Admin V2)", { error: saveError });
+      logger.warn("Falha ao salvar branding (Admin V2)", { error: saveError });
       setError(saveError instanceof Error ? saveError.message : "Falha ao salvar branding.");
     } finally {
       setSaving(false);
     }
   };
 
-  const revertLogo = async (logoUrl: string): Promise<void> => {
+  const revertLogo = (logoUrl: string): void => {
+    // Só atualiza o rascunho local (mesmo padrão do upload de logo e de
+    // MediaGalleryView.revertSlotToFallback) — não salva no backend sozinho,
+    // pra não arrastar junto edições não salvas de fullName/shortName (ERR-0077).
     const targetLogoUrl = normalizeLogoUrl(logoUrl);
     if (!targetLogoUrl) return;
-    setRevertingLogoUrl(targetLogoUrl);
-    await saveBranding({ ...form, logoUrl: targetLogoUrl });
-    setRevertingLogoUrl("");
+    setForm((current) => ({ ...current, logoUrl: targetLogoUrl }));
+    pushLogoHistory([targetLogoUrl]);
+    setSuccess('Logo revertida no formulário. Clique em "Salvar branding" para aplicar.');
   };
 
   const handleLogoFileSelected = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -194,7 +196,7 @@ export function BrandingSettingsView() {
       pushLogoHistory([resolvedUploadedUrl]);
       setSuccess('Upload concluído. URL preenchida automaticamente. Clique em "Salvar branding" para aplicar.');
     } catch (uploadError) {
-      logger.error("Falha ao subir logo (Admin V2)", { error: uploadError });
+      logger.warn("Falha ao subir logo (Admin V2)", { error: uploadError });
       setError(uploadError instanceof Error ? uploadError.message : "Falha ao enviar imagem da logo.");
     } finally {
       setUploadingLogo(false);
@@ -319,7 +321,6 @@ export function BrandingSettingsView() {
                 <div className="flex flex-col gap-2">
                   {logoHistory.map((historyUrl) => {
                     const isCurrentSavedLogo = historyUrl === normalizeLogoUrl(savedBranding.logoUrl);
-                    const isReverting = revertingLogoUrl === historyUrl;
                     return (
                       <div
                         key={historyUrl}
@@ -331,10 +332,10 @@ export function BrandingSettingsView() {
                         <button
                           type="button"
                           disabled={controlsDisabled || isCurrentSavedLogo}
-                          onClick={() => void revertLogo(historyUrl)}
+                          onClick={() => revertLogo(historyUrl)}
                           className="h-8 rounded-lg border border-primary/30 bg-primary/10 px-3 text-[11px] font-semibold text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {isCurrentSavedLogo ? "Em uso" : isReverting ? "Revertendo…" : "Reverter"}
+                          {isCurrentSavedLogo ? "Em uso" : "Reverter"}
                         </button>
                       </div>
                     );

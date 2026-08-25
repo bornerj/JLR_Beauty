@@ -207,6 +207,10 @@ export function ProductFormModal({
       return;
     }
     const costPrice = form.costPrice.trim() ? Number(form.costPrice) : undefined;
+    if (costPrice !== undefined && !Number.isFinite(costPrice)) {
+      setLocalError("Informe um custo válido.");
+      return;
+    }
     const minStock = form.minStock.trim() ? Number(form.minStock) : undefined;
     const maxStock = form.maxStock.trim() ? Number(form.maxStock) : null;
     const initialStock = !editing && form.initialStock.trim() ? Number(form.initialStock) : undefined;

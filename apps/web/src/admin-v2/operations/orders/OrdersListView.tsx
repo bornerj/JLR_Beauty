@@ -146,7 +146,7 @@ export function OrdersListView() {
     setBulkMessage(null);
     try {
       const result = await bulkAdvanceOrders({ token, orderIds: Array.from(selectedIds) });
-      const noPaymentCount = result.results.filter((item) => item.result === "SKIPPED" && item.reason?.toLowerCase().includes("pagamento")).length;
+      const noPaymentCount = result.results.filter((item) => item.result === "SKIPPED" && item.reasonCode === "payment_required").length;
       setBulkMessage(
         `${result.updatedCount} atualizado(s), ${result.skippedCount} ignorado(s)${noPaymentCount > 0 ? ` (${noPaymentCount} sem pagamento aprovado)` : ""}.`
       );
@@ -190,6 +190,8 @@ export function OrdersListView() {
           orderId,
           fulfillmentStatus: args.fulfillmentStatus as "PENDENTE" | "SEPARANDO" | "EMBALADO" | "DESPACHADO" | "ENVIADO" | "ENTREGUE",
           shipmentCarrier: args.shipmentCarrier || undefined,
+          shipmentTrackingCode: args.shipmentTrackingCode || undefined,
+          fulfillmentNotes: args.fulfillmentNotes || undefined,
         });
         setMutation({ submitting: false, error: null });
         setModal(null);

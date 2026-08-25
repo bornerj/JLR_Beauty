@@ -54,7 +54,9 @@ export function WhatsappIntegrationsView() {
   const [openingGreeting, setOpeningGreeting] = useState(DEFAULT_OPENING_GREETING);
   const [completionGreeting, setCompletionGreeting] = useState(DEFAULT_COMPLETION_GREETING);
   const [greetingsSaving, setGreetingsSaving] = useState(false);
-  const [greetingsMessage, setGreetingsMessage] = useState("");
+  // ERR-0078: estado estruturado (não decidir cor por substring na mensagem —
+  // um erro da API que contenha a palavra "sucesso" mostrava feedback verde).
+  const [greetingsStatus, setGreetingsStatus] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [settingsState, setSettingsState] = useState<SettingsState>({ loading: true, error: null });
 
   const [search, setSearch] = useState("");
@@ -143,7 +145,7 @@ export function WhatsappIntegrationsView() {
     const opening = openingGreeting.trim() || DEFAULT_OPENING_GREETING;
     const completion = completionGreeting.trim() || DEFAULT_COMPLETION_GREETING;
     setGreetingsSaving(true);
-    setGreetingsMessage("");
+    setGreetingsStatus(null);
     try {
       await Promise.all([
         updateSetting({ token, key: OPENING_GREETING_KEY, value: opening }),
@@ -151,11 +153,11 @@ export function WhatsappIntegrationsView() {
       ]);
       setOpeningGreeting(opening);
       setCompletionGreeting(completion);
-      setGreetingsMessage("Saudações salvas com sucesso.");
+      setGreetingsStatus({ kind: "success", text: "Saudações salvas com sucesso." });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Falha ao salvar saudações.";
       logger.warn("Falha ao salvar saudações do WhatsApp (Admin V2)", { error: message });
-      setGreetingsMessage(message);
+      setGreetingsStatus({ kind: "error", text: message });
     } finally {
       setGreetingsSaving(false);
     }
@@ -232,11 +234,9 @@ export function WhatsappIntegrationsView() {
           >
             {greetingsSaving ? "Salvando…" : "Salvar saudações"}
           </button>
-          {greetingsMessage && (
-            <p
-              className={`text-xs ${greetingsMessage.includes("sucesso") ? "text-state-healthy" : "text-state-critical"}`}
-            >
-              {greetingsMessage}
+          {greetingsStatus && (
+            <p className={`text-xs ${greetingsStatus.kind === "success" ? "text-state-healthy" : "text-state-critical"}`}>
+              {greetingsStatus.text}
             </p>
           )}
         </div>

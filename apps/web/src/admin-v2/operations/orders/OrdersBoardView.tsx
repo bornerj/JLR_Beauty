@@ -115,7 +115,9 @@ export function OrdersBoardView() {
     void load();
   }, [load]);
 
-  const [movingOrderId, setMovingOrderId] = useState<number | null>(null);
+  // ERR-0080: Set em vez de um único id — um id global permitia que arrastar um 2º
+  // card destravasse o 1º antes do PATCH dele terminar (condição de corrida).
+  const [movingOrderIds, setMovingOrderIds] = useState<Set<number>>(() => new Set());
   const [moveError, setMoveError] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingOrder>(null);
   const [pendingDispatch, setPendingDispatch] = useState<PendingOrder>(null);
@@ -142,7 +144,7 @@ export function OrdersBoardView() {
         setMoveError("Sessão expirada. Faça login novamente.");
         return;
       }
-      setMovingOrderId(orderId);
+      setMovingOrderIds((current) => new Set(current).add(orderId));
       setMoveError(null);
       try {
         await updateOrderFulfillmentStatus({ token, orderId, fulfillmentStatus: FULFILLMENT_STATUS_BY_COLUMN[targetColumn] });
@@ -152,7 +154,11 @@ export function OrdersBoardView() {
         logger.warn("Falha ao mover pedido no Board Operacional (Admin V2)", { error: message, orderId, targetColumn });
         setMoveError(message);
       } finally {
-        setMovingOrderId(null);
+        setMovingOrderIds((current) => {
+          const next = new Set(current);
+          next.delete(orderId);
+          return next;
+        });
       }
     },
     [load]
@@ -343,7 +349,7 @@ export function OrdersBoardView() {
                           key={card.orderId}
                           cardId={String(card.orderId)}
                           draggable={cardDraggable}
-                          disabled={movingOrderId === card.orderId}
+                          disabled={movingOrderIds.has(card.orderId)}
                         >
                           <OrderCardView card={card} />
                         </KanbanDraggableCard>

@@ -5,6 +5,7 @@ import { logger } from "../../utils/logger";
 import { useAdminScope } from "../shell/adminScope";
 import { fetchInsightFeed } from "../shared/api";
 import { formatCurrencyBRL } from "../shared/format";
+import { KnownImpactBanner } from "../shared/KnownImpactBanner";
 import { PRIORITY_DOT_CLASS, PRIORITY_LABELS, PRIORITY_ORDER, PRIORITY_TEXT_CLASS, SOURCE_LABELS } from "./state";
 import type { InsightFeed } from "./types";
 
@@ -77,15 +78,7 @@ export function InsightsView() {
         <p className="text-base text-stone-600 dark:text-stone-400">o que devo saber sem perguntar · últimos {feed.period.days} dia(s)</p>
       </div>
 
-      {feed.totalKnownImpact > 0 && (
-        <div className="rounded-xl border border-state-critical/30 bg-state-critical/5 p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-state-critical">Impacto total conhecido</p>
-          <p className="mt-1 text-3xl font-bold text-forest">{formatCurrencyBRL(feed.totalKnownImpact)}</p>
-          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            soma só dos insights com estimativa de R$ disponível — os demais aparecem na lista sem número, nunca escondidos
-          </p>
-        </div>
-      )}
+      <KnownImpactBanner totalImpact={feed.totalKnownImpact} itemLabel="insights" />
 
       {feed.insights.length === 0 ? (
         <div className="rounded-xl border border-dashed border-stone-200 p-6 text-center text-sm text-stone-500 dark:text-stone-400">

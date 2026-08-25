@@ -166,6 +166,8 @@ export const updateOrderFulfillmentStatus = async (args: {
   orderId: number;
   fulfillmentStatus: "PENDENTE" | "SEPARANDO" | "EMBALADO" | "DESPACHADO" | "ENVIADO" | "ENTREGUE";
   shipmentCarrier?: string;
+  shipmentTrackingCode?: string;
+  fulfillmentNotes?: string;
   shippedAt?: string;
 }): Promise<void> => {
   const response = await fetch(`${getApiUrl()}/api/orders/${args.orderId}/fulfillment`, {
@@ -174,6 +176,8 @@ export const updateOrderFulfillmentStatus = async (args: {
     body: JSON.stringify({
       fulfillmentStatus: args.fulfillmentStatus,
       ...(args.shipmentCarrier ? { shipmentCarrier: args.shipmentCarrier } : {}),
+      ...(args.shipmentTrackingCode ? { shipmentTrackingCode: args.shipmentTrackingCode } : {}),
+      ...(args.fulfillmentNotes ? { fulfillmentNotes: args.fulfillmentNotes } : {}),
       ...(args.shippedAt ? { shippedAt: args.shippedAt } : {}),
     }),
   });
@@ -590,7 +594,13 @@ export const updateBranding = async (args: { token: string; input: PublicBrandin
     throw new Error(await parseApiError(response));
   }
   const payload = (await response.json()) as { branding?: PublicBranding };
-  return payload.branding ?? args.input;
+  if (!payload.branding) {
+    // ERR-0081: antes caía silenciosamente pro `args.input` — um PUT que retorna
+    // 2xx com corpo malformado parecia "salvo com sucesso" sem confirmação real
+    // do servidor, ao contrário de fetchBranding (mesmo formato de resposta).
+    throw new Error("Resposta sem branding.");
+  }
+  return payload.branding;
 };
 
 /**

@@ -73,6 +73,8 @@ export type BulkAdvanceResult = {
   orderId: number;
   result: "UPDATED" | "SKIPPED";
   reason?: string;
+  /** ERR-0082 — código estável, não depender de match de texto em `reason`. */
+  reasonCode?: "not_found" | "cancelled" | "payment_required" | "final_stage";
   previousFulfillmentStatus?: string;
   nextFulfillmentStatus?: string;
   nextOrderStatus?: string;

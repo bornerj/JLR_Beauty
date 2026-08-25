@@ -170,8 +170,12 @@ export function ServiceFormModal({
       return;
     }
     const cost = form.cost.trim() ? Number(form.cost) : undefined;
+    if (cost !== undefined && !Number.isFinite(cost)) {
+      setLocalError("Informe um custo válido.");
+      return;
+    }
     const commissionPercent = form.commissionPercent.trim() ? Number(form.commissionPercent) : undefined;
-    if (commissionPercent !== undefined && (commissionPercent < 0 || commissionPercent > 100)) {
+    if (commissionPercent !== undefined && (!Number.isFinite(commissionPercent) || commissionPercent < 0 || commissionPercent > 100)) {
       setLocalError("Comissão deve estar entre 0 e 100%.");
       return;
     }

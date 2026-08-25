@@ -5,6 +5,7 @@ import { logger } from "../../utils/logger";
 import { useAdminScope } from "../shell/adminScope";
 import { fetchBottlenecksRanking } from "../shared/api";
 import { formatCurrencyBRL } from "../shared/format";
+import { KnownImpactBanner } from "../shared/KnownImpactBanner";
 import type { BottlenecksRanking } from "./types";
 
 /**
@@ -75,15 +76,7 @@ export function GargalosView() {
         <p className="text-base text-stone-600 dark:text-stone-400">o que impede o negócio de performar melhor · últimos {ranking.period.days} dia(s)</p>
       </div>
 
-      {ranking.totalImpact > 0 && (
-        <div className="rounded-xl border border-state-critical/30 bg-state-critical/5 p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-state-critical">Impacto total conhecido</p>
-          <p className="mt-1 text-3xl font-bold text-forest">{formatCurrencyBRL(ranking.totalImpact)}</p>
-          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            soma só dos gargalos com estimativa de R$ disponível — os demais aparecem na lista sem número, nunca escondidos
-          </p>
-        </div>
-      )}
+      <KnownImpactBanner totalImpact={ranking.totalImpact} itemLabel="gargalos" />
 
       {ranking.bottlenecks.length === 0 ? (
         <div className="rounded-xl border border-dashed border-stone-200 p-6 text-center text-sm text-stone-500 dark:text-stone-400">

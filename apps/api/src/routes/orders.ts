@@ -1245,6 +1245,9 @@ ordersRouter.patch("/orders/bulk/advance", requireAdmin, async (req, res) => {
     orderId: number;
     result: "UPDATED" | "SKIPPED";
     reason?: string;
+    /** ERR-0082 — código estável pro frontend decidir lógica (ex.: contagem de
+     * "sem pagamento aprovado"), sem depender de match de texto em `reason`. */
+    reasonCode?: "not_found" | "cancelled" | "payment_required" | "final_stage";
     previousFulfillmentStatus?: FulfillmentStatus;
     nextFulfillmentStatus?: FulfillmentStatus;
     nextOrderStatus?: OrderStatus;
@@ -1254,12 +1257,12 @@ ordersRouter.patch("/orders/bulk/advance", requireAdmin, async (req, res) => {
     for (const orderId of orderIds) {
       const existing = orderById.get(orderId);
       if (!existing) {
-        results.push({ orderId, result: "SKIPPED", reason: "pedido nao encontrado" });
+        results.push({ orderId, result: "SKIPPED", reason: "pedido nao encontrado", reasonCode: "not_found" });
         continue;
       }
 
       if (existing.status === "CANCELADO" || existing.fulfillmentStatus === "CANCELADO") {
-        results.push({ orderId, result: "SKIPPED", reason: "pedido cancelado" });
+        results.push({ orderId, result: "SKIPPED", reason: "pedido cancelado", reasonCode: "cancelled" });
         continue;
       }
 
@@ -1267,7 +1270,7 @@ ordersRouter.patch("/orders/bulk/advance", requireAdmin, async (req, res) => {
       const hasLinkedPayment = existing.payments.length > 0;
       const requiresApprovedPayment = hasLinkedPayment && !hasApprovedPayment;
       if (requiresApprovedPayment) {
-        results.push({ orderId, result: "SKIPPED", reason: MSG.ORDER_PAYMENT_REQUIRED });
+        results.push({ orderId, result: "SKIPPED", reason: MSG.ORDER_PAYMENT_REQUIRED, reasonCode: "payment_required" });
         continue;
       }
 
@@ -1277,6 +1280,7 @@ ordersRouter.patch("/orders/bulk/advance", requireAdmin, async (req, res) => {
           orderId,
           result: "SKIPPED",
           reason: "pedido ja esta na etapa final",
+          reasonCode: "final_stage",
           previousFulfillmentStatus: existing.fulfillmentStatus,
         });
         continue;

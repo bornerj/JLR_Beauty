@@ -135,26 +135,53 @@ export function TestsView() {
         detail: "Desativado por segurança. Defina localStorage admin_tests_write=true.",
       });
     } else {
-      try {
-        const servicePayload = { name: `Teste Auto Serviço ${Date.now()}`, description: "Teste automatizado", price: 1, durationMin: 10, isFeatured: false };
-        const created = await apiRequest({ token, path: "/services", method: "POST", body: servicePayload });
-        const createdId = (created.json as { id?: number } | null)?.id;
-        if (!createdId) throw new Error("ID do serviço não retornado.");
-        await apiRequest({ token, path: `/services/${createdId}`, method: "DELETE" });
-        add({ id: "api:write-service", title: "Criar e remover serviço", status: "pass", severity: "major", detail: "Serviço criado e removido com sucesso." });
-      } catch (error) {
-        add({ id: "api:write-service", title: "Criar e remover serviço", status: "fail", severity: "major", detail: error instanceof Error ? error.message : "Falha no teste de gravação." });
+      {
+        // ERR-0079: POST e DELETE isolados — se o registro chegar a ser criado e só o
+        // DELETE falhar, o teste precisa dizer isso explicitamente (fica órfão no
+        // catálogo real), não reportar a mesma "falha no teste" genérica de sempre.
+        let createdId: number | undefined;
+        try {
+          const servicePayload = { name: `Teste Auto Serviço ${Date.now()}`, description: "Teste automatizado", price: 1, durationMin: 10, isFeatured: false };
+          const created = await apiRequest({ token, path: "/services", method: "POST", body: servicePayload });
+          createdId = (created.json as { id?: number } | null)?.id;
+          if (!createdId) throw new Error("ID do serviço não retornado.");
+          await apiRequest({ token, path: `/services/${createdId}`, method: "DELETE" });
+          add({ id: "api:write-service", title: "Criar e remover serviço", status: "pass", severity: "major", detail: "Serviço criado e removido com sucesso." });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Falha no teste de gravação.";
+          add({
+            id: "api:write-service",
+            title: "Criar e remover serviço",
+            status: "fail",
+            severity: "major",
+            detail: createdId
+              ? `Serviço #${createdId} foi criado mas não pôde ser removido (${message}) — ficou órfão no catálogo real, precisa de exclusão manual.`
+              : message,
+          });
+        }
       }
 
-      try {
-        const productPayload = { name: `Teste Auto Produto ${Date.now()}`, description: "Teste automatizado", price: 1, isFeatured: false };
-        const created = await apiRequest({ token, path: "/products", method: "POST", body: productPayload });
-        const createdId = (created.json as { id?: number } | null)?.id;
-        if (!createdId) throw new Error("ID do produto não retornado.");
-        await apiRequest({ token, path: `/products/${createdId}`, method: "DELETE" });
-        add({ id: "api:write-product", title: "Criar e remover produto", status: "pass", severity: "major", detail: "Produto criado e removido com sucesso." });
-      } catch (error) {
-        add({ id: "api:write-product", title: "Criar e remover produto", status: "fail", severity: "major", detail: error instanceof Error ? error.message : "Falha no teste de gravação." });
+      {
+        let createdId: number | undefined;
+        try {
+          const productPayload = { name: `Teste Auto Produto ${Date.now()}`, description: "Teste automatizado", price: 1, isFeatured: false };
+          const created = await apiRequest({ token, path: "/products", method: "POST", body: productPayload });
+          createdId = (created.json as { id?: number } | null)?.id;
+          if (!createdId) throw new Error("ID do produto não retornado.");
+          await apiRequest({ token, path: `/products/${createdId}`, method: "DELETE" });
+          add({ id: "api:write-product", title: "Criar e remover produto", status: "pass", severity: "major", detail: "Produto criado e removido com sucesso." });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Falha no teste de gravação.";
+          add({
+            id: "api:write-product",
+            title: "Criar e remover produto",
+            status: "fail",
+            severity: "major",
+            detail: createdId
+              ? `Produto #${createdId} foi criado mas não pôde ser removido (${message}) — ficou órfão no catálogo real, precisa de exclusão manual.`
+              : message,
+          });
+        }
       }
     }
 

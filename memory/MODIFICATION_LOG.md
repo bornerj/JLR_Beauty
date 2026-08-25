@@ -10398,3 +10398,71 @@ de aprovação separada.
 
 **Status:** `PLAN-0034` DONE e commitado. Sessão pode fechar ou seguir para outra
 tarefa, a critério do usuário.
+
+## 2026-08-24 — Fix pontual: fulfillment (rastreio/notas) descartado no Admin V2
+
+**Contexto/objetivo:** usuário pediu para rodar o agente `code-archaeologist` sobre
+`apps/web/src/admin-v2/` inteiro (116 arquivos, 17k linhas) validando bugs/
+inconsistências. Executado via 4 subagentes em paralelo (um por fatia do módulo),
+usando a skill `code-review-checklist`. Relatório consolidado apresentado ao usuário
+com 1 achado crítico, 6 médios, 7 baixos. Usuário pediu para corrigir só o crítico
+(achado #1) agora — os demais ficam para decisão futura.
+
+**Ação:** `ERR-0075` corrigido — ver `DEBUG-HISTORY.md` para causa raiz completa.
+Resumo: `updateOrderFulfillmentStatus` (`shared/api.ts`) não enviava
+`shipmentTrackingCode`/`fulfillmentNotes` ao backend (que já aceitava ambos);
+`handleSaveFulfillment` (`OrdersListView.tsx`) não repassava esses campos do modal.
+
+**Validações:** `apps/web` `tsc -b` limpo; `npm run build` PASS (215 módulos, bundle
+893 KB, inalterado); `eslint` nos 2 arquivos tocados sem erro novo.
+
+**Arquivos alterados:** `apps/web/src/admin-v2/shared/api.ts`,
+`apps/web/src/admin-v2/operations/orders/OrdersListView.tsx`.
+
+**Pendente (não corrigido, registrado no relatório do code-archaeologist, decisão do
+usuário sobre corrigir ou não):** 6 achados médios (validação NaN em `ServiceFormModal`,
+`revertLogo` do Branding salvando o form inteiro, feedback verde/vermelho por match de
+substring no WhatsApp, teste de gravação podendo deixar registro órfão, condição de
+corrida no drag do Kanban de Pedidos, 11 arquivos com erro de lint
+`react-hooks/set-state-in-effect`) + 7 achados baixos (duplicação de JSX/boilerplate,
+inconsistência de log level, etc.) — lista completa só nesta conversa, não replicada
+em arquivo formal ainda.
+
+**Status:** achado crítico corrigido e validado. Sem commit/push ainda — aguardando
+decisão do usuário.
+
+## 2026-08-24 — PLAN-0035: correções dos 12 achados restantes do code-archaeologist
+
+**Contexto/objetivo:** continuação do achado #1 (já corrigido, `ERR-0075`). Usuário
+pediu "ajusta os outros" — os 12 achados médios/baixos do relatório do
+`code-archaeologist` sobre `admin-v2`, exceto #7/#14 (erro de lint em 11 arquivos +
+proposta de hook compartilhado — deixado de fora por ser um refactor maior, risco
+de regressão maior, fica pra decisão separada).
+
+**Ação:** 10 bugs reais corrigidos e registrados (`ERR-0076` a `ERR-0082`, alguns
+cobrindo 2 achados relacionados) + 1 cleanup de duplicação (achado #13, sem bug
+associado, sem ERR-XXXX). Formalizado como `PLAN-0035` (mesmo padrão do `PLAN-0032`
+— múltiplos módulos, >3 arquivos, gatilho de scope drift do kernel).
+
+**Arquivos alterados:**
+- `apps/web/src/admin-v2/cadastros/services/components/ServiceFormModal.tsx`
+- `apps/web/src/admin-v2/cadastros/products/components/ProductFormModal.tsx`
+- `apps/web/src/admin-v2/sistema/branding/BrandingSettingsView.tsx`
+- `apps/web/src/admin-v2/sistema/whatsapp/WhatsappIntegrationsView.tsx`
+- `apps/web/src/admin-v2/sistema/tests/TestsView.tsx`
+- `apps/web/src/admin-v2/operations/orders/OrdersBoardView.tsx`
+- `apps/web/src/admin-v2/operations/orders/OrdersListView.tsx`
+- `apps/web/src/admin-v2/operations/orders/listTypes.ts`
+- `apps/web/src/admin-v2/shared/api.ts`
+- `apps/web/src/admin-v2/shared/KnownImpactBanner.tsx` (novo)
+- `apps/web/src/admin-v2/gargalos/GargalosView.tsx`
+- `apps/web/src/admin-v2/insights/InsightsView.tsx`
+- `apps/api/src/routes/orders.ts`
+
+**Validações:** `apps/api` `tsc -b` limpo + `npm run test` 134/134 PASS; `apps/web`
+`tsc -b` limpo, `npm run build` PASS (216 módulos, bundle 893.99 KB), `eslint` nos
+12 arquivos tocados sem erro novo (5 erros pré-existentes de
+`react-hooks/set-state-in-effect`, fora de escopo — achado #7).
+
+**Status:** `PLAN-0035` DONE. Sem commit/push ainda — pre-commit review a ser
+apresentado ao usuário.
