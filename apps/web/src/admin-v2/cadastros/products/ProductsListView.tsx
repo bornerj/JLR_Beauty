@@ -87,7 +87,10 @@ export function ProductsListView() {
   }, []);
 
   useEffect(() => {
-    void load();
+    // ERR-0084 — mesmo fix do ERR-0083: adia a chamada em 1 tick pra sair do
+    // commit síncrono do efeito (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => void load(), 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   const categories = useMemo(() => {

@@ -10495,3 +10495,28 @@ nenhum novo).
 
 **Status:** relatório do `code-archaeologist` sobre `admin-v2` 100% endereçado
 (1 crítico + 12 médios/baixos + este último). Sem commit/push ainda.
+
+## 2026-08-24 — ERR-0084: mesmo fix do achado #7 em 10 arquivos fora do escopo original
+
+**Contexto/objetivo:** usuário perguntou se existiam outros arquivos com o mesmo
+bug do achado #7 (`set-state-in-effect`). Confirmado: 10 arquivos com o padrão
+idêntico (`useEffect(() => { void load(); }, [load]);`) fora do escopo da
+auditoria original + 5 casos da mesma regra em formato diferente (não mecânicos).
+Usuário pediu pra aplicar o mesmo fix nos 10.
+
+**Ação:** `ERR-0084` — mesma mudança mecânica do `ERR-0083` (adiar 1 tick via
+`setTimeout`) em: `CouponsListView.tsx`, `CustomersListView.tsx`,
+`PlansListView.tsx`, `ProductsListView.tsx`, `ProfessionalsListView.tsx`,
+`ServicesListView.tsx`, `UsersListView.tsx`, `CustomersFlowView.tsx`,
+`SubscriptionHealthView.tsx`, `OrdersListView.tsx` (efeito de carregamento
+inicial).
+
+**Validações:** `tsc -b` limpo, `npm run build` PASS (216 módulos), `eslint .`
+caiu de 17 pra 7 erros (exatamente os 10 esperados, nenhum novo).
+
+**Fora deste lote (mapeado, não corrigido — precisa fix caso a caso):**
+`CapacityView.tsx`, `OrdersListView.tsx:87/116`, `ProductsListView.tsx:128`,
+`ManualSaleModal.tsx:60/102`, `FranquiasEtapasAberturaSection.tsx` (regra
+diferente). Ver `ERR-0084` para detalhe de cada um.
+
+**Status:** sem commit/push ainda.
