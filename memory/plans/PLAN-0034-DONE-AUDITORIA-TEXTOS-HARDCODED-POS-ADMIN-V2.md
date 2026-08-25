@@ -481,7 +481,14 @@ explícita do usuário — ver Git Record abaixo).
   workspace (`.sfk/kernel/skills/*`, `.cursor/rules/memsession.md`,
   `.sfk/kernel/skills/memsession/`, `.codex/`) foram deliberadamente deixadas de
   fora, por instrução explícita do usuário.
-- [ ] Step 2 (Commit authorization): pendente — aguardando aprovação explícita
-- [ ] Step 3 (Commit confirmation): pendente
-- [ ] Step 4 (Push authorization e resultado): pendente
-- Push status: PENDING
+- [x] Step 2 (Commit authorization) — 2026-08-24: usuário aprovou explicitamente
+  ("pode commitar, git rm --cached nos arquivos de skills")
+- [x] Step 3 (Commit confirmation) — 3 commits em `main`:
+  `964ae52` (fecha `PLAN-0034`, 30 arquivos), `9ef303b` (destrackeia
+  `.sfk/kernel/skills/`, 198 arquivos, leva separada — engine housekeeping,
+  confirmada com o usuário antes de commitar por ser maior escopo que o
+  previsto), `430a8e9` (registra os 2 commits acima em memória)
+- [x] Step 4 (Push authorization e resultado) — 2026-08-24: usuário aprovou push
+  junto com o commit do registro de memória. `git push origin main`:
+  `d81d277..430a8e9 main -> main`, sucesso
+- Push status: COMPLETED
