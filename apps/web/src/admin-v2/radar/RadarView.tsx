@@ -40,7 +40,10 @@ export function RadarView() {
   }, [scope.days]);
 
   useEffect(() => {
-    void load();
+    // ERR-0083 — adia a chamada em 1 tick: load() faz setState antes do primeiro
+    // await, o que roda de forma síncrona dentro do próprio efeito (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => void load(), 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   if (state.loading && !state.data) {

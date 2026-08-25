@@ -10466,3 +10466,32 @@ associado, sem ERR-XXXX). Formalizado como `PLAN-0035` (mesmo padrão do `PLAN-0
 
 **Status:** `PLAN-0035` DONE. Sem commit/push ainda — pre-commit review a ser
 apresentado ao usuário.
+
+## 2026-08-24 — Achado #7/#14: erro de lint nos 11 dashboards de inteligência
+
+**Contexto/objetivo:** último achado pendente do relatório do `code-archaeologist`
+sobre `admin-v2`. Apresentadas 4 opções ao usuário (suprimir lint / adiar 1 tick /
+extrair hook compartilhado `useAdminV2Fetch` / não fazer nada) com recomendação.
+Usuário escolheu a opção de menor risco (adiar 1 tick).
+
+**Ação:** `ERR-0083` corrigido — ver `DEBUG-HISTORY.md`. `useEffect(() => { void
+load(); }, [load]);` virou `useEffect(() => { const timer = setTimeout(() => void
+load(), 0); return () => clearTimeout(timer); }, [load]);` nos 11 arquivos.
+
+**Fora deste lote (decisão do usuário):** extração de hook compartilhado
+(achado #14, duplicação de boilerplate) — maior refactor, fica pra plano futuro
+separado, se decidido.
+
+**Achado colateral (não corrigido, registrado):** o mesmo padrão de bug existe em
+~10 arquivos fora do escopo original da auditoria (`cadastros/*ListView.tsx`,
+`CustomersFlowView.tsx`, `SubscriptionHealthView.tsx`, `CapacityView.tsx`,
+`OrdersListView.tsx`, `ManualSaleModal.tsx`) — candidato a limpeza futura.
+
+**Validações:** `apps/web` `tsc -b` limpo, `npm run build` PASS (216 módulos);
+`eslint .` no repo inteiro caiu de 28 pra 17 erros (exatamente os 11 esperados,
+nenhum novo).
+
+**Arquivos alterados:** os 11 dashboards listados em `ERR-0083`.
+
+**Status:** relatório do `code-archaeologist` sobre `admin-v2` 100% endereçado
+(1 crítico + 12 médios/baixos + este último). Sem commit/push ainda.
