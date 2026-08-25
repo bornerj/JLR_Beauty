@@ -10603,3 +10603,41 @@ podendo legitimamente ter seu próprio `h1`. Registrado em `DECISION-020.md`.
 (`ERR-0088`) segue corrigido e funcional; resultado real depois desta decisão:
 5/6 checks relevantes resolvidos (Security/Lint/Schema/Test PASS, SEO com
 achado tratado por decisão, UX Audit é ruído genérico — não perseguido).
+
+## 2026-08-24 — FECHAMENTO DE SESSÃO
+
+**O que foi feito hoje (resumo completo):**
+1. **Fechamento formal do `PLAN-0034`** (auditoria de textos/imagens hardcoded, técnica já concluída em 2026-08-20) — rename `-DONE-`, Git Record completo, commit+push.
+2. **Achado colateral**: `.gitignore` tinha perdido a regra `/.codex/`; `.sfk/kernel/skills/` (197 arquivos) destrackeada do git por instrução do usuário (engine sincronizado automaticamente, não é produto do projeto).
+3. **Auditoria completa do `@code-archaeologist` sobre `admin-v2`** (116 arquivos, 17k linhas, 4 subagentes em paralelo) — 14 achados (1 crítico + 6 médios + 7 baixos).
+4. **13 bugs corrigidos** (`ERR-0075` a `ERR-0088`): fulfillment descartado silenciosamente, validação NaN, "reverter logo" salvando form inteiro, feedback errado por substring match, teste deixando registro órfão, condição de corrida no Kanban, `updateBranding` mascarando erro, contagem por string match, duplicação de JSX, e o erro de lint `set-state-in-effect` em **27 arquivos** (11+10+5+1), mais `react-hooks/static-components` em 1 arquivo do site público.
+5. **`checklist.py` do kernel corrigido** (`ERR-0088` — caminho `.agent/` inexistente + `python` inexistente neste sistema) — nunca tinha rodado de verdade antes.
+6. **`DECISION-020`** registrada — múltiplos `<h1>` nas seções públicas são intencionais (arquitetura de seções independentes), não bug.
+7. **2 registros de memória episódica** (`memory/memsession/`) capturando contexto conversacional não reconstruível dos artefatos formais.
+
+**Resultado técnico:** lint do `apps/web` **28 → 0 erros**. `apps/api`: `tsc -b` limpo + 134/134 testes PASS (inalterado, backend não teve regressão). `apps/web`: `tsc -b` limpo + build PASS em toda mudança.
+
+**Commits desta sessão** (todos commitados e pushados, aprovação separada de cada commit e cada push, `origin/main` sincronizado):
+`964ae52`, `9ef303b`, `430a8e9`, `66c6196`, `962e4d2`, `a54d9ee`, `3faa8bc`, `3597992`, `58603a2`, `2f005b0`, `e9b8cb0`, `d8301f0`, `860fa7c`, `cb5851e`, `55a7a0c`, `bbba9d8`.
+
+**Pendente para próxima sessão (não bloqueante, registrado):**
+- Achado #14 do `code-archaeologist` — extração do hook compartilhado `useAdminV2Fetch` (DRY dos 11 dashboards), **deferred** por decisão explícita do usuário, não é bug.
+- `verify_all.py` (kernel, Pre-Deploy) — não testado nesta sessão; dado que `checklist.py` tinha bugs que nunca foram notados, vale desconfiar até testar na prática.
+- Itens de sessões anteriores, ainda não verificados: possível contagem duplicada em `unit-health/service.ts`/`dashboardSalesInsights.ts` (`ERR-0058`-like); tela "Assinantes" como candidata a feature nova; `flows.spec.ts` "home cart and checkout flow" quebrado (pré-existente).
+
+## 2026-08-24 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — `DECISION-020` nova, coerente; nenhuma ativa contradita; 1 campo aditivo (`reasonCode`) não exigiu DECISION própria |
+| State Integrity | PASS — `PLAN-0035` fechado DONE; observação não-bloqueante: expansão do achado #7 (27 arquivos, 4 levas) tratada ponto-a-ponto em vez de sob um `PLAN-0036` formal |
+| Operational Memory | PASS — `MODIFICATION_LOG`/planos atualizados em tempo real |
+| Debug Memory | PASS — 13 bugs (`ERR-0075` a `ERR-0088`) registrados com template completo |
+| Technical Validation | PASS — lint 28→0, build/tsc limpos em toda mudança, `apps/api` 134/134 PASS, zero `console.log` |
+| Regression Risk | PASS — nenhuma área sensível (auth/pagamento) tocada; observação não-bloqueante: fixes de frontend sem teste automatizado dedicado (padrão já aceito no projeto) |
+| Git Governance | PASS — 16 commits, review + aprovação de commit + aprovação de push separadas em cada um, `origin/main` sincronizado |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260824_225807-PASS.md`.
+
+**Status:** Sessão fechada formalmente. Todos os commits desta sessão já estão
+em `origin/main` — nada pendente de push.
