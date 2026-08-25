@@ -72,7 +72,10 @@ resumido no checklist).
       `npm run build` PASS (216 módulos), `eslint` sem erro novo nos 12 arquivos
       tocados (5 erros pré-existentes de `react-hooks/set-state-in-effect`,
       já mapeados no achado #7, fora de escopo deste plano).
-- [ ] Step 2 (Commit authorization): pendente
-- [ ] Step 3 (Commit confirmation): pendente
-- [ ] Step 4 (Push authorization e resultado): pendente
+- [x] Step 2 (Commit authorization) — 2026-08-24: usuário aprovou explicitamente
+  ("pode commitar, sem push por enquanto")
+- [x] Step 3 (Commit confirmation) — `a54d9ee` em `main`, 16 arquivos
+  (14 modificados + 2 novos), branch `main`
+- [ ] Step 4 (Push authorization e resultado): pendente — usuário pediu
+  explicitamente para não dar push por enquanto
 - Push status: PENDING
