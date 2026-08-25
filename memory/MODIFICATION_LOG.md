@@ -10584,3 +10584,22 @@ iniciada nesta sessão. Lint do `apps/web`: 28 → 0. 13 registros em
 `DEBUG-HISTORY.md` (`ERR-0075` a `ERR-0087`). Único item ainda em aberto por
 decisão explícita: extração do hook compartilhado `useAdminV2Fetch` (achado
 #14, deferred, não é bug). Sem commit/push ainda.
+
+## 2026-08-24 — DECISION-020: múltiplos H1 nas seções públicas são intencionais
+
+**Contexto:** achado do `seo_checker.py` (checklist geral, fora do escopo do
+`admin-v2`) — "Multiple H1 tags" em `HomeProductsSection.tsx` (3) somados ao
+`h1` de `HomeHeroSection.tsx` = 4 `<h1>` na mesma Home renderizada. Investigado,
+confirmado (não é falso positivo), correção proposta (rebaixar pra h2/p).
+
+**Decisão do usuário:** não corrigir — é intencional. As páginas públicas são
+compostas por seções independentes (`public-site/sections/*.tsx`), cada uma
+podendo legitimamente ter seu próprio `h1`. Registrado em `DECISION-020.md`.
+
+**Ação:** nenhuma mudança de código. Decisão registrada pra achados futuros de
+"múltiplos H1" dentro de `public-site/sections/` não serem reabertos como bug.
+
+**Status:** fecha o achado de SEO Check do checklist final. `checklist.py`
+(`ERR-0088`) segue corrigido e funcional; resultado real depois desta decisão:
+5/6 checks relevantes resolvidos (Security/Lint/Schema/Test PASS, SEO com
+achado tratado por decisão, UX Audit é ruído genérico — não perseguido).
