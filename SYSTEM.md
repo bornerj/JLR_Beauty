@@ -10,7 +10,7 @@ Regras de processo, continuidade e memoria ficam em `kernel/RULES.md`.
 - ORM: Prisma 5.22 com PostgreSQL 16.
 - Testes E2E: Playwright.
 - Frontend principal: Vite + React 19.
-- Pagamentos: Stripe (integração ativa — ver project.toml).
+- Pagamentos: Mercado Pago, Checkout Pro (integração ativa — ver sfk.toml, PLAN-0036).
 
 ## Estilo de Codigo
 - Use componentes funcionais (React).
@@ -76,12 +76,11 @@ await db.query(`SELECT * FROM users WHERE email = '${email}'`);
 - Mensagens da API devem ser normalizadas no cliente (ex.: mapeamento PT-BR).
 - Modais de login/cadastro devem limpar estado de erro/sucesso ao abrir/fechar.
 
-## Pagamentos (Stripe)
-- Nunca armazene numeros de cartao.
-- Use tokenizacao do Stripe.
+## Pagamentos (Mercado Pago)
+- Nunca armazene numeros de cartao — a captura do cartao acontece na pagina hospedada do Checkout Pro, fora do nosso servidor.
 - Registre tentativas de pagamento.
 - Trate falhas graciosamente.
-- Use chaves de idempotencia.
+- Use chaves de idempotencia (ver `PaymentWebhookEvent`, dedupe por `provider`+`eventId`).
 
 ## Gerenciamento de Estado
 - Use React Context para tema/usuario quando aplicavel.

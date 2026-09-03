@@ -374,6 +374,9 @@ export const PAGE_TEXT_CATALOG: ReadonlyArray<PageTextEntry> = [
   { key: "global.mission.valores_item_4", page: "global", section: "mission", label: "Valores — item 4",     type: "simple", defaultValue: "Inovar sempre, com amor e propósito." },
   { key: "global.mission.valores_item_5", page: "global", section: "mission", label: "Valores — item 5",     type: "simple", defaultValue: "Trabalhar com ética, respeito e paixão." },
 
+  // ─── GLOBAL / CHECKOUT (PLAN-0036) ───────────────────────────────────────────
+  { key: "global.checkout.secure_badge", page: "global", section: "checkout", label: "Selo de segurança do carrinho/checkout", type: "simple", defaultValue: "Finalização segura com Mercado Pago" },
+
   // ─── ASSINATURAS / HERO ───────────────────────────────────────────────────────
   { key: "assinaturas.hero.title",      page: "assinaturas", section: "hero", label: "Título principal",  type: "segmented", defaultValue: [{ text: "Viva seu melhor ", style: "default" }, { text: "Estilo!", style: "gold-gradient" }] },
   { key: "assinaturas.hero.subtitle_1", page: "assinaturas", section: "hero", label: "Subtítulo linha 1", type: "simple",    defaultValue: "Aqui está a solução para conseguir cuidar da sua autoestima em meio à sua rotina super corrida!" },

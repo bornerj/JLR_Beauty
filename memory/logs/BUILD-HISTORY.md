@@ -146,3 +146,31 @@ Reexecutável com `npm run seed:admin-v2-test-data` (requer `tsx`, disponível e
 `attention`, board com as 4 colunas populadas, fluxo com gargalo real detectado na etapa
 Enviado→Entregue, média 1170min). `npm run test` (46/46) e `tsc -p tsconfig.build.json` seguem
 PASS após a adição do script.
+
+---
+
+## 2026-09-02 — PLAN-0036: StripeWebhookEvent → PaymentWebhookEvent (Ondas 1-3)
+
+**Migration:** `apps/api/prisma/migrations/20260903010053_generalize_payment_webhook_event/`.
+`DROP TABLE "StripeWebhookEvent"` + `CREATE TABLE "PaymentWebhookEvent"` (coluna `provider`
+nova, unique composto `@@unique([provider, eventId])` em vez do unique simples de `eventId`).
+
+**Por que DROP em vez de migrar linha a linha:** a tabela é um ledger de idempotência de
+webhook — dado puramente operacional, sem valor histórico de negócio. Confirmado via `psql`
+direto antes da migration: `SELECT provider, status, count(*) FROM "Payment" GROUP BY
+provider, status` → zero linhas com `provider='STRIPE'` (só `MANUAL`, 23 pagamentos);
+`SELECT count(*) FROM "StripeWebhookEvent"` → 0. Nenhum dado real perdido.
+
+**Como rodou:** `docker compose build api` (rebuild completo com o novo `schema.prisma` +
+pasta de migration) → `docker compose up -d api` → `docker-entrypoint.sh` roda `prisma
+migrate deploy` no boot, aplicou a migration automaticamente e sem erro (log confirmado:
+"All migrations have been successfully applied").
+
+**Validação pós-execução:** `docker compose exec postgres psql ... \d "PaymentWebhookEvent"`
+confirma schema real batendo com o Prisma (coluna `provider`, unique composto). `GET /health`
+200. Smoke test das 3 rotas novas via `wget` de dentro do container: `POST
+.../mercadopago/checkout-preference` (payload válido, `MERCADOPAGO_ENABLED=false`) → 503
+`{"message":"pagamento invalido"}` (comportamento esperado); `POST .../mercadopago/webhook`
+sem assinatura → 400 `{"message":"dados invalidos"}`; `POST .../mercadopago/cancel-pending`
+com `orderId` inexistente → 404 `{"message":"pagamento nao encontrado"}`. `tsc -b` e `npm run
+build` limpos; `npm run test` 134/134 PASS (sem regressão, backend legado intocado).

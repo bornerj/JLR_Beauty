@@ -120,7 +120,7 @@ const getProductStockById = async (
   return Number(product.stock || 0);
 };
 
-test("order lifecycle e2e: pago, nao pago, cancelado stripe, despacho, entrega e estorno", async ({
+test("order lifecycle e2e: pago, nao pago, cancelado mercadopago, despacho, entrega e estorno", async ({
   request,
 }) => {
   const auth = await getAdminAuth(request);
@@ -267,10 +267,10 @@ test("order lifecycle e2e: pago, nao pago, cancelado stripe, despacho, entrega e
     const stockAfterSecondOrder = await getProductStockById(request, auth.token, product.id);
     expect(stockAfterSecondOrder).toBe(stockBeforeSecondOrder - 1);
 
-    const stripePayment = await prisma.payment.create({
+    const mercadoPagoPayment = await prisma.payment.create({
       data: {
-        provider: "STRIPE",
-        providerPaymentId: `sess_e2e_${Date.now()}`,
+        provider: "MERCADOPAGO",
+        providerPaymentId: `pref_e2e_${Date.now()}`,
         status: "PENDENTE",
         amount: new Prisma.Decimal(25),
         method: "CARD",
@@ -278,30 +278,30 @@ test("order lifecycle e2e: pago, nao pago, cancelado stripe, despacho, entrega e
       },
       select: { id: true },
     });
-    createdPaymentIds.push(stripePayment.id);
+    createdPaymentIds.push(mercadoPagoPayment.id);
 
-    const stripeCancelResponse = await request.post(
-      `${API_BASE_URL}/api/public/payments/stripe/cancel-pending`,
+    const mercadoPagoCancelResponse = await request.post(
+      `${API_BASE_URL}/api/public/payments/mercadopago/cancel-pending`,
       {
-        data: { paymentRecordId: stripePayment.id },
+        data: { paymentRecordId: mercadoPagoPayment.id },
       }
     );
-    expect(stripeCancelResponse.ok()).toBeTruthy();
-    const stripeCancelBody = (await stripeCancelResponse.json()) as { ok: boolean };
-    expect(stripeCancelBody.ok).toBe(true);
+    expect(mercadoPagoCancelResponse.ok()).toBeTruthy();
+    const mercadoPagoCancelBody = (await mercadoPagoCancelResponse.json()) as { ok: boolean };
+    expect(mercadoPagoCancelBody.ok).toBe(true);
 
-    const cancelledStripeOrder = await getOrderById(request, auth.token, secondOrder.id);
-    expect(cancelledStripeOrder.status).toBe("CANCELADO");
-    expect(cancelledStripeOrder.fulfillmentStatus).toBe("CANCELADO");
+    const cancelledMercadoPagoOrder = await getOrderById(request, auth.token, secondOrder.id);
+    expect(cancelledMercadoPagoOrder.status).toBe("CANCELADO");
+    expect(cancelledMercadoPagoOrder.fulfillmentStatus).toBe("CANCELADO");
 
-    const stripePaymentAfterCancel = await prisma.payment.findUnique({
-      where: { id: stripePayment.id },
+    const mercadoPagoPaymentAfterCancel = await prisma.payment.findUnique({
+      where: { id: mercadoPagoPayment.id },
       select: { status: true },
     });
-    expect(stripePaymentAfterCancel?.status).toBe("CANCELADO");
+    expect(mercadoPagoPaymentAfterCancel?.status).toBe("CANCELADO");
 
-    const stockAfterStripeCancel = await getProductStockById(request, auth.token, product.id);
-    expect(stockAfterStripeCancel).toBe(stockBeforeSecondOrder);
+    const stockAfterMercadoPagoCancel = await getProductStockById(request, auth.token, product.id);
+    expect(stockAfterMercadoPagoCancel).toBe(stockBeforeSecondOrder);
   } finally {
     if (createdPaymentIds.length) {
       await prisma.payment.deleteMany({ where: { id: { in: createdPaymentIds } } });

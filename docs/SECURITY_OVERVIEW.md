@@ -406,32 +406,32 @@ Após fazer um login, um logout e uma tentativa de login com senha errada, os tr
 
 ### O que é
 
-Os eventos de pagamento recebidos do Stripe (processadora de cartão) são **filtrados antes de serem gravados** no banco de dados — removendo qualquer dado pessoal desnecessário.
+Os eventos de pagamento recebidos do Mercado Pago (processadora de cartão, Checkout Pro — `PLAN-0036`, substituiu o Stripe) são **filtrados antes de serem gravados** no banco de dados — removendo qualquer dado pessoal desnecessário.
 
 ### Como funciona
 
-Quando o Stripe notifica a plataforma sobre um pagamento (via webhook), o sistema recebe um objeto completo que pode conter dados como nome do comprador, detalhes de faturamento, e-mail, endereço de entrega. Antes de gravar esse evento no banco, o sistema **remove automaticamente** todos esses campos, mantendo apenas as informações de negócio necessárias:
-- ID do evento no Stripe
-- Tipo de evento (pagamento aprovado, expirado, etc.)
-- Valor total
-- Status do pagamento
-- ID da sessão de checkout
+Quando o Mercado Pago notifica a plataforma sobre um pagamento (via webhook), o backend busca o recurso completo (`GET /v1/payments/:id`), que pode conter dados como nome do comprador, e-mail, CPF, endereço de faturamento. Antes de gravar esse evento no banco, o sistema **remove automaticamente** todos esses campos, mantendo apenas as informações de negócio necessárias (`sanitizeMercadoPagoPayment`, `apps/api/src/routes/orders.ts`):
+- ID do pagamento no Mercado Pago
+- Status e status detalhado (aprovado, recusado, pendente, motivo)
+- `external_reference` (nosso `Payment.id` interno — correlação, não dado pessoal)
+- Valor da transação
+- Número de parcelas
 
-Dados como `billing_details`, `customer_details`, `shipping` e `metadata` com e-mail são descartados antes de qualquer persistência.
+Dados como `payer` (nome/e-mail/CPF/telefone), `card` e `additional_info` (endereço, IP) nunca são incluídos na função de sanitização — não é uma lista de exclusão, é uma lista de inclusão explícita.
 
 ### Vantagens
 
 - Minimização de dados: só guarda o que realmente precisa — princípio fundamental de privacidade (LGPD/GDPR).
-- Reduz a superfície de risco: um vazamento do banco não expõe dados de cartão ou endereço do comprador capturados pelo Stripe.
+- Reduz a superfície de risco: um vazamento do banco não expõe dados de cartão ou dados pessoais do comprador capturados pelo Mercado Pago.
 - Conformidade: dados de pagamento devem ser minimizados fora do ambiente certificado PCI-DSS.
 
 ### Como validar
 
 ```sql
--- No banco de dados, após um pagamento Stripe:
-SELECT payload FROM "StripeWebhookEvent" LIMIT 1;
--- O payload não contém billing_details, customer_details ou metadata com email
--- Apenas: id, type, amount_total, payment_status, payment_intent
+-- No banco de dados, após um pagamento Mercado Pago:
+SELECT payload FROM "PaymentWebhookEvent" WHERE provider = 'MERCADOPAGO' LIMIT 1;
+-- O payload não contém payer, card ou additional_info
+-- Apenas: id, status, status_detail, external_reference, transaction_amount, installments
 ```
 
 ---
@@ -516,7 +516,7 @@ O endpoint `/health` (sem sufixo), usado internamente pelo Docker para verificar
 | 10 | Row-Level Security nas tabelas sensíveis | ✅ Ativo |
 | 11 | Auditoria de banco de dados via pg_audit | ✅ Ativo |
 | 12 | Log de auditoria de segurança (login, logout, role change...) | ✅ Ativo |
-| 13 | Dados de pagamento Stripe filtrados antes de persistir | ✅ Ativo |
+| 13 | Dados de pagamento Mercado Pago filtrados antes de persistir | ✅ Ativo |
 | 14 | Recuperação de senha segura (token único, 15 min, sem enumeração) | ✅ Ativo |
 | 15 | Endpoints de diagnóstico protegidos por autenticação | ✅ Ativo |
 

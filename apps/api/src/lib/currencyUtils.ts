@@ -190,11 +190,3 @@ export const buildOrderPublicCode = (): string => {
 };
 
 export const normalizeCouponCode = (value: string): string => value.trim().toUpperCase();
-
-export const buildStripeCancelUrlWithContext = (
-  baseUrl: string,
-  params: { orderId: number; paymentRecordId: number }
-): string => {
-  const separator = baseUrl.includes("?") ? "&" : "?";
-  return `${baseUrl}${separator}orderId=${params.orderId}&paymentRecordId=${params.paymentRecordId}`;
-};

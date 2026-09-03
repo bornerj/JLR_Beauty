@@ -10641,3 +10641,261 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260824_225807-PASS.md`.
 
 **Status:** Sessão fechada formalmente. Todos os commits desta sessão já estão
 em `origin/main` — nada pendente de push.
+
+## 2026-08-25 — Regularização de registro: PLAN-0035
+
+**Contexto/objetivo:** leitura de bootstrap no início da sessão apontou
+inconsistência em `memory/plans/PLAN-0035-...md`: `Status: DONE` no corpo,
+mas arquivo sem o sufixo `-DONE-` e o Step 4 do Git Record ainda marcado como
+push pendente — desatualizado, já que o push do lote inteiro (16 commits,
+`964ae52`..`bbba9d8`, incluindo `a54d9ee`/`3faa8bc` deste plano) foi
+confirmado no fechamento da sessão anterior (`git log`/`git status`: `main`
+sincronizado com `origin/main`, sem commits pendentes). Mesmo padrão de
+inconsistência já corrigido antes no `PLAN-0025`.
+
+**Arquivos alterados:**
+- `memory/plans/PLAN-0035-CORRECOES-AUDITORIA-ADMIN-V2.md` → renomeado para
+  `memory/plans/PLAN-0035-DONE-CORRECOES-AUDITORIA-ADMIN-V2.md`
+- Mesmo arquivo: Step 4 do Git Record marcado `[x]` (push confirmado), Push
+  status `PENDING` → `COMPLETED`, nota de regularização adicionada.
+
+**Validações executadas:** `git log`/`git status -sb` confirmam `main`
+e `origin/main` sincronizados (sem commits pendentes) antes da alteração.
+Nenhum código tocado — mudança 100% de registro/memória.
+
+**Último passo concluído / próximo:** regularização concluída. Sem
+pendências — aguardando aprovação explícita do usuário para commit (nenhum
+push necessário para este commit específico, já que não há binário/código
+associado — mas segue a regra de dupla aprovação normalmente).
+
+## 2026-09-02 — PLAN-0036: migração Stripe → Mercado Pago (START, planejamento)
+
+**Contexto/objetivo:** usuário pediu plano formal pra (1) remover o módulo
+Stripe, (2) integrar Mercado Pago Checkout Pro, (3) preparar dados de teste
+(cartões aprovado/recusado/parcelado). RAG completo do módulo Stripe atual
+(`apps/api/src/modules/payments/stripe/`, ~15 pontos em `routes/orders.ts`,
+`app.ts`, `schema.prisma`, `CheckoutContent.tsx`, e2e) + pesquisa web da
+documentação/GitHub oficial do Mercado Pago (SDK `mercadopago` Node 18+,
+fluxo Preference/back_urls/webhook `x-signature` HMAC-SHA256, cartões de
+teste BR e códigos de simulação por nome do titular). 3 perguntas
+estratégicas feitas ao usuário antes de escrever o plano (Socratic Gate):
+Checkout Pro confirmado (não Payment Brick), credenciais de teste ainda não
+existem (Onda 0 do plano), parcelamento até 12x sem juros.
+
+**Achado colateral (RAG):** `Payment` já é agnóstico de provedor desde o
+`PLAN-0020` (`provider`/`providerPaymentId`/`rawPayload` genéricos) — só o
+model `StripeWebhookEvent` está amarrado ao Stripe. Texto hardcoded
+"Finalização segura com Stripe" em `CartModalSection.tsx` viola o princípio
+de `content_architecture` do próprio projeto — corrigido dentro do escopo
+deste plano (Onda 5), não como achado à parte.
+
+**Arquivo criado:** `memory/plans/PLAN-0036-MIGRACAO-STRIPE-MERCADOPAGO.md`
+(8 ondas, matriz de teste documentada, esforço estimado ~2-2,5 dias de
+sessão, 2 perguntas de arquitetura abertas pra confirmar na apresentação).
+
+**Status:** `PLANNING` — plano apresentado ao usuário com esforço previsto,
+aguardando aprovação explícita antes de qualquer execução (Onda 0 depende
+do usuário criar a conta/credenciais no Mercado Pago).
+
+## 2026-09-02 — PLAN-0036: aprovado
+
+Usuário aprovou o plano e confirmou a decisão de arquitetura pendente:
+model de ledger de webhook genérico `PaymentWebhookEvent` (não
+`MercadoPagoWebhookEvent`). `express.raw()` mantido como planejado, sem
+objeção. Plano atualizado (`Status: APROVADO`, seção de perguntas abertas
+fechada). Execução aguarda a Onda 0 (usuário cria conta/credenciais de
+teste no Mercado Pago) antes de qualquer código ser tocado.
+
+## 2026-09-02 — PLAN-0036: Ondas 1-3 executadas (backend)
+
+**Contexto/objetivo:** usuário confirmou ter criado a conta no Mercado Pago
+(app criada; credenciais de teste ainda não geradas) e pediu início da
+Onda 1. Ondas 1 (remoção Stripe), 2 (módulo Mercado Pago) e 3 (schema)
+executadas juntas nesta sessão — o handler de checkout e a lógica de
+validação de pedido/estoque vivem no mesmo arquivo (`routes/orders.ts`),
+então separar remoção/criação quebraria o build no meio.
+
+**Arquivos alterados:**
+- Removido: `apps/api/src/modules/payments/stripe/` (4 arquivos)
+- Criado: `apps/api/src/modules/payments/mercadopago/` (client/config/
+  publicCheckout/index — Preference + Payment.get + validação HMAC de
+  webhook via SDK oficial `mercadopago` v3.6.0)
+- `apps/api/src/routes/orders.ts` — 3 rotas públicas + webhook reescritos
+  (`checkout-preference`, `confirm-payment`, `cancel-pending`,
+  `handleMercadoPagoWebhookNotification`), função única
+  `syncMercadoPagoPayment` compartilhada entre confirmação e webhook
+  (o Stripe original duplicava essa lógica — corrigido na reescrita)
+- `apps/api/src/app.ts`, `apps/api/src/routes/index.ts` — removida a
+  necessidade de registro especial de webhook com `express.raw()` (o MP
+  assina um manifest textual, não o body — decisão confirmada com o
+  usuário na apresentação do plano)
+- `apps/api/src/lib/currencyUtils.ts` — `buildStripeCancelUrlWithContext`
+  removida (não tem equivalente necessário no fluxo Mercado Pago —
+  correlação passou a ser via `external_reference`, não via URL)
+- `apps/api/package.json` — dependência `stripe` → `mercadopago` (`^3.6.0`)
+- `apps/api/prisma/schema.prisma` + migration
+  `20260903010053_generalize_payment_webhook_event` —
+  `StripeWebhookEvent` → `PaymentWebhookEvent { provider, eventId, ... }`
+  (ver `memory/logs/BUILD-HISTORY.md` para o racional do DROP+CREATE)
+- `.env` e `.env.docker.example` — bloco `STRIPE_*` → `MERCADOPAGO_*`
+  (desabilitado por padrão, sem credenciais reais ainda)
+
+**Achado de arquitetura registrado inline no código:** o Mercado Pago usa
+dois IDs diferentes por transação (preferenceId na criação, paymentId real
+no retorno/webhook) — diferente do Stripe (mesmo sessionId nos dois
+momentos). A correlação pedido↔pagamento passou a ser via
+`external_reference` (nosso `Payment.id`), não via ID do provedor.
+
+**Validações executadas:** `tsc -b` limpo, `npm run build` limpo, `npm run
+test` 134/134 PASS (sem regressão). Rebuild Docker completo do `api` +
+`prisma migrate deploy` real no boot (log confirma sucesso) + schema
+conferido via `psql \d "PaymentWebhookEvent"`. Smoke test das 3 rotas
+novas via `wget` de dentro do container confirma o comportamento esperado
+em cada uma (503 disabled / 400 sem assinatura / 404 pagamento não
+encontrado). Grep final por `stripe`/`Stripe` em `apps/api/src` — só
+restam comentários explicativos comparando com o padrão antigo, zero
+resíduo funcional.
+
+**Pendente (não bloqueante pro código, bloqueia só a validação end-to-end
+real):** Onda 0 — usuário ainda não gerou o `TEST-` access token/public
+key/webhook secret no painel do Mercado Pago. Sem isso, `MERCADOPAGO_ENABLED`
+segue `false` e o teste manual do fluxo completo (Onda 2) e a matriz de
+cartões de teste (Onda 6) não podem ser executados.
+
+**Status:** Ondas 1, 2 e 3 `CONCLUÍDA`. Próximo passo: Onda 4 (frontend —
+reescrever `CheckoutContent.tsx` pro fluxo de redirect Mercado Pago), que
+pode prosseguir sem depender das credenciais reais. Sem commit/push ainda
+(aguardando aprovação explícita do usuário).
+
+## 2026-09-02 — PLAN-0036: credenciais de teste + validação real (Onda 0/2)
+
+**Contexto:** usuário informou as credenciais de teste do Mercado Pago
+(Public Key + Access Token, formato `APP_USR-...` pareado a um "Usuário de
+teste" dedicado — confirmado como sandbox real do painel, não credencial
+de produção como eu tinha suspeitado inicialmente por causa do prefixo).
+Guardadas em `.env` (raiz, gitignored — nunca no git). `MERCADOPAGO_PUBLIC_KEY`
+não é lida pelo backend (Checkout Pro não precisa dela server-side, só
+guardada por padronização). `MERCADOPAGO_WEBHOOK_SECRET` segue pendente
+(tela separada no painel, Webhooks > Configurar notificações).
+
+**Achado real corrigido (`ERR-0089`):** primeira chamada real à API do
+Mercado Pago falhou com `"auto_return invalid. back_url.success must be
+defined"` — a API valida que `back_urls.success` seja publicamente
+alcançável (https, não localhost) sempre que `auto_return` é enviado,
+diferente do Stripe (que não validava alcançabilidade). `auto_return`
+virou condicional (`isPubliclyReachableUrl`) em
+`apps/api/src/modules/payments/mercadopago/publicCheckout.ts` — sem
+domínio real (mesma limitação do `PLAN-0019`), a preferência é criada
+normalmente, só sem o redirect automático pós-pagamento.
+
+**Validação real (não simulada):** com `MERCADOPAGO_ENABLED=true` e as
+credenciais reais, `checkout-preference` criou uma Preference de verdade
+contra a API do Mercado Pago (`preferenceId`/`initPoint`/`sandboxInitPoint`
+reais retornados, produto real do catálogo — FreePee Go, id 6). `Payment`
+gravado no banco (`provider=MERCADOPAGO`, `status=PENDENTE`). `cancel-pending`
+testado em seguida — reverteu `Payment`/`Order` pra `CANCELADO` e liberou a
+reserva de estoque. Pedido de teste limpo do banco, nenhum resíduo.
+
+**Nota de higiene de memória (não bloqueante):** `ERR-0088` é citado em 4
+arquivos de memória (fix do `checklist.py` do kernel, sessão 2026-08-24)
+mas nunca foi de fato escrito em `DEBUG-HISTORY.md` — numeração pulada
+para `ERR-0089` pra não colidir. Backfill do `ERR-0088` fica pendente,
+registrado aqui pra não se perder.
+
+**Status:** Onda 0 (credenciais) e a validação real da Onda 2 concluídas.
+Falta só `MERCADOPAGO_WEBHOOK_SECRET` (não bloqueia checkout, só a
+confirmação assíncrona via webhook) e o teste manual completo com cartão
+de teste num navegador real (Onda 6). Próximo passo inalterado: Onda 4
+(frontend).
+
+## 2026-09-02 — PLAN-0036: Ondas 4 e 5 executadas (frontend)
+
+**Contexto/objetivo:** usuário pediu pra seguir. Reescrita do `CheckoutContent.tsx`
+pro fluxo de redirect do Mercado Pago (Checkout Pro) + migração dos textos
+hardcoded remanescentes (achado de `content_architecture` do RAG inicial).
+
+**Arquivos alterados:**
+- `apps/web/src/components/pages/CheckoutContent.tsx` — `startStripeCheckout`/
+  `confirmStripeSession`/`cancelPendingStripeOrder` → equivalentes Mercado
+  Pago; tipos de resposta atualizados pro formato real do backend
+  (`preferenceId`/`initPoint`/`sandboxInitPoint`, `paymentId`); leitura do
+  retorno passa a ser por um marcador próprio (`mpStatus=success|failure|pending`)
+  + `payment_id` real que o Mercado Pago anexa, em vez dos query params do
+  Stripe. Caso `pending` é tratamento novo (Checkout Pro tem 3 back_urls,
+  Stripe só tinha 2) — não cancela nem limpa carrinho, só informa.
+- `apps/api/src/modules/pageTexts/catalog.ts` — chave nova
+  `global.checkout.secure_badge` (texto do selo de segurança do carrinho)
+- `apps/web/src/modules/public-site/sections/CartModalSection.tsx` — texto
+  hardcoded "Finalização segura com Stripe" migrado pra `usePageText`/
+  `RichText` (mesmo padrão do resto do site), marca trocada
+- `apps/web/src/admin-v2/operations/orders/components/ConfirmPaymentModal.tsx`
+  — comentário desatualizado corrigido
+
+**Validações executadas:** `tsc -b` limpo (`apps/web`), `npm run build`
+limpo (216 módulos, bundle 895KB — mesma ordem de grandeza de antes,
+sem regressão), `npm run lint` (`eslint .`) zero erros. Rebuild Docker
+completo do `web` + `up -d --force-recreate`, container saudável. Grep
+final por `stripe`/`Stripe` em `apps/api/src`+`apps/web/src`: zero
+resíduo (nem código nem comentário).
+
+**Validação NÃO executada (limitação do ambiente):** teste manual real
+no navegador (extensão Chrome indisponível nesta sessão — sem acesso à
+`mcp__claude-in-chrome__*`). A criação da preferência e o cancelamento já
+foram validados via chamada direta à API (ver entrada anterior desta
+sessão); falta percorrer a página do Mercado Pago de ponta a ponta com um
+cartão de teste — fica registrado como pendência real da Onda 6, não como
+"deveria funcionar".
+
+**Status:** Ondas 4 e 5 `CONCLUÍDA` (com a ressalva acima). Próximo passo:
+Onda 6 (matriz de cartões de teste) — depende de validação manual do
+usuário ou de uma sessão futura com a extensão do Chrome disponível.
+
+## 2026-09-02 — PLAN-0036: Onda 7 executada (config/docs/decisão/fechamento)
+
+**Contexto:** usuário pediu pra seguir pra Onda 7. RAG de fechamento (grep
+por "stripe"/"Stripe" em todo o repo, fora de `node_modules`/`memory`)
+encontrou resíduo real além do inventário original do plano — corrigido
+na mesma leva em vez de virar um achado separado.
+
+**Arquivos alterados:**
+- `sfk.toml` — `[[integrations]]` Stripe → Mercado Pago;
+  `[environments.docker].vars` atualizado (9 vars novas)
+- `docs/integrations/mercadopago.md` (novo) — runbook completo: env vars,
+  endpoints, 5 diferenças arquiteturais vs Stripe documentadas
+  (correlação via `external_reference`, webhook notify-then-fetch,
+  assinatura por manifest, 3 back_urls, `auto_return` condicional),
+  cartões de teste, como gerar credenciais/webhook secret
+- `memory/decisions/DECISION-021.md` (novo) — troca de provedor, Checkout
+  Pro vs Payment Brick, `PaymentWebhookEvent` genérico, achados técnicos,
+  consequências (incluindo a pendência de validação real)
+- **Limpeza adicional** (achado no grep de fechamento, fora do inventário
+  original): `SYSTEM.md` (stack + seção de pagamentos), `docs/SECURITY_OVERVIEW.md`
+  (controle #13 reescrito pro `sanitizeMercadoPagoPayment`/`PaymentWebhookEvent`
+  real), `docs/config/DEPLOY_VPS.md` (passo pós-deploy), `docs/config/STRIPE_TEST_RUNBOOK.md`
+  removido (obsoleto — substituído pelo runbook novo em `docs/integrations/`),
+  `apps/web/e2e/order-dashboard-lifecycle.spec.ts` (rota/provider/título do
+  teste de cancelamento)
+
+**Validações executadas:** `apps/api` `tsc -b` limpo + `npm run test`
+134/134 PASS; `apps/web` `tsc -b` limpo + `npm run build` PASS (216
+módulos) + `eslint .` zero erros. E2E do Playwright validado só
+sintaticamente (`esbuild` transpile check) — execução real não foi
+possível (Postgres/API não publicados pro host fora da rede Docker;
+expor portas seria uma mudança de segurança que não tomo sozinho). Rebuild
+Docker completo (`api`+`web`), validado ao vivo: `/health` 200, endpoint
+`/api/public/page-texts` devolvendo `global.checkout.secure_badge` com o
+valor novo.
+
+**Pendências explícitas (não fechadas, registradas para não se perder):**
+- `MERCADOPAGO_WEBHOOK_SECRET` real — usuário ainda não gerou (tela
+  separada no painel, Webhooks > Configurar notificações)
+- Onda 6 — validação manual completa com cartão de teste num navegador
+  real (aprovado/recusado/parcelado) — não executável nesta sessão
+
+**Status:** Onda 7 concluída, exceto os 2 itens acima (deliberadamente
+fora do fechamento formal). Plano **não renomeado `-DONE-`** — fica
+`PLAN-0036-MIGRACAO-STRIPE-MERCADOPAGO.md` até a validação manual
+acontecer. Pre-commit review pronto (ver o próprio plano, seção "Git
+Record of Delivery") — aguardando aprovação explícita do usuário pra
+commit (este commit também fecha a regularização pendente do `PLAN-0035`
+do início da sessão). Sem push ainda, autorização é sempre separada.

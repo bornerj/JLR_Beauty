@@ -3,7 +3,7 @@ import { useState } from "react";
 /**
  * Admin V2 (PLAN-0030) — modal da transição Recebido→Pago no Board Operacional de Pedidos.
  * Não existe hoje uma integração de meio de pagamento cobrindo esse trecho do fluxo (vendas
- * balcão/manuais, PIX fora do Stripe etc.) — por isso a confirmação é manual: pede nome e data
+ * balcão/manuais, PIX fora do Mercado Pago etc. — PLAN-0036) — por isso a confirmação é manual: pede nome e data
  * de quem confirmou o recebimento, gravados como texto no histórico do pedido (mesmo padrão do
  * `StageChangeReasonModal` de Franquias — motivo/contexto livre em vez de campo estruturado
  * novo). Quando uma integração real cobrir esse trecho, a flag

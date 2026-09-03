@@ -24,11 +24,12 @@ import {
 } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
 import {
-  assertStripeEnabled,
-  constructStripeWebhookEvent,
-  createPublicStripeCheckoutSession,
-  retrieveStripeCheckoutSession,
-} from "../modules/payments/stripe";
+  assertMercadoPagoEnabled,
+  createPublicMercadoPagoPreference,
+  retrieveMercadoPagoPayment,
+  verifyMercadoPagoWebhookSignature,
+  type MercadoPagoPaymentLike,
+} from "../modules/payments/mercadopago";
 import {
   toDecimalNumber,
   roundCurrency,
@@ -38,7 +39,6 @@ import {
   readCheckoutShippingPolicy,
   calculateCheckoutShipping,
   buildOrderPublicCode,
-  buildStripeCancelUrlWithContext,
   type CheckoutDeliveryMethod,
 } from "../lib/currencyUtils";
 import {
@@ -58,14 +58,14 @@ const publicDiscountCouponValidateSchema = z.object({
   subtotal: z.coerce.number().min(0),
 });
 
-const publicStripeCheckoutItemSchema = z.object({
+const publicMercadoPagoCheckoutItemSchema = z.object({
   itemType: z.enum(["PRODUCT", "MEMBERSHIP"]),
   entityId: z.coerce.number().int().positive(),
   quantity: z.coerce.number().int().min(1).max(99),
 });
 
-const publicStripeCheckoutSessionSchema = z.object({
-  items: z.array(publicStripeCheckoutItemSchema).min(1),
+const publicMercadoPagoCheckoutSessionSchema = z.object({
+  items: z.array(publicMercadoPagoCheckoutItemSchema).min(1),
   customerName: z.string().min(1),
   customerEmail: z.string().email(),
   customerPhone: phoneSchema,
@@ -73,11 +73,13 @@ const publicStripeCheckoutSessionSchema = z.object({
   deliveryMethod: z.enum(["PICKUP", "LOCAL_DELIVERY"]).default("LOCAL_DELIVERY"),
 });
 
-const publicStripeConfirmSessionQuerySchema = z.object({
-  sessionId: z.string().min(1),
+// PLAN-0036: o Mercado Pago devolve o paymentId real (nao o preferenceId
+// usado na criacao) na volta do Checkout Pro — ver back_urls no config.
+const publicMercadoPagoConfirmPaymentQuerySchema = z.object({
+  paymentId: z.string().min(1),
 });
 
-const publicStripeCancelPendingSchema = z
+const publicMercadoPagoCancelPendingSchema = z
   .object({
     orderId: z.coerce.number().int().positive().optional(),
     paymentRecordId: z.coerce.number().int().positive().optional(),
@@ -161,9 +163,9 @@ const paymentUpdateSchema = z.object({
 type OrderInput = z.infer<typeof orderSchema>;
 type OrderItemInput = OrderInput["items"][number];
 
-type PublicStripeCheckoutItem = z.infer<typeof publicStripeCheckoutItemSchema>;
+type PublicMercadoPagoCheckoutItem = z.infer<typeof publicMercadoPagoCheckoutItemSchema>;
 
-type PublicStripePricedItem = {
+type PublicMercadoPagoPricedItem = {
   itemType: "PRODUCT" | "MEMBERSHIP";
   entityId: number;
   quantity: number;
@@ -266,8 +268,99 @@ ordersRouter.get("/public/checkout/shipping-policy", async (_req, res) => {
   }
 });
 
-ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) => {
-  const parsed = publicStripeCheckoutSessionSchema.safeParse(req.body);
+// PLAN-0036: função única de sincronização de status, usada tanto pelo
+// endpoint de confirmação (retorno do navegador) quanto pelo webhook —
+// diferente do Stripe (que tinha um "mode" vindo do tipo de evento), aqui o
+// status real do pagamento (approved/rejected/cancelled/pending/...) já vem
+// pronto do próprio Mercado Pago, então a decisão é derivada dele.
+const syncMercadoPagoPayment = async (
+  payment: MercadoPagoPaymentLike,
+  params: { source: string; eventType: string; eventId: string }
+): Promise<{ paymentRecordId: number; orderId: number | null } | null> => {
+  const paymentRecordId = Number(payment.external_reference);
+  if (!Number.isFinite(paymentRecordId)) {
+    logger.warn("Webhook/confirmacao Mercado Pago sem external_reference valido", {
+      mercadopagoPaymentId: String(payment.id),
+    });
+    return null;
+  }
+
+  const status = (payment.status || "").toLowerCase();
+
+  return prisma.$transaction(async (tx) => {
+    const current = await tx.payment.findUnique({
+      where: { id: paymentRecordId },
+      select: { id: true, status: true, orderId: true, provider: true, rawPayload: true },
+    });
+    if (!current || current.provider !== "MERCADOPAGO") return null;
+
+    const basePayload = asInputJsonObject(current.rawPayload);
+    const syncMeta = {
+      mercadopagoPaymentId: String(payment.id),
+      mercadopagoStatus: payment.status,
+      mercadopagoStatusDetail: payment.status_detail,
+      syncEventId: params.eventId,
+      syncEventType: params.eventType,
+      syncSource: params.source,
+    };
+
+    if (status === "approved") {
+      if (current.status !== "APROVADO") {
+        await tx.payment.update({
+          where: { id: current.id },
+          data: {
+            status: "APROVADO",
+            paidAt: new Date(),
+            rawPayload: { ...basePayload, ...syncMeta },
+          },
+        });
+      }
+      if (current.orderId) {
+        // PLAN-0020: markOrderAsPaid confirma as reservas do pedido (baixa REAL).
+        await markOrderAsPaid(tx, {
+          orderId: current.orderId,
+          source: params.source,
+          note: `pagamento aprovado via ${params.eventType}`,
+        });
+      }
+      return { paymentRecordId: current.id, orderId: current.orderId };
+    }
+
+    if (status === "rejected" || status === "cancelled") {
+      if (current.status === "APROVADO") {
+        // já tinha sido aprovado antes (ex.: reprocessamento fora de ordem) — não reverte.
+        return { paymentRecordId: current.id, orderId: current.orderId };
+      }
+      await tx.payment.update({
+        where: { id: current.id },
+        data: {
+          status: "CANCELADO",
+          rawPayload: { ...basePayload, ...syncMeta },
+        },
+      });
+      if (current.orderId) {
+        await cancelOrderWithOptionalRestock(tx, {
+          orderId: current.orderId,
+          source: params.source,
+          note: `pagamento recusado/cancelado via ${params.eventType} (${payment.status_detail || payment.status})`,
+          forceRestock: true,
+        });
+      }
+      return { paymentRecordId: current.id, orderId: current.orderId };
+    }
+
+    // pending / in_process / authorized / in_mediation — estado intermediário,
+    // só registra o payload mais recente, não mexe no status do Payment/Order.
+    await tx.payment.update({
+      where: { id: current.id },
+      data: { rawPayload: { ...basePayload, ...syncMeta } },
+    });
+    return { paymentRecordId: current.id, orderId: current.orderId };
+  });
+};
+
+ordersRouter.post("/public/payments/mercadopago/checkout-preference", async (req, res) => {
+  const parsed = publicMercadoPagoCheckoutSessionSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({
       message: MSG.INVALID_PAYLOAD,
@@ -276,11 +369,10 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
     return;
   }
 
-  let stripeConfig;
   try {
-    stripeConfig = assertStripeEnabled();
+    assertMercadoPagoEnabled();
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "stripe_disabled";
+    const detail = error instanceof Error ? error.message : "mercadopago_disabled";
     res.status(503).json({
       message: MSG.INVALID_PAYMENT,
       ...withDetail(detail),
@@ -342,8 +434,8 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
   const productById = new Map(products.map((item) => [item.id, item]));
   const membershipById = new Map(memberships.map((item) => [item.id, item]));
 
-  const pricedItems: PublicStripePricedItem[] = [];
-  for (const item of payload.items as PublicStripeCheckoutItem[]) {
+  const pricedItems: PublicMercadoPagoPricedItem[] = [];
+  for (const item of payload.items as PublicMercadoPagoCheckoutItem[]) {
     if (item.itemType === "PRODUCT") {
       const product = productById.get(item.entityId);
       if (!product) {
@@ -405,7 +497,7 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
   if (total <= 0) {
     res.status(400).json({
       message: MSG.INVALID_ORDER,
-      ...withDetail("total do pedido invalido para checkout stripe"),
+      ...withDetail("total do pedido invalido para checkout mercadopago"),
     });
     return;
   }
@@ -490,7 +582,7 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
 
       const payment = await tx.payment.create({
         data: {
-          provider: "STRIPE",
+          provider: "MERCADOPAGO",
           status: "PENDENTE",
           amount: new Prisma.Decimal(total),
           method: "CARD",
@@ -521,7 +613,7 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
       });
       return;
     }
-    logger.error("Falha ao criar pedido/pagamento para checkout stripe", { error: detail });
+    logger.error("Falha ao criar pedido/pagamento para checkout mercadopago", { error: detail });
     res.status(500).json({
       message: MSG.SERVER_ERROR,
       ...withDetail(detail),
@@ -529,43 +621,38 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
     return;
   }
 
-  // PLAN-0034 (Fase 5, achado de branding) — descrição do Stripe usava "JLR" hardcoded,
-  // aparecendo pro cliente no checkout mesmo sem nenhum vínculo com o sistema de
-  // branding editável (Admin V2 > Sistema > Branding).
+  // PLAN-0034 (Fase 5, achado de branding) — descrição do checkout usava "JLR" hardcoded,
+  // aparecendo pro cliente mesmo sem nenhum vínculo com o sistema de branding editável
+  // (Admin V2 > Sistema > Branding).
   const checkoutBranding = await getPublicBranding();
   const checkoutLineItems = [
     {
-      name: `Pedido ${createdOrder.publicCode || `#${createdOrder.id}`}`,
+      title: `Pedido ${createdOrder.publicCode || `#${createdOrder.id}`}`,
       description: `Pagamento de compra no site ${checkoutBranding.shortName}`,
       quantity: 1,
-      unitAmount: total,
+      unitPrice: total,
     },
   ];
 
-  let sessionId: string;
-  let checkoutUrl: string;
+  // PLAN-0036: correlação com o Mercado Pago é feita via external_reference
+  // (nosso Payment.id), não via preferenceId — o pagamento real que o MP
+  // devolve na volta/webhook tem um ID diferente do preferenceId criado aqui.
+  let preferenceId: string;
+  let initPoint: string | null;
+  let sandboxInitPoint: string | null;
   try {
-    const session = await createPublicStripeCheckoutSession({
-      lineItems: checkoutLineItems,
-      customerEmail: payload.customerEmail,
-      metadata: {
-        orderId: String(createdOrder.id),
-        paymentRecordId: String(createdPayment.id),
-        publicCode: createdOrder.publicCode || "",
-      },
-      cancelUrl: buildStripeCancelUrlWithContext(stripeConfig.cancelUrl, {
-        orderId: createdOrder.id,
-        paymentRecordId: createdPayment.id,
-      }),
+    const preference = await createPublicMercadoPagoPreference({
+      items: checkoutLineItems,
+      payerEmail: payload.customerEmail,
+      payerName: payload.customerName,
+      externalReference: String(createdPayment.id),
     });
-    if (!session.url) {
-      throw new Error("stripe_session_without_url");
-    }
-    sessionId = session.id;
-    checkoutUrl = session.url;
+    preferenceId = preference.id;
+    initPoint = preference.initPoint;
+    sandboxInitPoint = preference.sandboxInitPoint;
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "stripe_session_create_failed";
-    logger.error("Falha ao criar sessao Stripe Checkout", {
+    const detail = error instanceof Error ? error.message : "mercadopago_preference_create_failed";
+    logger.error("Falha ao criar preferencia Mercado Pago", {
       error: detail,
       orderId: createdOrder.id,
       paymentId: createdPayment.id,
@@ -583,14 +670,14 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
       });
       await cancelOrderWithOptionalRestock(tx, {
         orderId: createdOrder.id,
-        source: "STRIPE_SESSION",
-        note: "falha ao criar sessao stripe",
+        source: "MERCADOPAGO_PREFERENCE",
+        note: "falha ao criar preferencia mercadopago",
         forceRestock: true,
       });
     });
     res.status(502).json({
       message: MSG.INVALID_PAYMENT,
-      ...withDetail("stripe_checkout_session_failed"),
+      ...withDetail("mercadopago_checkout_preference_failed"),
     });
     return;
   }
@@ -598,7 +685,7 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
   await prisma.payment.update({
     where: { id: createdPayment.id },
     data: {
-      providerPaymentId: sessionId,
+      providerPaymentId: preferenceId,
       rawPayload: {
         origin: "public_checkout",
         deliveryMethod,
@@ -607,14 +694,15 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
         discount,
         couponCode: normalizedCouponCode,
         couponId,
-        stripeSessionId: sessionId,
+        mercadopagoPreferenceId: preferenceId,
       },
     },
   });
 
   res.status(201).json({
-    sessionId,
-    checkoutUrl,
+    preferenceId,
+    initPoint,
+    sandboxInitPoint,
     orderId: createdOrder.id,
     publicCode: createdOrder.publicCode,
     paymentRecordId: createdPayment.id,
@@ -627,8 +715,8 @@ ordersRouter.post("/public/payments/stripe/checkout-session", async (req, res) =
   });
 });
 
-ordersRouter.get("/public/payments/stripe/confirm-session", async (req, res) => {
-  const parsed = publicStripeConfirmSessionQuerySchema.safeParse(req.query);
+ordersRouter.get("/public/payments/mercadopago/confirm-payment", async (req, res) => {
+  const parsed = publicMercadoPagoConfirmPaymentQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({
       message: MSG.INVALID_PAYLOAD,
@@ -638,9 +726,9 @@ ordersRouter.get("/public/payments/stripe/confirm-session", async (req, res) => 
   }
 
   try {
-    assertStripeEnabled();
+    assertMercadoPagoEnabled();
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "stripe_disabled";
+    const detail = error instanceof Error ? error.message : "mercadopago_disabled";
     res.status(503).json({
       message: MSG.INVALID_PAYMENT,
       ...withDetail(detail),
@@ -648,12 +736,12 @@ ordersRouter.get("/public/payments/stripe/confirm-session", async (req, res) => 
     return;
   }
 
-  const { sessionId } = parsed.data;
-  let session;
+  const { paymentId } = parsed.data;
+  let mpPayment: MercadoPagoPaymentLike;
   try {
-    session = await retrieveStripeCheckoutSession(sessionId);
+    mpPayment = await retrieveMercadoPagoPayment(paymentId);
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "stripe_session_not_found";
+    const detail = error instanceof Error ? error.message : "mercadopago_payment_not_found";
     res.status(404).json({
       message: MSG.INVALID_PAYMENT,
       ...withDetail(detail),
@@ -661,79 +749,18 @@ ordersRouter.get("/public/payments/stripe/confirm-session", async (req, res) => 
     return;
   }
 
-  const payment = await prisma.payment.findFirst({
-    where: {
-      provider: "STRIPE",
-      providerPaymentId: session.id,
-    },
-    include: {
-      order: true,
-    },
+  const synced = await syncMercadoPagoPayment(mpPayment, {
+    source: "MERCADOPAGO_CONFIRM",
+    eventType: "confirm_payment",
+    eventId: `confirm:${mpPayment.id}`,
   });
-  if (!payment) {
+  if (!synced) {
     res.status(404).json({ message: MSG.PAYMENT_NOT_FOUND });
     return;
   }
 
-  if (session.payment_status === "paid") {
-    await prisma.$transaction(async (tx) => {
-      const currentPayment = await tx.payment.findUnique({
-        where: { id: payment.id },
-        select: { id: true, status: true, orderId: true },
-      });
-      if (!currentPayment) return;
-      if (currentPayment.status !== "APROVADO") {
-        await tx.payment.update({
-          where: { id: currentPayment.id },
-          data: {
-            status: "APROVADO",
-            paidAt: new Date(),
-            rawPayload: {
-              stripeSessionId: session.id,
-              stripePaymentIntentId:
-                typeof session.payment_intent === "string"
-                  ? session.payment_intent
-                  : session.payment_intent?.id || null,
-              confirmSource: "confirm_session",
-            },
-          },
-        });
-      }
-      if (currentPayment.orderId) {
-        // PLAN-0020: markOrderAsPaid confirma as reservas do pedido (baixa REAL).
-        await markOrderAsPaid(tx, {
-          orderId: currentPayment.orderId,
-          source: "STRIPE_CONFIRM",
-          note: "pagamento confirmado por confirm-session",
-        });
-      }
-    });
-  } else if (session.status === "expired" && payment.status === "PENDENTE") {
-    await prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: "CANCELADO",
-        rawPayload: {
-            stripeSessionId: session.id,
-            confirmSource: "confirm_session",
-            reason: "expired",
-          },
-        },
-      });
-      if (payment.orderId) {
-        await cancelOrderWithOptionalRestock(tx, {
-          orderId: payment.orderId,
-          source: "STRIPE_CONFIRM",
-          note: "sessao stripe expirada",
-          forceRestock: true,
-        });
-      }
-    });
-  }
-
   const refreshed = await prisma.payment.findUnique({
-    where: { id: payment.id },
+    where: { id: synced.paymentRecordId },
     include: {
       order: true,
     },
@@ -744,9 +771,9 @@ ordersRouter.get("/public/payments/stripe/confirm-session", async (req, res) => 
   }
 
   res.json({
-    sessionId: session.id,
-    stripeSessionStatus: session.status,
-    stripePaymentStatus: session.payment_status,
+    paymentId: String(mpPayment.id),
+    mercadopagoStatus: mpPayment.status,
+    mercadopagoStatusDetail: mpPayment.status_detail,
     paymentStatus: refreshed.status,
     order: refreshed.order
       ? {
@@ -766,8 +793,8 @@ ordersRouter.get("/public/payments/stripe/confirm-session", async (req, res) => 
   });
 });
 
-ordersRouter.post("/public/payments/stripe/cancel-pending", async (req, res) => {
-  const parsed = publicStripeCancelPendingSchema.safeParse(req.body);
+ordersRouter.post("/public/payments/mercadopago/cancel-pending", async (req, res) => {
+  const parsed = publicMercadoPagoCancelPendingSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({
       message: MSG.INVALID_PAYLOAD,
@@ -784,12 +811,12 @@ ordersRouter.post("/public/payments/stripe/cancel-pending", async (req, res) => 
     : await prisma.payment.findFirst({
         where: {
           orderId: payload.orderId,
-          provider: "STRIPE",
+          provider: "MERCADOPAGO",
         },
         orderBy: { id: "desc" },
       });
 
-  if (!payment || payment.provider !== "STRIPE") {
+  if (!payment || payment.provider !== "MERCADOPAGO") {
     res.status(404).json({ message: MSG.PAYMENT_NOT_FOUND });
     return;
   }
@@ -811,7 +838,7 @@ ordersRouter.post("/public/payments/stripe/cancel-pending", async (req, res) => 
     if (currentPayment.orderId) {
       await cancelOrderWithOptionalRestock(tx, {
         orderId: currentPayment.orderId,
-        source: "STRIPE_CANCEL",
+        source: "MERCADOPAGO_CANCEL",
         note: "checkout cancelado antes da confirmacao",
         forceRestock: true,
       });
@@ -1695,168 +1722,86 @@ ordersRouter.post("/payments/intent", requireAuth, async (req, res) => {
   });
 });
 
-// --- Stripe webhook handler (exported for use in app.ts) ---
+// --- Mercado Pago webhook handler (exported for use em app.ts) ---
+// PLAN-0036: diferente do Stripe (que manda o payload pronto e assinado), o
+// Mercado Pago manda so { type, data: { id } } — o handler busca o pagamento
+// real via API antes de decidir (padrao "notify-then-fetch"). A assinatura
+// (x-signature) e validada sobre um manifest textual, nao sobre o body.
 
-type StripeCheckoutSessionLike = {
-  id: string;
-  status?: string | null;
-  payment_status?: string | null;
-  payment_intent?: string | { id: string } | null;
-};
-
-const syncStripeCheckoutSessionPayment = async (
-  session: StripeCheckoutSessionLike,
-  params: {
-    mode: "approve" | "cancel";
-    source: string;
-    eventType: string;
-    eventId: string;
-  }
-): Promise<void> => {
-  const payment = await prisma.payment.findFirst({
-    where: {
-      provider: "STRIPE",
-      providerPaymentId: session.id,
-    },
-    select: { id: true, orderId: true },
-  });
-  if (!payment) return;
-
-  await prisma.$transaction(async (tx) => {
-    const current = await tx.payment.findUnique({
-      where: { id: payment.id },
-      select: { id: true, status: true, orderId: true, rawPayload: true },
-    });
-    if (!current) return;
-
-    const basePayload = asInputJsonObject(current.rawPayload);
-    const stripePaymentIntentId =
-      typeof session.payment_intent === "string"
-        ? session.payment_intent
-        : session.payment_intent?.id || null;
-
-    if (params.mode === "approve" || session.payment_status === "paid") {
-      if (current.status !== "APROVADO") {
-        await tx.payment.update({
-          where: { id: current.id },
-          data: {
-            status: "APROVADO",
-            paidAt: new Date(),
-            rawPayload: {
-              ...basePayload,
-              stripeSessionId: session.id,
-              stripePaymentIntentId,
-              webhookEventId: params.eventId,
-              webhookEventType: params.eventType,
-              webhookSource: params.source,
-            },
-          },
-        });
-      }
-      if (current.orderId) {
-        await markOrderAsPaid(tx, {
-          orderId: current.orderId,
-          source: params.source,
-          note: `pagamento aprovado via ${params.eventType}`,
-        });
-      }
-      return;
-    }
-
-    if (current.status === "APROVADO") {
-      return;
-    }
-
-    await tx.payment.update({
-      where: { id: current.id },
-      data: {
-        status: "CANCELADO",
-        rawPayload: {
-          ...basePayload,
-          stripeSessionId: session.id,
-          stripePaymentIntentId,
-          webhookEventId: params.eventId,
-          webhookEventType: params.eventType,
-          webhookSource: params.source,
-        },
-      },
-    });
-    if (current.orderId) {
-      await cancelOrderWithOptionalRestock(tx, {
-        orderId: current.orderId,
-        source: params.source,
-        note: `pagamento cancelado via ${params.eventType}`,
-        forceRestock: true,
-      });
-    }
-  });
-};
-
-function sanitizeStripeEvent(event: unknown): Record<string, unknown> {
-  if (!event || typeof event !== "object") return {};
-  const e = event as Record<string, unknown>;
-
-  const sanitized: Record<string, unknown> = {
-    id: e.id,
-    object: e.object,
-    type: e.type,
-    livemode: e.livemode,
-    created: e.created,
-    api_version: e.api_version,
+function sanitizeMercadoPagoPayment(payment: MercadoPagoPaymentLike): Record<string, unknown> {
+  return {
+    id: payment.id,
+    status: payment.status,
+    status_detail: payment.status_detail,
+    external_reference: payment.external_reference,
+    transaction_amount: payment.transaction_amount,
+    installments: payment.installments,
   };
-
-  const data = e.data as Record<string, unknown> | undefined;
-  if (data && typeof data === "object") {
-    const obj = data.object as Record<string, unknown> | undefined;
-    if (obj && typeof obj === "object") {
-      sanitized.data = {
-        object: {
-          id: obj.id,
-          object: obj.object,
-          amount_total: obj.amount_total,
-          amount_subtotal: obj.amount_subtotal,
-          currency: obj.currency,
-          payment_status: obj.payment_status,
-          status: obj.status,
-          mode: obj.mode,
-          payment_intent:
-            typeof obj.payment_intent === "string"
-              ? obj.payment_intent
-              : obj.payment_intent !== null &&
-                typeof obj.payment_intent === "object"
-              ? (obj.payment_intent as Record<string, unknown>).id
-              : null,
-        },
-      };
-    }
-  }
-
-  return sanitized;
 }
 
-export const handleStripeWebhook = async (req: Request, res: Response): Promise<void> => {
-  const signatureHeader = req.headers["stripe-signature"];
-  if (typeof signatureHeader !== "string" || !signatureHeader.trim()) {
-    res.status(400).json({ message: MSG.INVALID_PAYLOAD, ...withDetail("missing_stripe_signature") });
+const handleMercadoPagoWebhookNotification = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const signatureHeader = req.headers["x-signature"];
+  const requestId = req.headers["x-request-id"];
+  const body = req.body as { type?: string; action?: string; data?: { id?: string | number } };
+  const dataId = body?.data?.id !== undefined ? String(body.data.id) : String(req.query.id || "");
+
+  if (
+    typeof signatureHeader !== "string" ||
+    !signatureHeader.trim() ||
+    typeof requestId !== "string" ||
+    !requestId.trim() ||
+    !dataId
+  ) {
+    res
+      .status(400)
+      .json({ message: MSG.INVALID_PAYLOAD, ...withDetail("missing_mercadopago_signature") });
     return;
   }
-  const rawBody =
-    req.body instanceof Buffer
-      ? req.body
-      : Buffer.from(typeof req.body === "string" ? req.body : "");
 
-  let event;
+  let signatureValid: boolean;
   try {
-    event = constructStripeWebhookEvent(rawBody, signatureHeader);
+    signatureValid = verifyMercadoPagoWebhookSignature({
+      signatureHeader,
+      requestId,
+      dataId,
+    });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "stripe_signature_invalid";
-    logger.warn("Webhook Stripe rejeitado por assinatura/payload invalido", { detail });
+    const detail = error instanceof Error ? error.message : "mercadopago_signature_check_failed";
+    logger.warn("Webhook Mercado Pago rejeitado — falha ao validar assinatura", { detail });
     res.status(400).json({ message: MSG.INVALID_PAYLOAD, ...withDetail(detail) });
     return;
   }
+  if (!signatureValid) {
+    logger.warn("Webhook Mercado Pago rejeitado — assinatura invalida", { dataId });
+    res
+      .status(400)
+      .json({ message: MSG.INVALID_PAYLOAD, ...withDetail("mercadopago_signature_invalid") });
+    return;
+  }
 
-  const alreadyProcessed = await prisma.stripeWebhookEvent.findUnique({
-    where: { eventId: event.id },
+  // Só processamos notificações de pagamento — outros tipos (merchant_order
+  // legado etc.) são apenas confirmados, sem ação.
+  if (body?.type !== "payment") {
+    res.status(200).json({ received: true, ignored: true });
+    return;
+  }
+
+  let mpPayment: MercadoPagoPaymentLike;
+  try {
+    mpPayment = await retrieveMercadoPagoPayment(dataId);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "mercadopago_payment_not_found";
+    logger.error("Webhook Mercado Pago — falha ao buscar pagamento", { dataId, error: detail });
+    res.status(502).json({ message: MSG.SERVER_ERROR, ...withDetail(detail) });
+    return;
+  }
+
+  const eventId = `${dataId}:${mpPayment.status || "unknown"}`;
+  const alreadyProcessed = await prisma.paymentWebhookEvent.findUnique({
+    where: { provider_eventId: { provider: "MERCADOPAGO", eventId } },
     select: { id: true },
   });
   if (alreadyProcessed) {
@@ -1865,58 +1810,41 @@ export const handleStripeWebhook = async (req: Request, res: Response): Promise<
   }
 
   try {
-    if (
-      event.type === "checkout.session.completed" ||
-      event.type === "checkout.session.async_payment_succeeded"
-    ) {
-      const session = event.data.object as unknown as StripeCheckoutSessionLike;
-      await syncStripeCheckoutSessionPayment(session, {
-        mode: "approve",
-        source: "STRIPE_WEBHOOK",
-        eventType: event.type,
-        eventId: event.id,
-      });
-    } else if (
-      event.type === "checkout.session.expired" ||
-      event.type === "checkout.session.async_payment_failed"
-    ) {
-      const session = event.data.object as unknown as StripeCheckoutSessionLike;
-      await syncStripeCheckoutSessionPayment(session, {
-        mode: "cancel",
-        source: "STRIPE_WEBHOOK",
-        eventType: event.type,
-        eventId: event.id,
-      });
-    }
+    await syncMercadoPagoPayment(mpPayment, {
+      source: "MERCADOPAGO_WEBHOOK",
+      eventType: "payment",
+      eventId,
+    });
 
-    await prisma.stripeWebhookEvent.create({
+    await prisma.paymentWebhookEvent.create({
       data: {
-        eventId: event.id,
-        eventType: event.type,
-        livemode: Boolean(event.livemode),
+        provider: "MERCADOPAGO",
+        eventId,
+        eventType: "payment",
+        livemode: true,
         status: "PROCESSED",
-        payload: sanitizeStripeEvent(event) as Prisma.InputJsonValue,
+        payload: sanitizeMercadoPagoPayment(mpPayment) as Prisma.InputJsonValue,
         processedAt: new Date(),
       },
     });
 
     res.status(200).json({ received: true });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "stripe_webhook_process_failed";
-    logger.error("Falha ao processar webhook Stripe", {
-      eventId: event.id,
-      eventType: event.type,
+    const detail = error instanceof Error ? error.message : "mercadopago_webhook_process_failed";
+    logger.error("Falha ao processar webhook Mercado Pago", {
+      dataId,
       error: detail,
     });
-    await prisma.stripeWebhookEvent
+    await prisma.paymentWebhookEvent
       .create({
         data: {
-          eventId: event.id,
-          eventType: event.type,
-          livemode: Boolean(event.livemode),
+          provider: "MERCADOPAGO",
+          eventId,
+          eventType: "payment",
+          livemode: true,
           status: "FAILED",
           errorMessage: detail,
-          payload: sanitizeStripeEvent(event) as Prisma.InputJsonValue,
+          payload: sanitizeMercadoPagoPayment(mpPayment) as Prisma.InputJsonValue,
           processedAt: new Date(),
         },
       })
@@ -1924,5 +1852,10 @@ export const handleStripeWebhook = async (req: Request, res: Response): Promise<
     res.status(500).json({ message: MSG.SERVER_ERROR });
   }
 };
+
+ordersRouter.post(
+  "/public/payments/mercadopago/webhook",
+  handleMercadoPagoWebhookNotification
+);
 
 export { ordersRouter };

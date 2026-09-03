@@ -256,7 +256,7 @@ Pronto. O que falta para estar na VPS:
 Opcional (pós-deploy)
 
   - SSL: Certbot + nginx quando tiver domínio (guia já está no DEPLOY_VPS.md)
-  - Stripe: ativar STRIPE_ENABLED=true e preencher as chaves
+  - Mercado Pago: ativar MERCADOPAGO_ENABLED=true e preencher as credenciais (ver docs/integrations/mercadopago.md, PLAN-0036)
   - Z-API: configurar ZAPI_WEBHOOK_SECRET
 
 ✻ Worked for 1m 18s

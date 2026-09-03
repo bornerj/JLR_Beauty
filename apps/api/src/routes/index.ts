@@ -4,7 +4,7 @@ import { webhooksRouter } from "./webhooks";
 import { catalogRouter } from "./catalog";
 import { subscriptionsRouter } from "./subscriptions";
 import { scheduleRouter } from "./schedule";
-import { ordersRouter, handleStripeWebhook } from "./orders";
+import { ordersRouter } from "./orders";
 import { usersRouter } from "./users";
 import { adminRouter } from "./admin";
 import { inventoryRouter } from "./inventory";
@@ -23,5 +23,4 @@ router.use(inventoryRouter);
 router.use(subscriptionsRouter);
 router.use(adminV2Router);
 
-export { handleStripeWebhook };
 export default router;

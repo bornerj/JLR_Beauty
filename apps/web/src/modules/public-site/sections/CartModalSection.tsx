@@ -1,6 +1,10 @@
 import type { ReactElement } from "react";
+import { usePageText } from "../pageTexts.runtime";
+import { RichText } from "../../../components/ui/RichText";
 
 export const CartModalSection = (): ReactElement => {
+  const secureBadgeText = usePageText("global.checkout.secure_badge");
+
   return (
     <div
       className="fixed inset-0 z-[60] hidden bg-black/40 backdrop-blur-sm transition-opacity duration-300"
@@ -54,7 +58,9 @@ export const CartModalSection = (): ReactElement => {
             Pagar agora
             <span className="material-symbols-outlined text-sm">arrow_forward</span>
           </button>
-          <p className="text-[10px] text-center text-gray-400">Finalização segura com Stripe</p>
+          <p className="text-[10px] text-center text-gray-400">
+            <RichText value={secureBadgeText} />
+          </p>
         </div>
       </div>
     </div>

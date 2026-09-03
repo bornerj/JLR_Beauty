@@ -442,9 +442,13 @@ model OrderStatusHistory {
   @@index([orderId, createdAt])
 }
 
-model StripeWebhookEvent {
+/// PLAN-0036: generalizado a partir de StripeWebhookEvent quando o Stripe foi
+/// removido em favor do Mercado Pago — nome/formato agnósticos de provedor,
+/// alinhado ao princípio de portabilidade SaaS declarado em sfk.toml.
+model PaymentWebhookEvent {
   id           Int      @id @default(autoincrement())
-  eventId      String   @unique
+  provider     String
+  eventId      String
   eventType    String
   livemode     Boolean  @default(false)
   status       String   @default("PROCESSED")
@@ -453,6 +457,8 @@ model StripeWebhookEvent {
   processedAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@unique([provider, eventId])
 }
 
 model Unit {

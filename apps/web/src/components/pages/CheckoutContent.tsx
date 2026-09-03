@@ -20,7 +20,7 @@ const TAX_RATE = 0;
 const FALLBACK_IMAGE_URL = NO_PRODUCT_IMAGE_URL;
 const API_URL = import.meta.env.VITE_API_URL || "";
 const COUPON_REQUEST_TIMEOUT_MS = 12000;
-const PENDING_STRIPE_ORDER_KEY = "jlr_pending_stripe_order_checkout";
+const PENDING_MERCADOPAGO_ORDER_KEY = "jlr_pending_mercadopago_order_checkout";
 const PENDING_SUBSCRIPTION_KEY = "jlr_pending_subscription_checkout";
 
 type AppliedCoupon = {
@@ -43,9 +43,10 @@ type CouponValidationResponse = {
   total: number;
 };
 
-type StripeCheckoutSessionResponse = {
-  sessionId: string;
-  checkoutUrl: string;
+type MercadoPagoCheckoutPreferenceResponse = {
+  preferenceId: string;
+  initPoint: string | null;
+  sandboxInitPoint: string | null;
   orderId: number;
   publicCode: string | null;
   paymentRecordId: number;
@@ -66,10 +67,10 @@ type CheckoutShippingPolicyResponse = {
   };
 };
 
-type StripeConfirmSessionResponse = {
-  sessionId: string;
-  stripeSessionStatus: string | null;
-  stripePaymentStatus: string | null;
+type MercadoPagoConfirmPaymentResponse = {
+  paymentId: string;
+  mercadopagoStatus: string | null;
+  mercadopagoStatusDetail: string | null;
   paymentStatus: string;
   order: {
     id: number;
@@ -85,11 +86,11 @@ type StripeConfirmSessionResponse = {
   } | null;
 };
 
-type PendingStripeOrderPayload = {
+type PendingMercadoPagoOrderPayload = {
   orderId: number;
   paymentRecordId: number;
   publicCode: string | null;
-  sessionId: string;
+  preferenceId: string;
 };
 
 const getItemSubtitle = (item: CartItem): string => {
@@ -159,7 +160,7 @@ export default function CheckoutContent(): ReactElement {
   const [isStartingCheckout, setIsStartingCheckout] = useState<boolean>(false);
   const [checkoutError, setCheckoutError] = useState<string>("");
   const [checkoutSuccess, setCheckoutSuccess] = useState<string>("");
-  const [stripeQueryHandled, setStripeQueryHandled] = useState<boolean>(false);
+  const [mercadoPagoQueryHandled, setMercadoPagoQueryHandled] = useState<boolean>(false);
   const [deliveryMethod, setDeliveryMethod] = useState<CheckoutDeliveryMethod>("LOCAL_DELIVERY");
   const [shippingPolicy, setShippingPolicy] = useState<{
     localDeliveryFee: number;
@@ -325,40 +326,37 @@ export default function CheckoutContent(): ReactElement {
     setCouponSuccess("");
   };
 
-  const confirmStripeSession = async (sessionId: string): Promise<void> => {
+  const confirmMercadoPagoPayment = async (
+    paymentId: string,
+    options?: { requireApproved?: boolean }
+  ): Promise<MercadoPagoConfirmPaymentResponse> => {
     const response = await fetch(
-      `${API_URL}/api/public/payments/stripe/confirm-session?sessionId=${encodeURIComponent(sessionId)}`
+      `${API_URL}/api/public/payments/mercadopago/confirm-payment?paymentId=${encodeURIComponent(paymentId)}`
     );
     const payload = (await response.json().catch(() => ({}))) as
-      | StripeConfirmSessionResponse
+      | MercadoPagoConfirmPaymentResponse
       | { message?: string; detail?: string };
     if (!response.ok) {
       const message =
         (payload as { detail?: string; message?: string }).detail ||
         (payload as { detail?: string; message?: string }).message ||
-        "Falha ao confirmar pagamento com Stripe.";
+        "Falha ao confirmar pagamento com Mercado Pago.";
       throw new Error(message);
     }
-    const confirmed = payload as StripeConfirmSessionResponse;
-    if (confirmed.paymentStatus !== "APROVADO" || confirmed.order?.status !== "PAGO") {
-      throw new Error("Pagamento ainda pendente no Stripe. Aguarde e tente novamente.");
+    const confirmed = payload as MercadoPagoConfirmPaymentResponse;
+    const requireApproved = options?.requireApproved ?? true;
+    if (requireApproved && (confirmed.paymentStatus !== "APROVADO" || confirmed.order?.status !== "PAGO")) {
+      throw new Error("Pagamento ainda em processamento no Mercado Pago. Aguarde e tente novamente.");
     }
-    clearCart();
-    window.localStorage.removeItem(PENDING_STRIPE_ORDER_KEY);
-    window.localStorage.removeItem(PENDING_SUBSCRIPTION_KEY);
-    setItems(readCart());
-    setCheckoutError("");
-    setCheckoutSuccess(
-      `Pagamento confirmado! Pedido ${confirmed.order.publicCode || `#${confirmed.order.id}`} aprovado.`
-    );
+    return confirmed;
   };
 
-  const cancelPendingStripeOrder = async (orderId?: number, paymentRecordId?: number): Promise<void> => {
+  const cancelPendingMercadoPagoOrder = async (orderId?: number, paymentRecordId?: number): Promise<void> => {
     const hasOrder = typeof orderId === "number" && Number.isFinite(orderId);
     const hasPayment = typeof paymentRecordId === "number" && Number.isFinite(paymentRecordId);
     if (!hasOrder && !hasPayment) return;
 
-    await fetch(`${API_URL}/api/public/payments/stripe/cancel-pending`, {
+    await fetch(`${API_URL}/api/public/payments/mercadopago/cancel-pending`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -368,7 +366,7 @@ export default function CheckoutContent(): ReactElement {
     }).catch(() => undefined);
   };
 
-  const startStripeCheckout = async (): Promise<void> => {
+  const startMercadoPagoCheckout = async (): Promise<void> => {
     if (!items.length) return;
     const normalizedName = customerName.trim();
     const normalizedEmail = customerEmail.trim();
@@ -383,7 +381,7 @@ export default function CheckoutContent(): ReactElement {
     setCheckoutError("");
     setCheckoutSuccess("");
     try {
-      const response = await fetch(`${API_URL}/api/public/payments/stripe/checkout-session`, {
+      const response = await fetch(`${API_URL}/api/public/payments/mercadopago/checkout-preference`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -400,27 +398,31 @@ export default function CheckoutContent(): ReactElement {
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as
-        | StripeCheckoutSessionResponse
+        | MercadoPagoCheckoutPreferenceResponse
         | { message?: string; detail?: string };
       if (!response.ok) {
         const message =
           (payload as { detail?: string; message?: string }).detail ||
           (payload as { detail?: string; message?: string }).message ||
-          "Falha ao iniciar checkout Stripe.";
+          "Falha ao iniciar checkout Mercado Pago.";
         throw new Error(message);
       }
-      const session = payload as StripeCheckoutSessionResponse;
-      const pendingPayload: PendingStripeOrderPayload = {
-        orderId: session.orderId,
-        paymentRecordId: session.paymentRecordId,
-        publicCode: session.publicCode,
-        sessionId: session.sessionId,
+      const preference = payload as MercadoPagoCheckoutPreferenceResponse;
+      const checkoutUrl = preference.sandboxInitPoint || preference.initPoint;
+      if (!checkoutUrl) {
+        throw new Error("Mercado Pago nao retornou uma URL de checkout valida.");
+      }
+      const pendingPayload: PendingMercadoPagoOrderPayload = {
+        orderId: preference.orderId,
+        paymentRecordId: preference.paymentRecordId,
+        publicCode: preference.publicCode,
+        preferenceId: preference.preferenceId,
       };
-      window.localStorage.setItem(PENDING_STRIPE_ORDER_KEY, JSON.stringify(pendingPayload));
-      window.location.href = session.checkoutUrl;
+      window.localStorage.setItem(PENDING_MERCADOPAGO_ORDER_KEY, JSON.stringify(pendingPayload));
+      window.location.href = checkoutUrl;
     } catch (error) {
       setCheckoutError(
-        error instanceof Error ? error.message : "Falha ao redirecionar para Stripe Checkout."
+        error instanceof Error ? error.message : "Falha ao redirecionar para o Mercado Pago."
       );
       setCheckoutSuccess("");
     } finally {
@@ -428,43 +430,69 @@ export default function CheckoutContent(): ReactElement {
     }
   };
 
+  // PLAN-0036: Checkout Pro tem 3 URLs de retorno (sucesso/falha/pendente,
+  // configuradas no backend), diferenciadas aqui pelo marcador `mpStatus` que
+  // a própria API anexa. O `payment_id` real (nao o preferenceId usado na
+  // criacao) vem sempre que o Mercado Pago sabe de uma tentativa de
+  // pagamento — inclusive em falha/pendencia, entao é usado nos 3 casos
+  // quando presente.
   useEffect(() => {
-    if (stripeQueryHandled) return;
+    if (mercadoPagoQueryHandled) return;
     const searchParams = new URLSearchParams(window.location.search);
-    const stripeSessionId = searchParams.get("stripeSessionId") || "";
-    const stripeSuccess = searchParams.get("stripeSuccess") === "1";
-    const stripeCanceled = searchParams.get("stripeCanceled") === "1";
-    const orderIdFromUrl = Number(searchParams.get("orderId"));
-    const paymentRecordIdFromUrl = Number(searchParams.get("paymentRecordId"));
+    const mpStatus = searchParams.get("mpStatus") || "";
+    const paymentIdFromUrl = searchParams.get("payment_id") || searchParams.get("collection_id") || "";
 
-    if (!stripeSuccess && !stripeCanceled) {
-      setStripeQueryHandled(true);
+    if (mpStatus !== "success" && mpStatus !== "failure" && mpStatus !== "pending") {
+      setMercadoPagoQueryHandled(true);
       return;
     }
 
-    const pendingRaw = window.localStorage.getItem(PENDING_STRIPE_ORDER_KEY);
-    let pendingOrder: PendingStripeOrderPayload | null = null;
+    const pendingRaw = window.localStorage.getItem(PENDING_MERCADOPAGO_ORDER_KEY);
+    let pendingOrder: PendingMercadoPagoOrderPayload | null = null;
     if (pendingRaw) {
       try {
-        pendingOrder = JSON.parse(pendingRaw) as PendingStripeOrderPayload;
+        pendingOrder = JSON.parse(pendingRaw) as PendingMercadoPagoOrderPayload;
       } catch {
         pendingOrder = null;
       }
     }
 
     const run = async () => {
-      if (stripeSuccess && stripeSessionId) {
-        await confirmStripeSession(stripeSessionId);
-      } else if (stripeCanceled) {
-        await cancelPendingStripeOrder(
-          Number.isFinite(orderIdFromUrl) ? orderIdFromUrl : pendingOrder?.orderId,
-          Number.isFinite(paymentRecordIdFromUrl)
-            ? paymentRecordIdFromUrl
-            : pendingOrder?.paymentRecordId
-        );
-        window.localStorage.removeItem(PENDING_STRIPE_ORDER_KEY);
-        setCheckoutSuccess("Pagamento cancelado no Stripe. O pedido pendente foi cancelado.");
+      if (mpStatus === "success" && paymentIdFromUrl) {
+        const confirmed = await confirmMercadoPagoPayment(paymentIdFromUrl);
+        clearCart();
+        window.localStorage.removeItem(PENDING_MERCADOPAGO_ORDER_KEY);
+        window.localStorage.removeItem(PENDING_SUBSCRIPTION_KEY);
+        setItems(readCart());
         setCheckoutError("");
+        setCheckoutSuccess(
+          `Pagamento confirmado! Pedido ${
+            confirmed.order?.publicCode || `#${confirmed.order?.id}`
+          } aprovado.`
+        );
+        return;
+      }
+
+      if (mpStatus === "pending") {
+        // Boleto/PIX/análise manual — não cancela nem limpa o carrinho, só
+        // informa; a confirmação de verdade chega depois via webhook.
+        if (paymentIdFromUrl) {
+          await confirmMercadoPagoPayment(paymentIdFromUrl, { requireApproved: false }).catch(
+            () => undefined
+          );
+        }
+        setCheckoutError("");
+        setCheckoutSuccess(
+          "Pagamento em análise pelo Mercado Pago. Você recebera a confirmação assim que for aprovado."
+        );
+        return;
+      }
+
+      if (mpStatus === "failure") {
+        await cancelPendingMercadoPagoOrder(pendingOrder?.orderId, pendingOrder?.paymentRecordId);
+        window.localStorage.removeItem(PENDING_MERCADOPAGO_ORDER_KEY);
+        setCheckoutSuccess("");
+        setCheckoutError("Pagamento não concluído no Mercado Pago. O pedido pendente foi cancelado.");
       }
     };
 
@@ -474,13 +502,13 @@ export default function CheckoutContent(): ReactElement {
         setCheckoutError(
           error instanceof Error
             ? error.message
-            : "Falha ao finalizar retorno do Stripe no checkout."
+            : "Falha ao finalizar retorno do Mercado Pago no checkout."
         );
       })
       .finally(() => {
-        setStripeQueryHandled(true);
+        setMercadoPagoQueryHandled(true);
       });
-  }, [stripeQueryHandled]);
+  }, [mercadoPagoQueryHandled]);
 
   return (
     <main className="flex-grow max-w-[980px] mx-auto px-3 lg:px-4 pt-6 md:pt-8 pb-10">
@@ -841,7 +869,7 @@ export default function CheckoutContent(): ReactElement {
               className="w-full flex items-center justify-center rounded-lg bg-primary h-14 text-white font-bold text-lg shadow-lg hover:bg-[#0da640] transition duration-200 disabled:opacity-60"
               disabled={items.length === 0 || isStartingCheckout}
               onClick={() => {
-                void startStripeCheckout();
+                void startMercadoPagoCheckout();
               }}
               type="button"
             >
@@ -1016,7 +1044,7 @@ export default function CheckoutContent(): ReactElement {
                 className="w-full flex items-center justify-center rounded-lg bg-primary h-12 text-white font-bold text-lg shadow-md hover:shadow-lg hover:bg-[#0da640] transition-all duration-300 mt-4 group disabled:opacity-60"
                 disabled={items.length === 0 || isStartingCheckout}
                 onClick={() => {
-                  void startStripeCheckout();
+                  void startMercadoPagoCheckout();
                 }}
                 type="button"
               >

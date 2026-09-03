@@ -76,6 +76,17 @@ resumido no checklist).
   ("pode commitar, sem push por enquanto")
 - [x] Step 3 (Commit confirmation) — `a54d9ee` em `main`, 16 arquivos
   (14 modificados + 2 novos), branch `main`
-- [ ] Step 4 (Push authorization e resultado): pendente — usuário pediu
-  explicitamente para não dar push por enquanto
-- Push status: PENDING
+- [x] Step 4 (Push authorization e resultado) — 2026-08-24: push autorizado
+  explicitamente pelo usuário mais tarde na mesma sessão, junto com o restante
+  do lote de 16 commits do fechamento (`964ae52`..`bbba9d8`, ver
+  `MODIFICATION_LOG.md` "2026-08-24 — FECHAMENTO DE SESSÃO"). `a54d9ee` e
+  `3faa8bc` (este plano) confirmados em `origin/main`.
+- Push status: COMPLETED
+
+## Regularização (2026-08-25)
+Achado ao reler o kernel numa nova sessão: o arquivo continuava sem o sufixo
+`-DONE-` e o Step 4 acima ficou registrado como pendente mesmo depois do push
+real ter acontecido (mesmo padrão de inconsistência já visto e corrigido no
+`PLAN-0025`). Nenhum código tocado — só rename do arquivo + atualização deste
+registro para refletir o estado real, já confirmado via `git log`/`git status`
+(`main` e `origin/main` sincronizados, sem commits pendentes).

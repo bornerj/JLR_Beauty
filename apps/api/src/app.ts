@@ -6,7 +6,7 @@ import path from "path";
 import { MSG } from "./lib/messages";
 import prisma from "./lib/prisma";
 import { requireAdmin } from "./middleware/auth";
-import routes, { handleStripeWebhook } from "./routes";
+import routes from "./routes";
 import { logger } from "./utils/logger";
 
 const app = express();
@@ -97,11 +97,11 @@ app.use(
 
 app.use(cookieParser());
 
-app.post(
-  "/api/public/payments/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  handleStripeWebhook
-);
+// PLAN-0036: o webhook do Mercado Pago (diferente do Stripe) nao exige body
+// cru para validar a assinatura — a HMAC e calculada sobre um manifest de
+// headers (x-signature/x-request-id) + data.id, nao sobre o payload inteiro.
+// Por isso a rota vive dentro de ordersRouter (routes/orders.ts), como as
+// demais rotas de pagamento, sem precisar de registro especial aqui.
 app.use(express.json({ limit: "2mb" }));
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 

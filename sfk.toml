@@ -118,12 +118,15 @@ vars = [
   "AUTH_RATE_LIMIT_BLOCK_MS",           # block duration in ms
   "MASTER_EMAIL",                       # email do usuário master (criado no seed)
   "MASTER_PASSWORD",                    # senha do usuário master
-  "STRIPE_ENABLED",                     # true | false
-  "STRIPE_SECRET_KEY",                  # Stripe secret key
-  "STRIPE_WEBHOOK_SECRET",              # Stripe webhook signing secret
-  "STRIPE_CHECKOUT_SUCCESS_URL",        # redirect after successful payment
-  "STRIPE_CHECKOUT_CANCEL_URL",         # redirect after cancelled payment
-  "STRIPE_CHECKOUT_CURRENCY",           # ex: brl
+  "MERCADOPAGO_ENABLED",                # true | false
+  "MERCADOPAGO_ACCESS_TOKEN",           # Mercado Pago access token (teste ou produção)
+  "MERCADOPAGO_PUBLIC_KEY",             # nao usada pelo backend (Checkout Pro) — guardada por padronização
+  "MERCADOPAGO_WEBHOOK_SECRET",         # assinatura secreta do webhook (Painel > Webhooks > Configurar notificações)
+  "MERCADOPAGO_CHECKOUT_SUCCESS_URL",   # redirect apos pagamento aprovado
+  "MERCADOPAGO_CHECKOUT_FAILURE_URL",   # redirect apos pagamento recusado/cancelado
+  "MERCADOPAGO_CHECKOUT_PENDING_URL",   # redirect apos pagamento em analise (boleto/PIX/revisao)
+  "MERCADOPAGO_NOTIFICATION_URL",       # URL do webhook (precisa ser publicamente alcancavel)
+  "MERCADOPAGO_MAX_INSTALLMENTS",       # numero maximo de parcelas oferecidas (default 12)
   "ZAPI_WEBHOOK_SECRET",                # Z-API webhook validation secret
   "CONCIERGE_RETENTION_DAYS",           # concierge session retention (days)
   "CONCIERGE_RETENTION_INTERVAL_HOURS", # cleanup job interval (hours)
@@ -135,11 +138,11 @@ vars = [
 # ═══════════════════════════════════════
 
 [[integrations]]
-name     = "Stripe"
-purpose  = "Payment processing — Checkout sessions, webhook confirmation, order/payment status sync"
-docs     = "https://stripe.com/docs"
-webhook  = "https://SEU_DOMINIO/api/public/payments/stripe/webhook"
-env_vars = ["STRIPE_ENABLED", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_CHECKOUT_SUCCESS_URL", "STRIPE_CHECKOUT_CANCEL_URL", "STRIPE_CHECKOUT_CURRENCY"]
+name     = "Mercado Pago"
+purpose  = "Payment processing (Checkout Pro) — preference creation, redirect checkout, webhook confirmation, order/payment status sync. Substitui o Stripe (PLAN-0036)."
+docs     = "docs/integrations/mercadopago.md"
+webhook  = "https://SEU_DOMINIO/api/public/payments/mercadopago/webhook"
+env_vars = ["MERCADOPAGO_ENABLED", "MERCADOPAGO_ACCESS_TOKEN", "MERCADOPAGO_PUBLIC_KEY", "MERCADOPAGO_WEBHOOK_SECRET", "MERCADOPAGO_CHECKOUT_SUCCESS_URL", "MERCADOPAGO_CHECKOUT_FAILURE_URL", "MERCADOPAGO_CHECKOUT_PENDING_URL", "MERCADOPAGO_NOTIFICATION_URL", "MERCADOPAGO_MAX_INSTALLMENTS"]
 
 [[integrations]]
 name     = "Z-API (WhatsApp)"
