@@ -1,6 +1,6 @@
 # PLAN-0036 — Migração de Pagamentos: remover Stripe, integrar Mercado Pago (Checkout Pro) + dados de teste
 
-**Status:** ✅ APROVADO (2026-09-02) — execução começa pela Onda 0 (bloqueante, depende do usuário)
+**Status:** 🟡 Ondas 0-5 e 7 concluídas, commitado (`dc4c174`, sem push ainda) — falta Onda 6 (validação manual com cartão real) antes do fechamento formal `-DONE-`
 **Data de abertura:** 2026-09-02
 **Escopo macro:** `apps/api` (módulo `payments/stripe` → `payments/mercadopago`, ~15 pontos em `routes/orders.ts`, 1 model em `schema.prisma`, `app.ts`, env vars), `apps/web` (`CheckoutContent.tsx` reescrito, 2 arquivos com texto/comentário Stripe), `apps/web/e2e` (1 spec), `sfk.toml`/`.env.docker.example`/`docs/integrations/`.
 **Decisão a registrar no fechamento:** `DECISION-021` (troca de provedor de pagamento — motivo, trade-offs, data).
@@ -263,7 +263,12 @@ Proposta de matriz mínima pra validar os 3 pedidos do usuário ("aprovar alguns
       preferência real criada e cancelada contra a API do Mercado Pago). Este commit também
       inclui a regularização pendente do `PLAN-0035` (rename `-DONE-` + Git Record, pedida
       no início desta sessão, antes do `PLAN-0036`).
-- [ ] Step 2 (Commit authorization): aguardando confirmação explícita do usuário
-- [ ] Step 3 (Commit confirmation): hash/branch/mensagem/estatísticas
-- [ ] Step 4 (Push authorization e resultado): confirmação explícita + retorno
-- Push status: PENDING
+- [x] Step 2 (Commit authorization) — 2026-09-02: usuário aprovou explicitamente
+      ("pode commitar")
+- [x] Step 3 (Commit confirmation) — `dc4c174` em `main`, 35 arquivos
+      (1543 inserções, 843 deleções; inclui a regularização do `PLAN-0035`)
+- [ ] Step 4 (Push authorization e resultado): **adiado por decisão explícita do
+      usuário** (2026-09-02) — "pode esperar a validação manual antes do push". Não é
+      falta de aprovação pendente, é uma escolha deliberada de não publicar até a
+      Onda 6 (cartão real num navegador) confirmar que o fluxo funciona ponta a ponta.
+- Push status: DEFERRED (deliberado, não pendente por omissão)

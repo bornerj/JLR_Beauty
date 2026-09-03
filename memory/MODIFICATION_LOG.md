@@ -10899,3 +10899,92 @@ acontecer. Pre-commit review pronto (ver o próprio plano, seção "Git
 Record of Delivery") — aguardando aprovação explícita do usuário pra
 commit (este commit também fecha a regularização pendente do `PLAN-0035`
 do início da sessão). Sem push ainda, autorização é sempre separada.
+
+## 2026-09-02 — PLAN-0036 (+ regularização PLAN-0035): commitado
+
+Usuário aprovou explicitamente ("pode commitar"). Commit `dc4c174` em
+`main`, 35 arquivos (1543 inserções, 843 deleções). Git Record do
+`PLAN-0036` atualizado (Steps 1-3 completos, Step 4/push pendente,
+aprovação separada de sempre). Plano **não renomeado `-DONE-`** —
+Onda 6 (validação manual com cartão real) segue em aberto. Sem push
+ainda.
+
+## 2026-09-02 — PLAN-0036: push adiado por decisão explícita
+
+Usuário: "pode esperar a validação manual antes do push". Push do
+commit `dc4c174` fica deliberadamente segurado até a Onda 6 (teste
+manual com cartão real num navegador) confirmar o fluxo ponta a ponta —
+registrado como decisão consciente, não como aprovação pendente por
+omissão (`Push status: DEFERRED` no `PLAN-0036`). `origin/main` segue
+em `27c3b58` (o commit local `dc4c174` ainda não subiu).
+
+**Próxima ação desta sessão:** nenhuma pendente — aguardando o usuário
+rodar a Onda 6 (ou pedir outra coisa). Sessão pode ser encerrada a
+qualquer momento a partir daqui sem trabalho perdido.
+
+## 2026-09-02 — FECHAMENTO DE SESSÃO
+
+**O que foi feito hoje (resumo completo):**
+1. **Regularização do `PLAN-0035`** (achado ao reler o kernel no início da sessão) —
+   rename `-DONE-` + Git Record (Step 4/push) corrigido, refletindo o push real que
+   já tinha acontecido na sessão anterior.
+2. **`PLAN-0036` criado, aprovado e executado** — migração completa de pagamentos
+   Stripe → Mercado Pago (Checkout Pro), a pedido do usuário. Pesquisa da
+   documentação/GitHub oficial do Mercado Pago (SDK `mercadopago` v3.6.0,
+   Preference/Payment API, assinatura de webhook HMAC), 3 perguntas estratégicas
+   feitas antes do plano (Socratic Gate), plano apresentado com esforço estimado
+   e aprovado.
+3. **Ondas 1-3 (backend)**: módulo `payments/stripe/` removido por completo;
+   módulo `payments/mercadopago/` novo; 3 rotas públicas + webhook reescritos em
+   `orders.ts` com função única `syncMercadoPagoPayment` (o Stripe original
+   duplicava essa lógica); `StripeWebhookEvent` → `PaymentWebhookEvent` genérico
+   (migration aplicada e validada no banco real).
+4. **Credenciais de teste reais** do usuário configuradas em `.env` — episódio à
+   parte: os 3 primeiros valores vieram trocados/mal identificados, corrigido após
+   o usuário colar a tela completa do painel. Validação real contra a API do
+   Mercado Pago encontrou e corrigiu um bug genuíno (`ERR-0089` — `auto_return`
+   exige `back_urls.success` publicamente alcançável).
+5. **Ondas 4-5 (frontend)**: `CheckoutContent.tsx` reescrito pro fluxo de redirect
+   (3 back_urls, estado "pendente" novo); texto hardcoded do carrinho migrado pra
+   `pageTexts` (achado de `content_architecture`).
+6. **Onda 7 (fechamento)**: `sfk.toml`, `docs/integrations/mercadopago.md` (novo),
+   `DECISION-021`, limpeza adicional de resíduo Stripe encontrada no grep final
+   (`SYSTEM.md`, `docs/SECURITY_OVERVIEW.md`, `docs/config/DEPLOY_VPS.md`,
+   `docs/config/STRIPE_TEST_RUNBOOK.md` removido, e2e test corrigido).
+7. **Commit `dc4c174`** em `main` (35 arquivos), aprovado explicitamente pelo
+   usuário. **Push deliberadamente adiado** por decisão do usuário, até a Onda 6
+   validar o fluxo com cartão real.
+
+**Resultado técnico:** `apps/api` — `tsc -b`/build limpos, 134/134 testes PASS,
+migration real aplicada. `apps/web` — `tsc -b`/build limpos (216 módulos), lint
+zero erros. Rebuild Docker completo (`api`+`web`) validado ao vivo (health 200,
+pageTexts real, preferência real criada/cancelada contra a API do Mercado Pago).
+
+**Pendente para próxima sessão (não bloqueante, registrado):**
+- `PLAN-0036` Onda 6 — validação manual com cartão de teste real num navegador
+  (bloqueada nesta sessão por falta de acesso à extensão do Chrome). Passos e
+  matriz de cartões documentados em `docs/integrations/mercadopago.md`.
+- Push de `dc4c174` pra `origin/main` — adiado por decisão explícita do usuário.
+- `MERCADOPAGO_WEBHOOK_SECRET` real — usuário ainda não gerou (tela separada no
+  painel, Webhooks > Configurar notificações).
+- Backfill do `ERR-0088` (referenciado em 4 arquivos de memória mas nunca
+  escrito de fato em `DEBUG-HISTORY.md`) — achado de higiene, não bloqueante.
+- `PLAN-0019` (TLS/HTTPS) — segue bloqueado por domínio, pré-existente.
+
+## 2026-09-02 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — `DECISION-021` nova, coerente com `DECISION-018`; nenhuma ativa contradita |
+| State Integrity | PASS — `PLAN-0036` aberto por decisão explícita (Onda 6 pendente), rastreado, não escondido; `PLAN-0035` fechado `DONE` |
+| Operational Memory | PASS — `MODIFICATION_LOG`/planos atualizados em tempo real, 8 entradas nesta sessão |
+| Debug Memory | PASS — `ERR-0089` registrado com template completo |
+| Technical Validation | PASS — `tsc`/build/lint limpos, 134/134 testes PASS, migration real validada; observação não-bloqueante: e2e Playwright só validado sintaticamente (Postgres/API não expostos ao host) |
+| Regression Risk | PASS — área sensível (pagamentos) tocada, validação real feita (achou e corrigiu `ERR-0089`), risco residual (cartão real não testado) registrado explicitamente, não escondido |
+| Git Governance | PASS — review + commit aprovados explicitamente; push deliberadamente adiado pelo usuário, não omisso |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260902_231733-PASS.md`.
+
+**Status:** Sessão fechada formalmente. `dc4c174` commitado em `main`, não
+publicado (decisão consciente). Nada foi perdido ou deixado em estado
+inconsistente — todas as pendências estão nomeadas e rastreadas.
