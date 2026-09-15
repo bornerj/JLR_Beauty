@@ -117,5 +117,7 @@ Regra de resolução: **match exato `page`+`section` no catálogo de mídia, men
 - [x] Step 3 (Commit confirmation) — commit `50658e6` em `main`: 8 arquivos, 620
   inserções/34 remoções (redesenho da tela + `docker-compose.yml`/`driveguard`
   (`ERR-0091`) + memória `ERR-0090`/`ERR-0091`/`MODIFICATION_LOG`/`progress.md`)
-- [ ] Step 4 (Push authorization e resultado): PENDENTE
-- Push status: PENDING
+- [x] Step 4 (Push authorization e resultado) — 2026-09-15: usuário aprovou explicitamente
+  ("pode subir (push)"). `git push origin main`: `27c3b58..20a143c main -> main`, sucesso
+  (3 commits: `50658e6`, `70d2e60`, `20a143c`)
+- Push status: COMPLETED
