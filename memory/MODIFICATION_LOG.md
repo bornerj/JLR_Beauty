@@ -10988,3 +10988,80 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260902_231733-PASS.md`.
 **Status:** Sessão fechada formalmente. `dc4c174` commitado em `main`, não
 publicado (decisão consciente). Nada foi perdido ou deixado em estado
 inconsistente — todas as pendências estão nomeadas e rastreadas.
+
+## 2026-09-15 — PLAN-0037: miniaturas visuais na tela "Seções Telas" (Admin V2)
+
+- **O que foi feito**: usuário pediu um estudo visual pra tela de liga/desliga de seções
+  (`/admin-v2/sistema/secoes`), hoje só nome cru + switch. RAG (subagente) localizou o
+  componente (`SectionTogglesView.tsx`), confirmou ausência de mecanismo de screenshot no
+  projeto e identificou o catálogo de Galeria de Mídias (`Setting.public.mediaSlots`,
+  espelhado em `modules/public-site/mediaSlots.ts`) como fonte reaproveitável de imagem por
+  `page`+`section`. Mockup HTML publicado como Artifact (`artifact-design` skill), iterado
+  1x a pedido do usuário (cor de fundo do modo escuro corrigida pra bater com o padrão real
+  `bg-white dark:bg-forest`/`border-[#cfe7d1] dark:border-forest-green`) e aprovado
+  explicitamente ("gostei da forma que está (...) pode fazer"). Plano formal escrito
+  (`PLAN-0037`) com o mapeamento completo das 32 seções → slot de mídia (22 cobertas, 10 com
+  wireframe de fallback, 2 exceções de nomenclatura documentadas: `hero`/`hero_gallery` de
+  Franquias compartilham `section:"hero"` no catálogo; `mission` das 3 páginas usa 1 slot
+  global compartilhado) e então executado.
+- **O que mudou**:
+  - `apps/web/src/admin-v2/sistema/sectionToggles/sectionDisplay.ts` (novo) — rótulos
+    amigáveis PT-BR das 32 seções, arquétipo de wireframe por seção, e
+    `resolveSectionThumbnailSlotId()` (resolve o slot certo via `getMediaSlotCatalog()`).
+  - `apps/web/src/admin-v2/sistema/sectionToggles/SectionThumbnail.tsx` (novo) — miniatura
+    com imagem real (com fallback pra wireframe se a imagem falhar ao carregar) ou wireframe
+    neutro (5 arquétipos: hero/split/cards/gallery/cta), tamanho controlado via prop.
+  - `apps/web/src/admin-v2/sistema/sectionToggles/SectionTogglesView.tsx` — cada linha ganhou
+    miniatura + rótulo amigável + chave técnica; endpoint/lógica de liga-desliga **inalterados**
+    (mesmo `GET`/`PUT /api/admin/section-toggles`); acrescentado seletor de tamanho (P/M/G) e
+    densidade de lista (compacta com rolagem / expandida), preferência local via `localStorage`
+    (`admin_v2_section_toggles_display`), zero dado novo no banco.
+  - `memory/logs/DEBUG-HISTORY.md` — `ERR-0090` registrado (achado de tooling, não de produto:
+    ver abaixo).
+- **Validações executadas**: `tsc -b` e `npm run build` (apps/web) limpos. Antes de aceitar
+  qualquer classe Tailwind nova, verifiquei manualmente (grep com o escaping real do seletor
+  CSS do Tailwind) que todas as classes novas introduzidas já estavam presentes em
+  `tailwind.generated.css`/`tailwind.css`/`tailwind.react.patch.css` — **nenhuma regeneração
+  foi necessária**. Na tentativa inicial de seguir o checklist padrão do projeto (regenerar
+  `tailwind.generated.css` por precaução), o comando documentado produziu um arquivo **983
+  linhas menor**, removendo classes ainda genuinamente em uso (`bg-gold-accent`, `p-0`,
+  `pr-10`, `bottom-1`, `opacity-40` etc., confirmado via `grep -rlF` no código-fonte) —
+  **revertido antes de qualquer commit** (`git checkout --`) e registrado como `ERR-0090`
+  (risco de tooling neste ambiente/sandbox, não um bug de produto). Imagem Docker do `web`
+  reconstruída e recriada (`docker compose build web && docker compose up -d --no-deps web`)
+  com o código novo.
+- **Pendente / não bloqueante**:
+  - **Validação visual real não foi possível nesta sessão** — nem a extensão Chrome
+    (`claude-in-chrome`) nem Playwright conseguiram alcançar a rede Docker a partir deste
+    sandbox (`ECONNREFUSED`/timeout em `localhost:80`; mesma limitação já registrada na
+    auditoria de 2026-09-02 pro Postgres/API). O container `web` já está rodando a versão
+    nova — usuário precisa abrir `/admin-v2/sistema/secoes` no próprio navegador (login
+    MASTER) pra confirmar visualmente antes do fechamento formal do plano.
+  - `PLAN-0037` **não** renomeado `-DONE-` — falta a validação visual acima e o Git Record
+    (commit/push, dupla aprovação explícita, ainda não pedida).
+  - As 10 seções sem slot de mídia natural (`services`, `membership`/`about`/`cta` de Home,
+    `about`/`etapas`/`contact` de Franquias, `membership`/`about`/`testimonials` de
+    Assinaturas) ficam com wireframe — decisão deliberada, não lacuna a fechar automaticamente
+    (ver "Fora de escopo" do plano).
+
+### Addendum — tela preta ao validar (`ERR-0091`, recorrência do `ERR-0033`)
+Usuário reportou tela preta em `http://localhost/` ao tentar a validação visual acima.
+Investigação confirmou **recorrência do `ERR-0033`** (drive externo do host montado depois do
+`nginx` subir, bind-mount de config capturado vazio) — não é bug do `PLAN-0037` nem regressão
+desta sessão (nem eu nem o usuário tocamos no serviço `nginx`; uptime do container só cresceu,
+nunca foi recriado). Usuário já aplicou `./scripts/fix-nginx.sh` (mesma correção do `ERR-0033`)
+e resolveu. Registrado como `ERR-0091` com a explicação de por que a correção "manual a cada
+boot" do `ERR-0033` não é permanente por design, e 3 opções de automação levantadas.
+
+Usuário escolheu a opção (c): `docker-compose.yml` ganhou um serviço-guarda novo
+(`driveguard`, reusa `nginx:alpine` já em cache, sem imagem nova) que testa via `healthcheck`
+o mesmo arquivo (`nginx/nginx.conf`) que o `nginx` depende; `nginx` ganhou
+`depends_on: driveguard: condition: service_healthy` + `healthcheck` próprio. Validado ao vivo
+nos 2 sentidos: cenário normal (ambos sobem saudáveis, na ordem certa) e cenário de falha
+simulado (arquivo renomeado temporariamente → `driveguard` fica unhealthy → `docker compose up
+-d nginx` **recusa subir** com erro explícito, em vez de subir quebrado silenciosamente —
+arquivo restaurado depois, tudo voltou a `healthy`). Documentado o limite conhecido: isso
+corrige o caso "rodo `docker compose up -d` manualmente", não o `restart: unless-stopped`
+disparado puro pelo Docker no boot do SO (bypassa o grafo de dependência do Compose) — se essa
+variante ainda ocorrer, as opções (a)/(b) seguem como próximo passo, não pedidas ainda.
+Validação visual do `PLAN-0037` segue pendente.
