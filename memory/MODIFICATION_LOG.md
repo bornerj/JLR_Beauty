@@ -11185,4 +11185,65 @@ chat).
 Validado em 2 estágios: sem credenciais (modo preview, log confirma) e depois com as
 credenciais reais coladas + `--force-recreate` do `api` — endpoint 200 sem log de preview nem
 erro, indício forte de envio bem-sucedido. `tsc`/`eslint`/testes (134/134) limpos nos dois
-apps. Confirmação final (e-mail realmente recebido) pendente do usuário. Sem commit ainda.
+apps. **Confirmado pelo usuário** (e-mail de redefinição e e-mail de verificação de cadastro,
+os dois recebidos de verdade, o segundo testado com um usuário descartável via alias do
+Gmail, apagado depois). Commitado (`944ddec`) e pushado.
+
+Fechamento validado ao vivo no navegador real (extensão Chrome conectada, algo que não
+tinha sido possível em boa parte desta sessão): login MASTER, redirect pós-login pra
+`/admin-v2` confirmado (`ERR-0092`), as 32 seções de "Seções Telas" com miniatura real
+(incluindo as 2 novas — Etapas de Adesão e Contato), seletores P/M/G e Compacta/Expandida
+funcionando. Nenhuma alteração de código nessa validação.
+
+## 2026-09-15 — FECHAMENTO DE SESSÃO
+
+**Resumo do dia** (8 commits, todos revisados e aprovados individualmente pelo usuário antes
+de commitar e de dar push, aprovações sempre separadas):
+
+| Commit | O quê |
+|---|---|
+| `50658e6` | `PLAN-0037` — miniaturas visuais na tela Seções Telas (Admin V2) |
+| `70d2e60`/`20a143c` | Fecha `PLAN-0037` `-DONE-`, registra hash |
+| `5277d16` | Registra efeito colateral do push sobre o `PLAN-0036` (ainda pendente, pré-existente) |
+| `f63206b` | `ERR-0092` (link `/admin` obsoleto), `ERR-0093` (autorização de troca de papel), `ERR-0094` (password reset self-service) |
+| `bcab48c` | Registra push de `f63206b` |
+| `80ca5d2` | Cobertura de imagem das 32 seções fechada (22/32 → 32/32) |
+| `944ddec` | `ERR-0095` — envio real de e-mail via Brevo (reset de senha + verificação de cadastro) |
+
+**O que ficou pendente (nomeado, não escondido)**:
+- `PLAN-0036` (Mercado Pago) e `PLAN-0019` (TLS/HTTPS) — pré-existentes, não tocados nesta
+  sessão, continuam abertos pelos motivos já registrados em sessões anteriores.
+- `ERR-0088` — backfill de higiene de memória, não bloqueante, citado desde 2026-08-24.
+- `ERR-0093` foi validado só manualmente (7 cenários reais contra a API, ao vivo) — nenhum
+  teste automatizado novo cobre especificamente a nova guarda de autorização de papel; os
+  134 testes automatizados existentes continuam passando, mas não foram estendidos.
+- `PLAN-0036`/`ERR-0089` (Onda 6, teste manual com cartão real) segue sem execução — ficou
+  mais urgente desde que o código foi parar em `origin/main` sem querer (efeito colateral do
+  push de hoje, já registrado).
+
+**Achado de tooling não-bloqueante desta sessão**: `docker compose exec`/`build` funcionaram
+normalmente desta vez (ao contrário do início da sessão, quando pareciam bloqueados) — a
+limitação real e persistente é só de rede do host (`curl localhost:80` de dentro do sandbox de
+comandos), não do Docker CLI em si.
+
+Nenhum dado de teste ficou para trás (usuários de teste sempre criados e removidos na mesma
+leva, conferido via SQL direto antes de fechar).
+
+## 2026-09-15 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — nenhuma `DECISION` ativa contradita; mudanças estruturais (`ERR-0093`, integração Brevo) registradas via `DEBUG-HISTORY`/`sfk.toml`, convenção já estabelecida |
+| State Integrity | PASS — `PLAN-0037` fechado `DONE`; `PLAN-0036`/`PLAN-0019` seguem abertos, pré-existentes, rastreados, não escondidos |
+| Operational Memory | PASS — `MODIFICATION_LOG`/plano atualizados em tempo real, 8 levas de commit nesta sessão |
+| Debug Memory | PASS — `ERR-0090` a `ERR-0095` (6 registros) completos no template padrão |
+| Technical Validation | PASS — `tsc`/`eslint`/`build`/testes (134/134) limpos nos dois apps em toda a sessão; nenhuma migration Prisma necessária |
+| Regression Risk | PASS com ressalva não-bloqueante — área sensível tocada (autorização, autenticação, integração externa), validação ao vivo rigorosa feita, mas sem teste automatizado novo cobrindo a guarda de papel do `ERR-0093` especificamente |
+| Git Governance | PASS — review + aprovação de commit e push separadas em todas as 8 levas |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260915_225615-PASS.md`.
+
+**Status:** Sessão fechada formalmente. `origin/main` em `944ddec`, tudo commitado e pushado
+com aprovação explícita. Nada foi perdido ou deixado em estado inconsistente — todas as
+pendências (`PLAN-0036`/`PLAN-0019`/`ERR-0088`/teste automatizado do `ERR-0093`) estão
+nomeadas e rastreadas.
