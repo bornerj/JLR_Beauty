@@ -126,7 +126,17 @@ usersRouter.patch("/users/:id", requireAuth, requireAdmin, async (req: AuthReque
     return;
   }
   const payload = parsed.data;
-  if (payload.role === "MASTER" && req.user?.role !== "MASTER") {
+  const existingUser = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!existingUser) {
+    res.status(404).json({ message: MSG.USER_NOT_FOUND });
+    return;
+  }
+  // ERR-0093 — a checagem original só bloqueava PROMOVER alguém a MASTER; um ADMIN
+  // conseguia REBAIXAR um MASTER existente pra qualquer outro papel sem essa guarda (e sem
+  // auditoria, ver recordAudit abaixo). Qualquer mudança real de papel, nas duas direções,
+  // agora exige o chamador ser MASTER — igual à rota dedicada `/users/:id/role`.
+  const isRoleChange = payload.role !== undefined && payload.role !== existingUser.role;
+  if (isRoleChange && req.user?.role !== "MASTER") {
     res.status(403).json({ message: MSG.FORBIDDEN });
     return;
   }
@@ -159,6 +169,18 @@ usersRouter.patch("/users/:id", requireAuth, requireAdmin, async (req: AuthReque
     where: { id: userId },
     data,
   });
+  if (isRoleChange) {
+    recordAudit("ROLE_CHANGE", {
+      userId,
+      req,
+      meta: {
+        fromRole: existingUser.role,
+        toRole: updated.role,
+        changedBy: req.user?.id,
+        via: "PATCH /users/:id",
+      },
+    });
+  }
   res.json({
     id: updated.id,
     name: updated.name,

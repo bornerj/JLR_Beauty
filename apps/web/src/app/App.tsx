@@ -6,6 +6,7 @@ import AssinaturasPage from "../pages/Assinaturas";
 import DbConsolePage from "../pages/DbConsole";
 import FranquiasPage from "../pages/Franquias";
 import HomePage from "../pages/Home";
+import RedefinirSenhaPage from "../pages/RedefinirSenha";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="franquias" element={<FranquiasPage />} />
           <Route path="checkout" element={<Navigate to="/?checkout=1" replace />} />
         </Route>
+        <Route path="redefinir-senha" element={<RedefinirSenhaPage />} />
         <Route
           path="admin-v2/*"
           element={

@@ -11065,3 +11065,61 @@ corrige o caso "rodo `docker compose up -d` manualmente", não o `restart: unles
 disparado puro pelo Docker no boot do SO (bypassa o grafo de dependência do Compose) — se essa
 variante ainda ocorrer, as opções (a)/(b) seguem como próximo passo, não pedidas ainda.
 Validação visual do `PLAN-0037` segue pendente.
+
+### Addendum — 2 bugs reportados pós-validação (não relacionados ao PLAN-0037)
+
+**`ERR-0092`** — link "Administrador" (menu, rodapé, redirect pós-login) ainda apontava pra
+`/admin` (removida no `PLAN-0033`). 3 arquivos corrigidos pra `/admin-v2`
+(`NavStatusActions.tsx`, `PublicSiteFooter.tsx`, `index.behavior.ts`). `tsc`/`eslint` limpos,
+`docker compose build web && up -d --no-deps web`, usuário confirmou correção.
+
+**`ERR-0093`** — usuário reportou o papel de `admin@jlrbeauty.com` trocado de MASTER pra
+ADMIN sozinho. Diagnosticado: `PATCH /users/:id` genérico (`apps/api/src/routes/users.ts:114`)
+exige só `requireAdmin`, não `requireMaster`, e sua única guarda de papel bloqueia promover
+alguém a MASTER mas **não** bloqueia rebaixar um MASTER existente — combinado com o formulário
+de Usuários mandando `role` por essa rota genérica (que não audita, diferente da rota dedicada
+`/users/:id/role`), o resultado é uma alteração de papel possível, irreversível pelo próprio
+painel e sem rastro em `audit_logs`. **Correção não aplicada ainda** — mexe em autorização,
+aguardando aprovação explícita do usuário. Estado restaurado via SQL direto
+(`UPDATE "User" SET role='MASTER'`), aprovado explicitamente antes de rodar.
+
+**`ERR-0094`** — na sequência, o usuário ficou travado tentando logar com sua conta pessoal
+MASTER (`jeiel.borner@gmail.com`) após eu resetar a senha via SQL (sem rota de API disponível
+sem SMTP), batendo no rate-limit de login (8 tentativas). Causa real do login recusado:
+`emailVerified=false` nessa conta (403 "confirme seu e-mail"), não a senha — confirmado com um
+`POST /api/auth/login` real disparado de dentro do container `api` (200, token MASTER válido)
+antes de reportar sucesso ao usuário. Corrigido via SQL (`emailVerified=true` +
+limpeza de `login_attempts`), todas as escritas em `passwordHash`/`role` feitas só após
+aprovação explícita (uma tentativa foi bloqueada uma vez pelo classificador de permissão do
+modo automático, refeita depois de aprovada). Achado de produto sem fix ainda: não existe
+rota nenhuma no Admin V2 pra um MASTER resetar a senha de outro usuário, nem pra marcar
+`emailVerified` manualmente — só o par `forgot-password`/`reset-password` via e-mail, inútil
+sem SMTP configurado. Nota de processo registrada: uma reversão inexplicada do hash de senha
+ocorreu no meio da investigação (sem `AuditLog` explicando), resolvida refazendo o UPDATE e
+confirmando com login real, mas a causa exata não foi determinada.
+
+**Atualização — ambos corrigidos e validados nesta sessão** (usuário aprovou explicitamente
+antes de tocar em código de autorização):
+
+- **`ERR-0093`**: `PATCH /users/:id` (`apps/api/src/routes/users.ts`) agora exige `MASTER`
+  pra qualquer mudança real de papel (compara com o valor atual, não só bloqueia promover a
+  `MASTER`) e grava `recordAudit("ROLE_CHANGE", ...)`, igual à rota dedicada. Frontend
+  (`UserFormModal.tsx`) desabilita o select de Papel na edição pra quem não é `MASTER`.
+  Validado ao vivo contra a API real: `ADMIN` tentando rebaixar um `MASTER` → 403 (antes
+  passava); `MASTER` mudando o papel de outro usuário → 200 e aparece em `audit_logs` pela
+  primeira vez nessa rota; edições normais de `ADMIN` (campos não-`role`) continuam 200, sem
+  regressão.
+- **`ERR-0094`** (metade de produto): "Esqueci minha senha" adicionado ao modal de login do
+  site público (`AuthModalsSection.tsx`/`index.behavior.ts`, novas funções
+  `requestPasswordReset`/`confirmPasswordReset` em `lib/auth.ts`) + página nova
+  `/redefinir-senha` que conclui a troca a partir do token da URL. Reusa os endpoints
+  `forgot-password`/`reset-password` que já existiam sem UI nenhuma. Limite documentado, não
+  escondido: sem SMTP configurado neste ambiente, o e-mail nunca chega de verdade — só
+  funciona hoje via acesso direto ao banco ou rodando a API em `NODE_ENV=development`
+  (aí o link de teste aparece embutido na própria resposta da UI). Reset de senha de outro
+  usuário direto pelo painel (a outra metade do achado) **não foi pedida nem implementada**.
+
+`tsc -b`/`eslint`/`npm run test` (134/134) limpos nos dois apps; `docker compose build api web`
++ redeploy; validação ponta a ponta contra a API real (login, tentativa de rebaixar MASTER,
+edição normal de ADMIN, mudança de papel auditada, `forgot-password`) — todos os 7 cenários
+testados deram o resultado esperado.

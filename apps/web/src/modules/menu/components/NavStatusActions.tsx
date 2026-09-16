@@ -17,7 +17,7 @@ export default function NavStatusActions({ mobileMenuTrigger }: NavStatusActions
         </span>
         <span className="pulse-dot" aria-hidden="true"></span>
       </button>
-      <Link className="nav-circle nav-circle-admin-desktop" to="/admin" aria-label="Administrador">
+      <Link className="nav-circle nav-circle-admin-desktop" to="/admin-v2" aria-label="Administrador">
         <span className="material-symbols-outlined text-[20px] text-forest">
           admin_panel_settings
         </span>

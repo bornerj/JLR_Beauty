@@ -42,6 +42,11 @@ const messageMap: Record<string, string> = {
   "token invalido": "Token inválido",
   "acesso negado": "Acesso negado",
   "falha na requisicao": "Falha na requisição",
+  "confirme seu e-mail antes de fazer login": "Confirme seu e-mail antes de fazer login",
+  "se o e-mail existir, um link de recuperacao foi enviado":
+    "Se o e-mail existir na nossa base, enviaremos um link de recuperação.",
+  "token de recuperacao invalido ou expirado": "Link de recuperação inválido ou expirado",
+  "senha alterada com sucesso — faca login novamente": "Senha alterada com sucesso — faça login novamente",
 };
 
 const normalizeMessage = (raw: string) => {
@@ -259,6 +264,32 @@ export async function register(name: string, email: string, password: string) {
   setToken(response.token);
   setUser(response.user);
   return response.user;
+}
+
+/**
+ * ERR-0094 — pedido de redefinição de senha (self-service). Sempre resolve com a mesma
+ * mensagem genérica, propositalmente (o backend nunca revela se o e-mail existe). Depende de
+ * SMTP configurado no ambiente pra o link chegar de verdade — sem isso, o token é gerado no
+ * banco mas ninguém recebe o e-mail.
+ */
+export async function requestPasswordReset(email: string): Promise<string> {
+  const response = await postJson<{ message: string; _dev_reset_token?: string }>(
+    "/auth/forgot-password",
+    { email }
+  );
+  // Conveniência só em NODE_ENV=development do backend (nunca em produção) — sem SMTP
+  // configurado, é a única forma de testar o fluxo completo localmente sem acesso ao banco.
+  if (response._dev_reset_token) {
+    const link = `${window.location.origin}/redefinir-senha?token=${response._dev_reset_token}`;
+    return `${response.message} [DEV] ${link}`;
+  }
+  return response.message;
+}
+
+/** ERR-0094 — conclui a redefinição a partir do token recebido por e-mail (query `?token=`). */
+export async function confirmPasswordReset(token: string, newPassword: string): Promise<string> {
+  const response = await postJson<{ message: string }>("/auth/reset-password", { token, newPassword });
+  return response.message;
 }
 
 export async function fetchMe() {

@@ -5,20 +5,25 @@
  *
  * **Sensível**: gestão de `role`/status de conta. Regras de permissão já existentes no
  * backend, replicadas aqui sem alteração:
- * - só um usuário `MASTER` pode atribuir o papel `MASTER` (checado no `POST`/`PATCH`
- *   genérico, 403 se violado) — espelhado no cliente escondendo a opção "Master" do select
- *   quando o usuário logado não é `MASTER`, mesmo padrão de gate client-side já usado pra
- *   "Seções Telas" (Onda 6).
+ * - criar usuário: só um `MASTER` pode atribuir o papel `MASTER` (checado no `POST /users`,
+ *   403 se violado) — espelhado escondendo a opção "Master" do select.
+ * - editar usuário existente: só um `MASTER` pode mudar o papel, em qualquer direção
+ *   (checado no `PATCH /users/:id`, 403 se violado) — espelhado desabilitando o select
+ *   inteiro pra quem não é `MASTER` (`ERR-0093`, ver abaixo).
  * - excluir a própria conta é bloqueado pelo backend (403) — espelhado desabilitando o botão
  *   de excluir na própria linha.
  *
- * **Achado de contrato (não corrigido, fora de escopo — mesmo padrão do `ERR-0053`)**: existe
- * uma rota dedicada e auditada pra troca de papel, `PATCH /users/:id/role` (`requireMaster`,
- * grava `AuditLog` via `recordAudit("ROLE_CHANGE", ...)`), mas o formulário legado (e esta
- * tela nativa, por paridade) manda `role` dentro do `PATCH /users/:id` genérico — que
- * **não** grava auditoria. Trocar de rota mudaria quem pode editar o quê (o genérico exige
- * só `ADMIN`, o dedicado exige `MASTER`) e não foi pedido nesta onda; documentado, não
- * fabricado como fix.
+ * **`ERR-0093` (corrigido nesta sessão)**: até aqui, o `PATCH /users/:id` genérico só
+ * bloqueava PROMOVER alguém a `MASTER` — um `ADMIN` comum (ou o próprio usuário) conseguia
+ * REBAIXAR um `MASTER` existente pra qualquer outro papel sem bloqueio nenhum, e essa rota
+ * nunca gravava `AuditLog` (diferente da rota dedicada `PATCH /users/:id/role`,
+ * `requireMaster`, que grava via `recordAudit("ROLE_CHANGE", ...)`). Isso causou um incidente
+ * real (conta MASTER rebaixada sem explicação, sem rastro em `audit_logs`). Corrigido:
+ * o `PATCH /users/:id` genérico agora exige `MASTER` pra qualquer mudança real de papel
+ * (compara com o valor atual no banco antes de decidir) e grava `recordAudit("ROLE_CHANGE",
+ * ...)` igual à rota dedicada — as duas rotas seguem existindo (a genérica por conveniência
+ * do formulário, a dedicada pra quem só precisa trocar o papel), mas agora com a mesma regra
+ * e o mesmo rastro de auditoria.
  */
 
 export const USER_ROLES = ["MASTER", "ADMIN", "MANAGER", "PROFESSIONAL", "CLIENT"] as const;

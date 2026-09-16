@@ -7,6 +7,7 @@ import {
   getUser,
   login,
   requestLoginModal,
+  requestPasswordReset,
   register,
 } from "../../lib/auth";
 import { resolveUploadedAssetUrl, NO_PRODUCT_IMAGE_URL } from "../../lib/assetUrls";
@@ -292,8 +293,10 @@ export function initIndexPage(): Cleanup {
 
   const loginModal = document.getElementById("loginModal");
   const signupModal = document.getElementById("signupModal");
+  const forgotPasswordModal = document.getElementById("forgotPasswordModal");
   const loginBackdrop = document.getElementById("login-backdrop");
   const signupBackdrop = document.getElementById("signup-backdrop");
+  const forgotPasswordBackdrop = document.getElementById("forgot-password-backdrop");
 
   const closeAuthModal = (modalId: string) => {
     const modal = document.getElementById(modalId);
@@ -321,6 +324,9 @@ export function initIndexPage(): Cleanup {
         if (icon) icon.textContent = "visibility";
         registerToggle.setAttribute("aria-label", "Mostrar senha");
       }
+    }
+    if (modalId === "forgotPasswordModal") {
+      if (forgotEmailInput) forgotEmailInput.value = "";
     }
   };
 
@@ -379,7 +385,14 @@ export function initIndexPage(): Cleanup {
     if (registerEmailInput) registerEmailInput.value = "";
     if (registerPasswordInput) registerPasswordInput.value = "";
     closeAuthModal("signupModal");
+    closeAuthModal("forgotPasswordModal");
     openAuthModal("loginModal");
+  };
+  const switchToForgotPassword = () => {
+    clearAuthErrors();
+    resetLoginPassword();
+    closeAuthModal("loginModal");
+    openAuthModal("forgotPasswordModal");
   };
 
   const win = window as typeof window & {
@@ -388,6 +401,7 @@ export function initIndexPage(): Cleanup {
     closeAuthModal?: (id: string) => void;
     switchToSignup?: () => void;
     switchToLogin?: () => void;
+    switchToForgotPassword?: () => void;
   };
 
   win.openLoginModal = openLoginModal;
@@ -395,6 +409,7 @@ export function initIndexPage(): Cleanup {
   win.closeAuthModal = closeAuthModal;
   win.switchToSignup = switchToSignup;
   win.switchToLogin = switchToLogin;
+  win.switchToForgotPassword = switchToForgotPassword;
 
   add(
     on(loginBackdrop, "click", () => {
@@ -407,6 +422,11 @@ export function initIndexPage(): Cleanup {
     })
   );
   add(
+    on(forgotPasswordBackdrop, "click", () => {
+      closeAuthModal("forgotPasswordModal");
+    })
+  );
+  add(
     on(document, "keydown", (event) => {
       if (!(event instanceof KeyboardEvent) || event.key !== "Escape") return;
       if (loginModal && !loginModal.classList.contains("hidden")) {
@@ -414,6 +434,9 @@ export function initIndexPage(): Cleanup {
       }
       if (signupModal && !signupModal.classList.contains("hidden")) {
         closeAuthModal("signupModal");
+      }
+      if (forgotPasswordModal && !forgotPasswordModal.classList.contains("hidden")) {
+        closeAuthModal("forgotPasswordModal");
       }
     })
   );
@@ -439,6 +462,13 @@ export function initIndexPage(): Cleanup {
     "[data-auth-register-submit]"
   ) as HTMLButtonElement | null;
 
+  const forgotEmailInput = document.querySelector(
+    "[data-auth-forgot-email]"
+  ) as HTMLInputElement | null;
+  const forgotSubmit = document.querySelector(
+    "[data-auth-forgot-submit]"
+  ) as HTMLButtonElement | null;
+
   const setBusy = (button: HTMLButtonElement | null, busy: boolean) => {
     if (!button) return;
     button.disabled = busy;
@@ -454,6 +484,12 @@ export function initIndexPage(): Cleanup {
   ) as HTMLParagraphElement | null;
   const registerSuccess = document.querySelector(
     "[data-auth-register-success]"
+  ) as HTMLParagraphElement | null;
+  const forgotError = document.querySelector(
+    "[data-auth-forgot-error]"
+  ) as HTMLParagraphElement | null;
+  const forgotSuccess = document.querySelector(
+    "[data-auth-forgot-success]"
   ) as HTMLParagraphElement | null;
 
   const clearAuthErrors = () => {
@@ -473,20 +509,28 @@ export function initIndexPage(): Cleanup {
       registerSuccess.textContent = "";
       registerSuccess.classList.add("hidden");
     }
+    if (forgotError) {
+      forgotError.textContent = "";
+      forgotError.classList.add("hidden");
+    }
+    if (forgotSuccess) {
+      forgotSuccess.textContent = "";
+      forgotSuccess.classList.add("hidden");
+    }
   };
 
-  const showAuthError = (target: "login" | "register", message: string) => {
-    const el = target === "login" ? loginError : registerError;
+  const showAuthError = (target: "login" | "register" | "forgot", message: string) => {
+    const el = target === "login" ? loginError : target === "register" ? registerError : forgotError;
     if (!el) return;
-    const prefix = target === "login" ? "Login falhou: " : "Cadastro falhou: ";
+    const prefix = target === "login" ? "Login falhou: " : target === "register" ? "Cadastro falhou: " : "";
     el.textContent = `${prefix}${message}`;
     el.classList.remove("hidden");
   };
 
-  const showAuthSuccess = (target: "login" | "register", message: string) => {
-    const el = target === "login" ? loginSuccess : registerSuccess;
+  const showAuthSuccess = (target: "login" | "register" | "forgot", message: string) => {
+    const el = target === "login" ? loginSuccess : target === "register" ? registerSuccess : forgotSuccess;
     if (!el) return;
-    const prefix = target === "login" ? "Login: " : "Cadastro: ";
+    const prefix = target === "login" ? "Login: " : target === "register" ? "Cadastro: " : "";
     el.textContent = `${prefix}${message}`;
     el.classList.remove("hidden");
   };
@@ -543,7 +587,7 @@ export function initIndexPage(): Cleanup {
           setTimeout(() => {
             closeAuthModal("loginModal");
             if (user.role === "ADMIN" || user.role === "MASTER") {
-              window.location.href = "/admin";
+              window.location.href = "/admin-v2";
             }
           }, 600);
         } catch (error) {
@@ -587,6 +631,28 @@ export function initIndexPage(): Cleanup {
           );
         } finally {
           setBusy(registerSubmit, false);
+        }
+      })
+    );
+  }
+
+  if (forgotSubmit) {
+    add(
+      on(forgotSubmit, "click", async () => {
+        clearAuthErrors();
+        const email = forgotEmailInput?.value.trim() || "";
+        if (!email) {
+          showAuthError("forgot", "Informe seu e-mail.");
+          return;
+        }
+        setBusy(forgotSubmit, true);
+        try {
+          const message = await requestPasswordReset(email);
+          showAuthSuccess("forgot", message);
+        } catch (error) {
+          showAuthError("forgot", error instanceof Error ? error.message : "Falha ao solicitar redefinição.");
+        } finally {
+          setBusy(forgotSubmit, false);
         }
       })
     );

@@ -12,10 +12,13 @@ import type { User, UserCreateInput, UserUpdateInput } from "../types";
  * legado), papel, telefone/telefone alternativo, cidade/bairro, avatar (upload real),
  * status, e-mail verificado, avaliação (1-5, opcional).
  *
- * **Gate de papel espelhado do backend**: só um usuário `MASTER` pode atribuir o papel
- * `MASTER` (`POST`/`PATCH /users` retornam 403 caso contrário) — a opção "Master" fica fora
- * do select quando quem está logado não é `MASTER`, mesmo padrão de gate client-side da
- * Onda 6 (Seções Telas).
+ * **Gate de papel espelhado do backend (atualizado, `ERR-0093`)**: na criação, só um usuário
+ * `MASTER` pode atribuir o papel `MASTER` (`POST /users` retorna 403 caso contrário) — a
+ * opção "Master" fica fora do select. Na edição de um usuário já existente, **qualquer**
+ * mudança de papel (não só pra `MASTER`) agora exige `MASTER` (`PATCH /users/:id`,
+ * corrigido depois de um incidente real onde um `ADMIN`/o próprio usuário rebaixou uma conta
+ * `MASTER` sem querer, sem deixar rastro) — o select inteiro fica desabilitado, travado no
+ * papel atual, quando quem está logado não é `MASTER`.
  */
 
 const IMAGE_UPLOAD_MAX_SIZE_BYTES = 5 * 1024 * 1024;
@@ -84,8 +87,16 @@ export function UserFormModal({
   const [uploading, setUploading] = useState(false);
 
   const currentUser = getUser();
-  const canAssignMaster = currentUser?.role === "MASTER" || editing?.role === "MASTER";
-  const roleOptions = USER_ROLES.filter((role) => role !== "MASTER" || canAssignMaster);
+  const isMasterCaller = currentUser?.role === "MASTER";
+  // ERR-0093 — o backend agora exige MASTER pra QUALQUER mudança de papel num usuário
+  // existente (não só pra promover a MASTER; ver PATCH /users/:id em routes/users.ts). Um
+  // não-MASTER editando alguém já cadastrado não consegue mais alterar o papel de jeito
+  // nenhum, então o select fica travado no valor atual em vez de deixar escolher uma opção
+  // que o servidor vai recusar. Criar usuário novo continua livre (exceto atribuir MASTER).
+  const canEditRole = editing ? isMasterCaller : true;
+  const roleOptions = editing && !canEditRole
+    ? USER_ROLES.filter((role) => role === editing.role)
+    : USER_ROLES.filter((role) => role !== "MASTER" || isMasterCaller);
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -227,7 +238,8 @@ export function UserFormModal({
               <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
+                disabled={!canEditRole}
+                className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60 dark:bg-forest-green"
               >
                 {roleOptions.map((role) => (
                   <option key={role} value={role}>
@@ -235,6 +247,9 @@ export function UserFormModal({
                   </option>
                 ))}
               </select>
+              {!canEditRole && (
+                <p className="text-[11px] text-stone-500 dark:text-stone-400">Só um usuário Master pode alterar o papel.</p>
+              )}
             </div>
           </div>
 

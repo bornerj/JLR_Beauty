@@ -4,6 +4,7 @@ type AuthWindow = Window & {
   closeAuthModal?: (id: string) => void;
   switchToSignup?: () => void;
   switchToLogin?: () => void;
+  switchToForgotPassword?: () => void;
 };
 
 export const AuthModalsSection = (): ReactElement => {
@@ -49,8 +50,17 @@ export const AuthModalsSection = (): ReactElement => {
               <p className="hidden text-xs text-red-600" data-auth-login-error></p>
               <p className="hidden text-xs text-green-600" data-auth-login-success></p>
             </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => authWindow.switchToForgotPassword?.()}
+                className="text-xs text-forest/60 dark:text-white/60 hover:text-primary hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
             <button
-              className="w-full mt-4 bg-primary text-white py-2 text-sm font-bold uppercase tracking-wider rounded-lg"
+              className="w-full mt-2 bg-primary text-white py-2 text-sm font-bold uppercase tracking-wider rounded-lg"
               data-auth-login-submit
             >
               Entrar
@@ -59,6 +69,46 @@ export const AuthModalsSection = (): ReactElement => {
               Não tem cadastro?
               <button onClick={() => authWindow.switchToSignup?.()} className="text-primary hover:underline ml-1">
                 Criar conta
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div id="forgotPasswordModal" className="fixed inset-0 z-[60] hidden bg-black/40 backdrop-blur-sm transition-opacity duration-300">
+        <div className="absolute inset-0" id="forgot-password-backdrop"></div>
+        <div className="absolute inset-0 flex items-center justify-center px-4">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0f1f16] border border-forest/10 dark:border-white/10 rounded-2xl shadow-2xl p-6 relative">
+            <button
+              onClick={() => authWindow.closeAuthModal?.("forgotPasswordModal")}
+              className="absolute top-3 right-3 text-forest/60 dark:text-white/60 hover:text-forest dark:hover:text-white transition"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+            <h3 className="text-2xl font-bold text-forest dark:text-white mb-2">Esqueci minha senha</h3>
+            <p className="text-xs text-forest/60 dark:text-white/60 mb-5">
+              Informe seu e-mail — se existir na nossa base, enviaremos um link de redefinição.
+            </p>
+            <div className="space-y-3">
+              <input
+                type="email"
+                placeholder="E-mail"
+                data-auth-forgot-email
+                className="w-full bg-[#f6f8f6] dark:bg-white/5 border border-[#cfe7d1] dark:border-white/10 rounded-lg px-4 py-2 text-sm text-forest dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <p className="hidden text-xs text-red-600" data-auth-forgot-error></p>
+              <p className="hidden text-xs text-green-600" data-auth-forgot-success></p>
+            </div>
+            <button
+              className="w-full mt-4 bg-primary text-white py-2 text-sm font-bold uppercase tracking-wider rounded-lg"
+              data-auth-forgot-submit
+            >
+              Enviar link
+            </button>
+            <p className="text-xs text-forest/60 dark:text-white/60 mt-4">
+              Lembrou a senha?
+              <button onClick={() => authWindow.switchToLogin?.()} className="text-primary hover:underline ml-1">
+                Voltar pro login
               </button>
             </p>
           </div>

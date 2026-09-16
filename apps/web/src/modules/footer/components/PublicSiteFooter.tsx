@@ -116,7 +116,7 @@ export default function PublicSiteFooter() {
                       <div className="flex gap-6">
                           <a className="footer-link" href="#">Política de
                               Privacidade</a>
-                          <Link className="footer-link" to="/admin">Administrador</Link>
+                          <Link className="footer-link" to="/admin-v2">Administrador</Link>
                       </div>
                   </div>
               </div>
