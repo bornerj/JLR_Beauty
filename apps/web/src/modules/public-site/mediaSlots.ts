@@ -292,6 +292,58 @@ export const mediaSlotCatalog = [
     label: "Missão/Visão - Foto central",
     fallbackUrl: "/images/about_img1.webp",
   },
+  // PLAN-0037 (achado pós-entrega) — 4 das 32 seções de "Seções Telas" não têm imagem própria
+  // na página pública real (services/products usam a imagem de cada Product/Service;
+  // membership/cta são só texto/cards). Estes 6 slots existem só pra dar uma miniatura
+  // decorativa no painel — não são consumidos por nenhuma seção do site público.
+  {
+    id: "home_services_cover_01",
+    page: "home",
+    section: "services",
+    order: 1,
+    label: "Serviços (Home) - Miniatura do painel (não aparece no site)",
+    fallbackUrl: "/images/Services/servico1.webp",
+  },
+  {
+    id: "home_products_cover_01",
+    page: "home",
+    section: "products",
+    order: 1,
+    label: "Produtos (Home) - Miniatura do painel (não aparece no site)",
+    fallbackUrl: "/images/products/produtos_todos.webp",
+  },
+  {
+    id: "home_membership_cover_01",
+    page: "home",
+    section: "membership",
+    order: 1,
+    label: "Planos (Home/Assinaturas) - Miniatura do painel (não aparece no site)",
+    fallbackUrl: "/images/salaodesfocado.webp",
+  },
+  {
+    id: "home_cta_cover_01",
+    page: "home",
+    section: "cta",
+    order: 1,
+    label: "Chamada final CTA (Home) - Miniatura do painel (não aparece no site)",
+    fallbackUrl: "/images/hero1.webp",
+  },
+  {
+    id: "franquias_etapas_cover_01",
+    page: "franquias",
+    section: "etapas",
+    order: 1,
+    label: "Etapas de Adesão (Franquias) - Miniatura do painel (não aparece no site)",
+    fallbackUrl: "/images/franchise/franquias_img5.webp",
+  },
+  {
+    id: "franquias_contact_cover_01",
+    page: "franquias",
+    section: "contact",
+    order: 1,
+    label: "Contato (Franquias) - Miniatura do painel (não aparece no site)",
+    fallbackUrl: "/images/franchise/franquias_img6.webp",
+  },
 ] as const;
 
 export type PublicMediaSlotCatalogItem = (typeof mediaSlotCatalog)[number];

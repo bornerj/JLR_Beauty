@@ -93,11 +93,21 @@ export const SECTION_ARCHETYPE: Record<string, Record<string, SectionThumbnailAr
 
 /**
  * Resolve qual slot da Galeria de Mídias representa uma seção do toggle. Match exato
- * `page`+`section`, menor `order` primeiro — com 2 exceções documentadas (ver PLAN-0037):
+ * `page`+`section`, menor `order` primeiro — com 3 exceções documentadas (ver PLAN-0037):
  * (1) Franquias separa "hero" e "hero_gallery" como toggles distintos, mas o catálogo de
  * mídia agrupa as duas sob `section: "hero"`, diferenciadas só pelo `id`/`order`; (2) "mission"
- * de qualquer página usa um slot único compartilhado (`page: "global"`).
+ * de qualquer página usa um slot único compartilhado (`page: "global"`); (3) `franquias.about`,
+ * `assinaturas.about`, `assinaturas.membership` e `assinaturas.testimonials` renderizam, na
+ * página pública, o mesmo componente de Home (`FranquiasContent.tsx`/`AssinaturasContent.tsx`
+ * importam `HomeAboutSection`/`HomeMembershipSection`/`HomeTestimonialsSection` diretamente) —
+ * a miniatura reaproveita o slot de `home` correspondente em vez de ficar sem imagem.
  */
+const HOME_SHARED_SECTIONS: Record<string, string> = {
+  about: "about",
+  membership: "membership",
+  testimonials: "testimonials",
+};
+
 export const resolveSectionThumbnailSlotId = (page: string, section: string): MediaSlotId | null => {
   const catalog = getMediaSlotCatalog();
 
@@ -110,6 +120,13 @@ export const resolveSectionThumbnailSlotId = (page: string, section: string): Me
     const wantsGallery = section === "hero_gallery";
     const candidates = catalog
       .filter((slot) => slot.page === "franquias" && slot.section === "hero" && slot.id.includes("gallery") === wantsGallery)
+      .sort((left, right) => left.order - right.order);
+    return candidates[0]?.id ?? null;
+  }
+
+  if ((page === "franquias" || page === "assinaturas") && HOME_SHARED_SECTIONS[section]) {
+    const candidates = catalog
+      .filter((slot) => slot.page === "home" && slot.section === HOME_SHARED_SECTIONS[section])
       .sort((left, right) => left.order - right.order);
     return candidates[0]?.id ?? null;
   }

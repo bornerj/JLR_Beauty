@@ -11123,3 +11123,43 @@ antes de tocar em código de autorização):
 + redeploy; validação ponta a ponta contra a API real (login, tentativa de rebaixar MASTER,
 edição normal de ADMIN, mudança de papel auditada, `forgot-password`) — todos os 7 cenários
 testados deram o resultado esperado.
+
+### Addendum — miniaturas das 10 seções sem imagem (follow-up do `PLAN-0037`)
+
+Usuário perguntou por que 10 das 32 seções de "Seções Telas" mostravam só o wireframe.
+Investigação (leitura de `AssinaturasContent.tsx`/`FranquiasContent.tsx`) revelou que a
+situação real era mais fina do que "faltam imagens":
+- 4 seções (`franquias.about`, `assinaturas.about`, `assinaturas.membership`,
+  `assinaturas.testimonials`) **reaproveitam os mesmos componentes de Home**
+  (`HomeAboutSection`/`HomeMembershipSection`/`HomeTestimonialsSection`) — já tinham imagem
+  real, só não estava mapeada.
+- 5 seções (`home.cta`, `home.membership`, `franquias.etapas`, `franquias.contact`) **não têm
+  nenhuma imagem na página pública real** — são blocos de texto/formulário/ícone por desenho
+  (confirmado lendo o JSX de cada componente, zero referência a imagem).
+- 2 seções (`home.services`, `home.products`) usam a imagem de cada `Product`/`Service`
+  individual, não uma capa única da seção.
+
+Perguntei ao usuário se queria uma foto decorativa mesmo nas 7 sem imagem real, ou manter o
+wireframe (mais preciso tecnicamente). Usuário escolheu foto decorativa nas 7.
+
+**Implementado**:
+- 4 mapeamentos "de graça" (sem imagem nova) em `resolveSectionThumbnailSlotId`
+  (`sectionDisplay.ts`): `franquias.about`/`assinaturas.about` → reusa `home.about`;
+  `assinaturas.membership` → reusa `home.membership`; `assinaturas.testimonials` → reusa
+  `home.testimonials`.
+- 6 slots novos no catálogo de mídia (backend `mediaSlots/service.ts` + espelho frontend
+  `modules/public-site/mediaSlots.ts`, rótulo explícito "não aparece no site" pra não confundir
+  quem for mexer na Galeria de Mídias depois): `home_services_cover_01`
+  (`/images/Services/servico1.webp`), `home_products_cover_01`
+  (`/images/products/produtos_todos.webp`), `home_membership_cover_01`
+  (`/images/salaodesfocado.webp`), `home_cta_cover_01` (`/images/hero1.webp`),
+  `franquias_etapas_cover_01` (`/images/franchise/franquias_img5.webp`),
+  `franquias_contact_cover_01` (`/images/franchise/franquias_img6.webp`) — todas reaproveitando
+  imagens já existentes no projeto, nenhum arquivo novo.
+- Cobertura de imagem real nas 32 seções passa de 22/32 pra **32/32** (10 antigas com
+  wireframe + 4 reaproveitadas de graça + 6 com slot novo).
+
+`tsc -b`/`eslint`/`npm run test` (134/134) limpos nos dois apps; `docker compose build api web`
++ redeploy; os 6 slots novos confirmados ao vivo via `GET /api/admin/media-slots` (login MASTER
+real), todos retornando a URL de fallback esperada. Validação visual no browser ainda pendente
+de confirmação do usuário. Sem commit ainda.
