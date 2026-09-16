@@ -580,3 +580,50 @@ ACAO: **desbloqueio imediato aplicado, com aprovação explícita do usuário, d
 **Produto — implementado nesta sessão (self-service, metade "esqueci minha senha")**: o backend já tinha `POST /auth/forgot-password`/`POST /auth/reset-password` prontos, só nunca tinham UI. Adicionado: link "Esqueci minha senha" no modal de login (`AuthModalsSection.tsx`) abrindo um modal novo (`forgotPasswordModal`, mesmo padrão imperativo de `index.behavior.ts` do resto do site público — `switchToForgotPassword`, handler de submit chamando `requestPasswordReset` novo em `lib/auth.ts`, mensagem genérica sempre igual — nunca revela se o e-mail existe, espelhando o backend); página nova `/redefinir-senha` (`RedefinirSenhaPage`/`RedefinirSenhaContent`, rota registrada em `App.tsx`) que lê `?token=` da URL e conclui via `confirmPasswordReset`. **Limite que continua real, documentado, não escondido**: sem SMTP configurado neste ambiente, o e-mail com o link nunca chega — o fluxo de pedido funciona (gera o token no banco) mas ninguém recebe nada fora de `NODE_ENV=development` (aqui roda `production`). Mitigação parcial: `requestPasswordReset` já repassa o `_dev_reset_token` (quando o backend o inclui, só em dev) formatado como link pronto — não resolve o ambiente atual, mas deixa o fluxo 100% testável assim que alguém rodar em modo dev ou configurar SMTP de verdade. Reset de senha de outro usuário direto pelo painel (a outra metade da recomendação original) **não foi implementada** — maior escopo (endpoint novo, decisão de quem pode fazer o quê), fica pra pedido futuro se for necessário.
 VALIDAÇÃO: `tsc -b`/`eslint`/`npm run test` (134/134) limpos nos dois apps. `docker compose build api web` + redeploy. `POST /api/auth/forgot-password` testado ao vivo contra a API real (200, mensagem genérica) — UI nova (link, modal, página `/redefinir-senha`) depende só do build ter incluído os arquivos novos, confirmado pelo `vite build` sem erro (220 módulos, +2 vs. antes).
 CONTEXTO: Sessão 2026-09-15, mesma investigação do `ERR-0093`. Desbloqueio inicial foi só ação de dados (`docker compose exec postgres psql`, aprovação explícita antes de cada escrita em `passwordHash`/`role`); a parte de produto (password reset na tela de entrada) tocou `apps/web/src/lib/auth.ts`, `apps/web/src/modules/public-site/sections/AuthModalsSection.tsx`, `apps/web/src/modules/public-site/index.behavior.ts`, `apps/web/src/components/pages/RedefinirSenhaContent.tsx` (novo), `apps/web/src/pages/RedefinirSenha.tsx` (novo), `apps/web/src/app/App.tsx`.
+
+# ID: ERR-0095: fecha a lacuna de SMTP do `ERR-0094` — envio real de e-mail via Brevo ##bug
+SINTOMA: usuário tentou o fluxo "Esqueci minha senha" (recém-lançado) e não recebeu e-mail
+nenhum — exatamente o limite já documentado no `ERR-0094` (sem SMTP configurado, o token era
+gerado no banco mas nada era enviado). Usuário pediu inicialmente pra decidir entre e-mail
+(Brevo), SMS ou WhatsApp; descartou WhatsApp e SMS (conta nova, custo por mensagem) e decidiu
+por Brevo, informando já ter conta lá — mesma configuração usada com sucesso num projeto
+irmão (`/mnt/arquivos/Development/GitHub/Rifa`, mesma raiz de diretórios, projeto diferente).
+CAUSA_RAIZ: nunca existiu, em lugar nenhum do backend, código de envio de e-mail — nem
+`nodemailer`, nem SDK de provedor nenhum. `createPasswordResetToken`/`createVerificationToken`
+sempre só geraram o token e pararam aí (achado original do `ERR-0094`); o mesmo valia pro
+fluxo de verificação de e-mail (`register`/`resend-verification`), nunca antes ligado à
+recuperação de senha nesta investigação.
+ACAO: implementado envio real via Brevo (SMTP relay), replicando o padrão já validado no
+projeto Rifa (mesmos nomes de variável, por conveniência — usuário confirmou reaproveitar a
+mesma conta/credenciais):
+- `apps/api/src/lib/email.ts` (novo) — `sendTransactionalEmail()` via `nodemailer` +
+  `smtp-relay.brevo.com`; sem `BREVO_SMTP_USER`/`BREVO_SMTP_KEY`/`BREVO_SENDER_EMAIL`
+  configurados, cai em modo preview (loga, não lança erro, nunca quebra o endpoint) — mesmo
+  espírito do `_dev_reset_token`/`_dev_verification_token` que já existiam.
+- `apps/api/src/lib/emailTemplates.ts` (novo) — `sendPasswordResetEmail`/`sendVerificationEmail`,
+  HTML simples inline, monta o link a partir de `APP_WEB_URL`.
+- `apps/api/src/routes/auth.ts` — `forgot-password` (o pedido original), e também
+  `register`/`resend-verification` (mesma lacuna, mesma correção, achado durante a
+  implementação — a rota `/auth/verify-email` já existia sem nenhuma UI/e-mail que a
+  alimentasse).
+- `apps/web/src/pages/ConfirmarEmail.tsx` + `apps/web/src/components/pages/ConfirmarEmailContent.tsx`
+  (novos) + rota `/confirmar-email` em `App.tsx` + `confirmEmail()` em `lib/auth.ts` — sem
+  isso, o e-mail de verificação teria um link pra lugar nenhum.
+- Dependência nova: `nodemailer` (+ `@types/nodemailer`) em `apps/api/package.json` — `npm audit`
+  confirmado sem vulnerabilidade nova introduzida (as 4 existentes são de `multer`/`express`/deps
+  transitivas, pré-existentes).
+- Variáveis registradas em `sfk.toml` (`[[integrations]]` + `[environments.docker].vars`),
+  `.env.docker.example` (nomes, sem valor) e `docs/integrations/brevo.md` (runbook novo,
+  mesmo padrão de `docs/integrations/mercadopago.md`).
+- Usuário confirmou que o `.env.local` do projeto Rifa já tinha os valores reais; copiados
+  pra cá (`BREVO_SMTP_USER`, `BREVO_SMTP_KEY`, `BREVO_SENDER_EMAIL` — `BREVO_SENDER_NAME`
+  trocado pra "JLR Beauty", não reaproveitado). Nunca exibidos em texto no chat.
+VALIDAÇÃO: `tsc -b`/`eslint`/`npm run test` (134/134) limpos nos dois apps; `docker compose
+build api web` + redeploy. Testado ao vivo em 2 estágios: (1) sem credenciais (modo preview)
+— `POST /auth/forgot-password` 200, log confirma "modo preview"; (2) com as credenciais reais
+do Brevo coladas no `.env` + `--force-recreate` do `api` — mesmo endpoint 200, **sem** o log
+de preview e sem erro, indício forte de envio real bem-sucedido. **Confirmação final do
+usuário: e-mail recebido de verdade** — envio Brevo funcionando ponta a ponta.
+CONTEXTO: Sessão 2026-09-15. Mesma sessão do `ERR-0092`/`ERR-0093`/`ERR-0094`. Nenhum
+arquivo de código do projeto Rifa foi alterado — só lido (`.env.local`, `src/lib/email.ts`,
+`src/lib/env.ts`, `src/features/auth/magic-link.ts`) como referência de padrão já validado.

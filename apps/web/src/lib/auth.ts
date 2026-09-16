@@ -292,6 +292,14 @@ export async function confirmPasswordReset(token: string, newPassword: string): 
   return response.message;
 }
 
+/** Confirma o e-mail a partir do token recebido por e-mail (query `?token=`) — já loga o usuário. */
+export async function confirmEmail(token: string): Promise<AuthUser> {
+  const response = await postJson<AuthResponse>("/auth/verify-email", { token });
+  setToken(response.token);
+  setUser(response.user);
+  return response.user;
+}
+
 export async function fetchMe() {
   const token = getToken();
   if (!token) {

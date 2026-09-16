@@ -131,6 +131,12 @@ vars = [
   "CONCIERGE_RETENTION_DAYS",           # concierge session retention (days)
   "CONCIERGE_RETENTION_INTERVAL_HOURS", # cleanup job interval (hours)
   "CONCIERGE_SUMMARY_PHONE",            # numero de WhatsApp de suporte/checkout (resumo do concierge + link "Fale Conosco") — sem isso, cai no fallback hardcoded (ver PLAN-0034)
+  "BREVO_SMTP_HOST",                    # default smtp-relay.brevo.com
+  "BREVO_SMTP_PORT",                    # default 587
+  "BREVO_SMTP_USER",                    # usuario SMTP (painel Brevo > SMTP & API > SMTP)
+  "BREVO_SMTP_KEY",                     # chave/senha SMTP (nao e a API key HTTP)
+  "BREVO_SENDER_EMAIL",                 # e-mail remetente, precisa estar verificado na conta Brevo
+  "BREVO_SENDER_NAME",                  # nome exibido como remetente (default "JLR Beauty")
 ]
 
 # ═══════════════════════════════════════
@@ -150,6 +156,12 @@ purpose  = "WhatsApp concierge — inbound webhook processing, outbound text mes
 docs     = "docs/config/WHATSAPP_API_ZAPI.md"
 webhook  = "https://SEU_DOMINIO/api/public/webhooks/zapi"
 env_vars = ["ZAPI_WEBHOOK_SECRET"]
+
+[[integrations]]
+name     = "Brevo (e-mail transacional)"
+purpose  = "Envio de e-mail transacional via SMTP relay (nodemailer) — redefinição de senha e confirmação de cadastro. Sem configuração, cai em modo preview (loga, não envia, nunca quebra o fluxo)."
+docs     = "docs/integrations/brevo.md"
+env_vars = ["BREVO_SMTP_HOST", "BREVO_SMTP_PORT", "BREVO_SMTP_USER", "BREVO_SMTP_KEY", "BREVO_SENDER_EMAIL", "BREVO_SENDER_NAME"]
 
 # ═══════════════════════════════════════
 # MONOREPO STRUCTURE

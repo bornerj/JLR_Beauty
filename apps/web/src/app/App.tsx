@@ -3,6 +3,7 @@ import PublicLayout from "./layouts/PublicLayout";
 import RequireAdmin from "./RequireAdmin";
 import AdminV2Page from "../pages/AdminV2";
 import AssinaturasPage from "../pages/Assinaturas";
+import ConfirmarEmailPage from "../pages/ConfirmarEmail";
 import DbConsolePage from "../pages/DbConsole";
 import FranquiasPage from "../pages/Franquias";
 import HomePage from "../pages/Home";
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="checkout" element={<Navigate to="/?checkout=1" replace />} />
         </Route>
         <Route path="redefinir-senha" element={<RedefinirSenhaPage />} />
+        <Route path="confirmar-email" element={<ConfirmarEmailPage />} />
         <Route
           path="admin-v2/*"
           element={

@@ -27,6 +27,7 @@ import {
 import { withDetail, formatZodDetail, applyEmailEnumerationJitter } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
 import { recordAudit } from "../lib/auditLog";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/emailTemplates";
 
 const REFRESH_COOKIE = "jlr_rt";
 
@@ -230,6 +231,9 @@ authRouter.post("/auth/register", async (req: Request, res: Response) => {
     });
 
     const verificationToken = await createVerificationToken(user.id);
+    void sendVerificationEmail({ to: user.email, name: user.name, verificationToken }).catch((error) => {
+      logger.warn("Falha ao enviar e-mail de verificacao no registro", { userId: user.id, error });
+    });
     const accessToken = signToken({ userId: user.id, role: user.role });
     const refreshToken = await createRefreshToken(user.id);
 
@@ -401,7 +405,7 @@ authRouter.post("/auth/resend-verification", async (req: Request, res: Response)
 
     const user = await prisma.user.findUnique({
       where: { email: parsed.data.email.toLowerCase() },
-      select: { id: true, emailVerified: true },
+      select: { id: true, name: true, email: true, emailVerified: true },
     });
 
     // Always return the same message to avoid email enumeration
@@ -412,6 +416,9 @@ authRouter.post("/auth/resend-verification", async (req: Request, res: Response)
     }
 
     const verificationToken = await createVerificationToken(user.id);
+    void sendVerificationEmail({ to: user.email, name: user.name, verificationToken }).catch((error) => {
+      logger.warn("Falha ao reenviar e-mail de verificacao", { userId: user.id, error });
+    });
 
     const responseBody: Record<string, unknown> = {
       message: MSG.VERIFICATION_TOKEN_SENT,
@@ -445,7 +452,7 @@ authRouter.post("/auth/forgot-password", async (req: Request, res: Response) => 
 
     const user = await prisma.user.findUnique({
       where: { email: parsed.data.email.toLowerCase() },
-      select: { id: true, passwordHash: true },
+      select: { id: true, name: true, email: true, passwordHash: true },
     });
 
     // Always return the same message to avoid email enumeration
@@ -456,6 +463,9 @@ authRouter.post("/auth/forgot-password", async (req: Request, res: Response) => 
     }
 
     const resetToken = await createPasswordResetToken(user.id);
+    void sendPasswordResetEmail({ to: user.email, name: user.name, resetToken }).catch((error) => {
+      logger.warn("Falha ao enviar e-mail de redefinicao de senha", { userId: user.id, error });
+    });
 
     recordAudit("PASSWORD_RESET_REQUEST", { userId: user.id, req });
 

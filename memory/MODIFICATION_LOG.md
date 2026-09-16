@@ -11161,5 +11161,28 @@ wireframe (mais preciso tecnicamente). Usuário escolheu foto decorativa nas 7.
 
 `tsc -b`/`eslint`/`npm run test` (134/134) limpos nos dois apps; `docker compose build api web`
 + redeploy; os 6 slots novos confirmados ao vivo via `GET /api/admin/media-slots` (login MASTER
-real), todos retornando a URL de fallback esperada. Validação visual no browser ainda pendente
-de confirmação do usuário. Sem commit ainda.
+real), todos retornando a URL de fallback esperada. Validação visual confirmada pelo usuário.
+**Commitado (`80ca5d2`) e pushado.**
+
+### Addendum — Brevo: fecha a lacuna de SMTP do `ERR-0094` (`ERR-0095`)
+
+Usuário testou "Esqueci minha senha" e não recebeu e-mail — exatamente o limite já documentado
+(nunca existiu código de envio de e-mail no backend). Depois de comparar e-mail (Brevo)/SMS/
+WhatsApp, usuário escolheu Brevo, já tem conta lá com a mesma configuração usada com sucesso
+num projeto irmão (`Rifa`, mesma raiz de diretórios).
+
+Implementado: `apps/api/src/lib/email.ts` (`sendTransactionalEmail` via `nodemailer` + Brevo
+SMTP relay, cai em modo preview sem credenciais — nunca quebra o endpoint) +
+`emailTemplates.ts` (2 templates); ligado em `forgot-password`, `register` e
+`resend-verification` (achado durante a implementação: a verificação de e-mail tinha a mesma
+lacuna, nunca antes ligada nesta investigação); página nova `/confirmar-email` (sem ela, o link
+de verificação não teria pra onde ir). Dependência nova `nodemailer`/`@types/nodemailer`
+(`npm audit`: zero vulnerabilidade nova). Variáveis registradas em `sfk.toml`,
+`.env.docker.example` e `docs/integrations/brevo.md` (runbook novo). Usuário confirmou que o
+`.env.local` do Rifa já tinha os valores reais; copiados pro `.env` local (nunca exibidos no
+chat).
+
+Validado em 2 estágios: sem credenciais (modo preview, log confirma) e depois com as
+credenciais reais coladas + `--force-recreate` do `api` — endpoint 200 sem log de preview nem
+erro, indício forte de envio bem-sucedido. `tsc`/`eslint`/testes (134/134) limpos nos dois
+apps. Confirmação final (e-mail realmente recebido) pendente do usuário. Sem commit ainda.
