@@ -11291,3 +11291,25 @@ nomeadas e rastreadas.
 - **Arquivos alterados**: `docker-compose.yml`, `.env.docker.example`, `.gitignore`, `sfk.toml`, `scripts/backup.sh` (novo), `scripts/fix-nginx.sh` (removido, staged), `docs/config/SERVIDOR_UBUNTU.md` (novo), `docs/config/DEPLOY_VPS.md`, `memory/*`.
 - **Validações**: `tomllib` lê o `sfk.toml`; `docker compose config -q`; backup `--verify` OK; checksums OK. `tsc`/testes não aplicáveis (`apps/*` intocado).
 - **Pendente (nomeado)**: teste de reboot (usuário); cron + offsite do backup; senhas das roles do banco = defaults versionados; commit/push aguardando aprovação. `PLAN-0038` fica aberto até o reboot. Os 2 arquivos `docs/config/TIME DE AGENTES RH*.MD` continuam não rastreados e fora do escopo.
+
+## 2026-10-03 — FECHAMENTO DE SESSÃO
+
+**Feito:** (1) bootstrap: `sfk.toml [ai_context]` e Resume Panel corrigidos (a "discrepância" das 57 skills não era erro — 57 skills com `SKILL.md` + `doc.md` + `ui-ux-pro-max/`); hook de pre-commit reinstalado no novo host (`core.hooksPath`); chave SSH/GitHub verificada (sem ajuste necessário). (2) `PLAN-0038`: banco + uploads do Zorin exportados, restaurados e validados (41/41 tabelas idênticas); `/srv` com bind mounts; `driveguard` e `fix-nginx.sh` removidos; `scripts/backup.sh --verify`; docs, `DECISION-022`, `ERR-0096`, backfill `ERR-0088`. Commit `ecf4734` pushado (`6d66dd9..ecf4734`), aprovações separadas.
+
+**Mudou:** `docker-compose.yml`, `.env.docker.example`, `.gitignore`, `sfk.toml`, `scripts/`, `docs/config/`, `memory/`; fora do git: `.env` (`JLR_*`, `CORS_ORIGIN` com os IPs de acesso). `apps/api`/`apps/web` intocados, sem migration.
+
+**Pendente (nomeado):** teste de **reboot** do servidor (usuário) → só então `PLAN-0038` vira `-DONE-`; cron do backup + **cópia offsite** (disco único `sda1`); senhas das roles `jlr_api_rw/ro` = defaults versionados (plano próprio); `PLAN-0036` Onda 6 e `PLAN-0019` (pré-existentes); sem teste automatizado de `backup.sh`/CORS/`ERR-0093`; manter o Zorin intacto como cópia até o reboot validar; `docs/config/TIME DE AGENTES RH*.MD` não rastreados e fora do projeto. Esta leva de memória de fechamento ficou **sem commit** aguardando aprovação.
+
+## 2026-10-03 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — `DECISION-022` registrada; nenhuma ACTIVE contradita |
+| State Integrity | PASS — `PLAN-0038`/`0036`/`0019` abertos e rastreados; desvio (`fix-nginx.sh`) registrado |
+| Operational Memory | PASS — log/plano/Git Record atualizados; plano corretamente não fechado (reboot pendente) |
+| Debug Memory | PASS — `ERR-0096` + backfill `ERR-0088` completos; `ERR-0033/0091` superados |
+| Technical Validation | PASS — `apps/*` intocado (lint/testes N/A); build, restore, contagens, `backup.sh --verify` OK |
+| Regression Risk | PASS com ressalva — CORS tocado só por config e verificado ao vivo; sem teste automatizado de `backup.sh`/CORS |
+| Git Governance | PASS — commit e push aprovados separadamente (`ecf4734`) |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261003_183448-PASS.md`.

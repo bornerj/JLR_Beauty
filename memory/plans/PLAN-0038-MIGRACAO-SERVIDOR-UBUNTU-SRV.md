@@ -112,8 +112,10 @@
 - `docs/config/SERVIDOR_UBUNTU.md`, `sfk.toml`, `DECISION-022`, `progress.md`, `MODIFICATION_LOG` atualizados; nenhum segredo em arquivos versionados.
 
 ## Git Record of Delivery
-- Step 1 (Pre-commit review): _pendente_
-- Step 2 (Commit authorization): _pendente_
-- Step 3 (Commit confirmation): _pendente_
-- Step 4 (Push authorization and result): _pendente_
-- Push status: PENDING
+- Step 1 (Pre-commit review): 15 arquivos (+519/−65) listados e revisados com o usuário — compose, `.env.docker.example`, `.gitignore`, `sfk.toml`, `scripts/backup.sh` (novo), `scripts/fix-nginx.sh` (removido), `docs/config/SERVIDOR_UBUNTU.md` (novo), `DEPLOY_VPS.md`, memória. Validações: `docker compose config`, build, `pg_restore` exit 0, 41/41 contagens idênticas, `backup.sh --verify` OK. `.env` e os 2 arquivos `TIME DE AGENTES RH*.MD` fora do commit.
+- Step 2 (Commit authorization): aprovação explícita do usuário em 2026-10-03.
+- Step 3 (Commit confirmation): `ecf4734` / `main` / `chore(infra): migra para servidor Ubuntu — bind mounts em /srv, backup.sh e docs (PLAN-0038)` / 15 arquivos, +519/−65.
+- Step 4 (Push authorization and result): aprovação separada do usuário em 2026-10-03; `git push origin main` → `6d66dd9..ecf4734`; `origin/main` = `ecf4734`.
+- Push status: COMPLETED
+
+**Plano permanece aberto (sem `-DONE-`)** até o teste de reboot do servidor ser feito e validado pelo usuário.
