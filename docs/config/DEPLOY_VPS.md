@@ -39,10 +39,9 @@ docker compose up -d --build web
 ## reconstruir os containers após as lateracoes
 docker compose up -d --build
 
-## ao voltar e3 religar a maquina , precisa subir o nginx
-docker compose up -d --force-recreate nginx
-
-## como ele sobe antes do drive "montar" sempre dará erro. 
+## (histórico) no notebook Zorin o nginx precisava ser recriado após ligar a máquina, porque subia
+## antes do HD externo montar (ERR-0033/ERR-0091). No servidor Ubuntu (/srv, disco fixo) isso NÃO
+## existe mais — ver docs/config/SERVIDOR_UBUNTU.md e DECISION-022.
 
 ---
 
@@ -63,8 +62,8 @@ docker compose version
 ## 1. Clonar o repositório
 
 ```bash
-git clone git@github.com:bornerj/JLR_Beauty.git /opt/jlrbeauty
-cd /opt/jlrbeauty
+git clone git@github.com:bornerj/JLR_Beauty.git /srv/projects/GitHub/JLR_Beauty
+cd /srv/projects/GitHub/JLR_Beauty
 ```
 
 ---
@@ -144,17 +143,11 @@ docker compose logs postgres    # logs do banco
 docker compose logs -f          # todos em tempo real
 ```
 
-### Backup do PostgreSQL
+### Backup e restore
 
-```bash
-docker compose exec postgres pg_dump -U jlrbeauty jlrbeauty > backup_$(date +%Y%m%d).sql
-```
-
-### Restaurar backup
-
-```bash
-cat backup_20260101.sql | docker compose exec -T postgres psql -U jlrbeauty jlrbeauty
-```
+Use `scripts/backup.sh` (dump + uploads + checksums + retenção; `--verify` testa o restore). O
+procedimento completo de backup/restore, o mapa de `/srv` e as variáveis de caminho estão em
+`docs/config/SERVIDOR_UBUNTU.md`.
 
 ### Reiniciar serviço específico
 

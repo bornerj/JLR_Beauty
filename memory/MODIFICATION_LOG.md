@@ -11247,3 +11247,47 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20260915_225615-PASS.md`.
 com aprovação explícita. Nada foi perdido ou deixado em estado inconsistente — todas as
 pendências (`PLAN-0036`/`PLAN-0019`/`ERR-0088`/teste automatizado do `ERR-0093`) estão
 nomeadas e rastreadas.
+
+## 2026-10-03 — Migração de ambiente (Zorin → servidor Ubuntu) + correção de 3 discrepâncias de bootstrap
+
+- **Contexto**: projeto movido do disco secundário do Zorin (`/media/jeiel/...`) para um servidor
+  Ubuntu em `/srv/projects/GitHub/JLR_Beauty`. Usuário suspeitou que a chave do GitHub precisaria
+  de ajuste.
+- **Verificado**: `origin` = `git@github.com:bornerj/JLR_Beauty.git` inalterado; `~/.ssh/config` +
+  `github_ed25519` já presentes; `ssh -T git@github.com` autentica como `bornerj`;
+  `git ls-remote origin HEAD` = `6d66dd9` (igual ao local). Nenhum ajuste de chave necessário.
+  `gh` CLI não instalado (não é exigido). Push real não foi testado (exige aprovação).
+- **Discrepâncias**: (1) contagem de skills no `CLAUDE.md` — **não era erro**: 57 skills com
+  `SKILL.md` + `doc.md` (guia) + `ui-ux-pro-max/` (só data/scripts) = 59 entradas; mantido 57.
+  (2) `sfk.toml [ai_context]` apontava para `kernel/...` e `kernel/project.toml`/`kernel/SYSTEM.md`
+  inexistentes — corrigido para `.sfk/kernel/...`, `sfk.toml`, `SYSTEM.md`. (3) Resume Panel do
+  `progress.md` dizia "última sessão fechada 2026-09-02" — corrigido para 2026-09-15.
+- **Achado da migração**: `core.hooksPath` não estava configurado (config local do git não migra)
+  e `install.sh` perdeu o bit de execução — hook de pre-commit reinstalado via
+  `bash .sfk/kernel/hooks/install.sh`.
+- **Pendente (não tocado)**: `ERR-0033/0091` e DEBUG-HISTORY citam o drive externo do Zorin como
+  causa raiz; no servidor Ubuntu o `driveguard` segue inofensivo, mas o contexto histórico mudou.
+  Containers/`.env`/volumes Docker no novo host não foram verificados. Os 2 arquivos
+  `docs/config/TIME DE AGENTES RH*.MD` seguem não rastreados e fora do escopo do projeto.
+- **Validações**: `git diff` limitado a `sfk.toml`, `progress.md`, `MODIFICATION_LOG.md`. Sem commit.
+
+## 2026-10-03 — PLAN-0038 START/parcial: `/srv` + restore dos dados do Zorin (Ondas 0-2)
+
+- **Contexto**: servidor Ubuntu com Docker zerado; banco/uploads do Zorin não tinham vindo na cópia de arquivos (viviam em volumes Docker). Export feito pelo usuário no Zorin (`pg_dump -Fc`, PG 16.15 + tar dos uploads) e copiado via WinSCP para `/srv/backups/jlr_beauty/migracao-zorin/`.
+- **Arquivos alterados**: `docker-compose.yml` (volumes nomeados → bind mounts `${JLR_PG_DATA_DIR}`/`${JLR_UPLOADS_DIR}`; `driveguard` removido), `.env` (3 variáveis de caminho, não versionado), `.env.docker.example`, `.gitignore` (`.data/`), `sfk.toml` (vars), `memory/plans/PLAN-0038-…` (novo).
+- **Validações**: sha256 dump/tar OK; `docker compose config -q` OK; build 3 imagens OK; `pg_restore --exit-on-error` exit 0; 15/15 migrations; RLS 26 policies/8 tabelas; 69 uploads; `ps` saudável; `GET /` 200 e upload 200.
+- **Pendente**: contagens vs Zorin, login MASTER, reboot (Onda 3); backup.sh (Onda 4); docs/`DECISION-022`/BUILD-HISTORY (Onda 5). **Achado de segurança** (não corrigido): senhas das roles do banco = defaults versionados. Sem commit.
+
+## 2026-10-03 — PLAN-0038 (Onda 3): login 403 por `CORS_ORIGIN` ##bug
+
+- **Sintoma**: `POST /api/auth/login` → 403 (27 bytes) ao acessar o admin por `http://10.10.10.2/`; site público e uploads funcionavam.
+- **Causa raiz**: `.env` tinha `CORS_ORIGIN=http://localhost`; o navegador envia `Origin: http://10.10.10.2` no POST e `app.ts` bloqueia (`"Origin blocked by CORS policy"` → 403). GETs same-origin não enviam `Origin`, por isso só o POST falhava. Em `localhost` no Zorin nunca aparecia.
+- **Ação**: `CORS_ORIGIN=http://localhost,http://10.10.10.2,http://192.168.0.14` (só `.env`, não versionado) + `docker compose up -d api` (recria; `restart` não relê o `.env`). Verificado com `curl`: origens liberadas → 400 (passa do CORS), `http://evil.example` → 403.
+- **Pendente**: usuário reconfirmar login MASTER no navegador. `APP_WEB_URL` segue `http://localhost` (afeta links em e-mails/Mercado Pago — só vira problema com acesso externo/domínio, `PLAN-0019`).
+
+## 2026-10-03 — PLAN-0038 (Ondas 3-5): validação, backup e documentação — reboot pendente
+
+- **Feito**: contagens das 41 tabelas Zorin × servidor idênticas; `ERR-0096` (login 403, `CORS_ORIGIN`) corrigido, login/telas/imagens confirmados pelo usuário; `scripts/backup.sh` criado e testado com `--verify` (restore real em banco temporário); `fix-nginx.sh` removido; docs (`SERVIDOR_UBUNTU.md`, `DEPLOY_VPS.md`), `sfk.toml` (`[hosting.*]`), `DECISION-022`, `DEBUG-HISTORY` (`ERR-0096`, `ERR-0033/0091` superados, `ERR-0088` backfill), `BUILD-HISTORY`, `progress.md`, `PR-0001-DESCRIPTION.md`.
+- **Arquivos alterados**: `docker-compose.yml`, `.env.docker.example`, `.gitignore`, `sfk.toml`, `scripts/backup.sh` (novo), `scripts/fix-nginx.sh` (removido, staged), `docs/config/SERVIDOR_UBUNTU.md` (novo), `docs/config/DEPLOY_VPS.md`, `memory/*`.
+- **Validações**: `tomllib` lê o `sfk.toml`; `docker compose config -q`; backup `--verify` OK; checksums OK. `tsc`/testes não aplicáveis (`apps/*` intocado).
+- **Pendente (nomeado)**: teste de reboot (usuário); cron + offsite do backup; senhas das roles do banco = defaults versionados; commit/push aguardando aprovação. `PLAN-0038` fica aberto até o reboot. Os 2 arquivos `docs/config/TIME DE AGENTES RH*.MD` continuam não rastreados e fora do escopo.

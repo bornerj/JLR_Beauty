@@ -26,16 +26,27 @@ docs       = ""
 # HOSTING — Where the project lives
 # ═══════════════════════════════════════
 
+[hosting.server]
+provider = "Servidor Ubuntu próprio (desde 2026-10-03; antes: notebook Zorin Linux)"
+layout   = "/srv/{projects,data,databases,backups,docker,models} — partição única sda1 (ext4)"
+repo     = "/srv/projects/GitHub/JLR_Beauty"
+guide    = "docs/config/SERVIDOR_UBUNTU.md"
+decision = "memory/decisions/DECISION-022.md"
+
 [hosting.docker]
-provider = "VPS (Ubuntu/Debian 22.04+)"
+provider = "Docker Compose no servidor Ubuntu (data-root /srv/docker)"
 compose  = "docker-compose.yml"
 services = ["nginx", "api", "web", "postgres"]
 guide    = "docs/config/DEPLOY_VPS.md"
 
 [hosting.database]
-provider = "PostgreSQL 16 (Docker volume)"
-service  = "postgres container — volume postgres_data"
+provider = "PostgreSQL 16 (container; bind mount em /srv/databases/jlr_beauty/postgres)"
+service  = "postgres container — dados via JLR_PG_DATA_DIR"
 url_var  = "DATABASE_URL"
+backup   = "scripts/backup.sh (destino JLR_BACKUP_DIR = /srv/backups/jlr_beauty)"
+
+[hosting.storage]
+uploads = "bind mount em /srv/data/jlr_beauty/uploads (JLR_UPLOADS_DIR)"
 
 # ═══════════════════════════════════════
 # STACK — What the project uses and which version
@@ -137,6 +148,9 @@ vars = [
   "BREVO_SMTP_KEY",                     # chave/senha SMTP (nao e a API key HTTP)
   "BREVO_SENDER_EMAIL",                 # e-mail remetente, precisa estar verificado na conta Brevo
   "BREVO_SENDER_NAME",                  # nome exibido como remetente (default "JLR Beauty")
+  "JLR_PG_DATA_DIR",                    # bind mount do Postgres (prod: /srv/databases/jlr_beauty/postgres)
+  "JLR_UPLOADS_DIR",                    # bind mount dos uploads (prod: /srv/data/jlr_beauty/uploads)
+  "JLR_BACKUP_DIR",                     # destino dos backups (prod: /srv/backups/jlr_beauty)
 ]
 
 # ═══════════════════════════════════════
@@ -186,13 +200,13 @@ prod = "80 (interno Docker — nginx proxia)"
 # ═══════════════════════════════════════
 
 [ai_context]
-kernel_entry   = "kernel/BOOTSTRAP.md"
-rules          = "kernel/RULES.md"
-behavior       = "kernel/SOUL.md"
-identity       = "kernel/project.toml"
-routing        = "kernel/index.toml"
-engineering    = "kernel/SYSTEM.md"
+kernel_entry   = ".sfk/kernel/BOOTSTRAP.md"
+rules          = ".sfk/kernel/RULES.md"
+behavior       = ".sfk/kernel/SOUL.md"
+identity       = "sfk.toml"
+routing        = ".sfk/kernel/index.toml"
+engineering    = "SYSTEM.md"
 memory_log     = "memory/MODIFICATION_LOG.md"
 memory_status  = "memory/progress.md"
 memory_debug   = "memory/logs/DEBUG-HISTORY.md"
-capabilities   = "kernel/ARCHITECTURE.md"
+capabilities   = ".sfk/kernel/ARCHITECTURE.md"

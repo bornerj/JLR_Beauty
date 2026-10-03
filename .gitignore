@@ -58,3 +58,6 @@ arvore.txt
 
 # Claude Code local settings
 .claude/
+
+# Dados persistentes locais (bind mounts default do docker-compose)
+.data/

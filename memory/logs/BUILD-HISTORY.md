@@ -174,3 +174,25 @@ confirma schema real batendo com o Prisma (coluna `provider`, unique composto). 
 sem assinatura → 400 `{"message":"dados invalidos"}`; `POST .../mercadopago/cancel-pending`
 com `orderId` inexistente → 404 `{"message":"pagamento nao encontrado"}`. `tsc -b` e `npm run
 build` limpos; `npm run test` 134/134 PASS (sem regressão, backend legado intocado).
+
+## 2026-10-03 — PLAN-0038: restore dos dados do Zorin no servidor Ubuntu (banco + uploads)
+
+**Origem dos dados:** Zorin (notebook, ainda ligado), volumes Docker `jlr_beauty_postgres_data` e
+`jlr_beauty_uploads_data`, exportados pelo usuário no terminal do Zorin às 17:00: `pg_dump -Fc`
+(`jlrbeauty.dump`, 277 KB, PostgreSQL 16.15, sha256 `b7d231635076…f5a5`) e tar dos uploads
+(`uploads.tar.gz`, 29 MB, 69 arquivos, sha256 `af74e395e94d…3bea`). Copiados por WinSCP para
+`/srv/backups/jlr_beauty/migracao-zorin/`; hashes conferidos no servidor (OK).
+
+**Por que:** a migração de arquivos do projeto para o servidor não trouxe banco/uploads (viviam em
+volumes Docker, fora da pasta do projeto) — o Docker do servidor estava zerado.
+
+**Como rodou:** `docker compose up -d postgres` (banco vazio + roles `jlr_api_rw/ro` pelo init) →
+`pg_restore --clean --if-exists --no-owner --exit-on-error` (exit 0, zero erros) → extração dos
+uploads em `/srv/data/jlr_beauty/uploads` → `docker compose up -d` (API: "15 migrations found … No
+pending migrations to apply"). A API **não** foi subida antes do restore (o entrypoint roda `migrate
+deploy` e conflitaria com um banco vazio).
+
+**Validação:** contagem exata de linhas das 41 tabelas, Zorin × servidor — **idêntica** (diff vazio),
+incl. `audit_logs` 431 e `refresh_tokens` 1114; `_prisma_migrations` 15/15; 26 policies RLS em 8
+tabelas; 69 uploads servidos pelo nginx (200); login MASTER e telas confirmados pelo usuário.
+Nenhuma migration nova, nenhum dado alterado. Zorin mantido intacto como cópia de segurança.
