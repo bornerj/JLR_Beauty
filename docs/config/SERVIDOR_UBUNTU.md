@@ -2,7 +2,7 @@
 
 > Desde 2026-10-03 o projeto roda num servidor Ubuntu (antes: notebook Zorin Linux, disco
 > secundário em `/media/jeiel/...`). **A aplicação não mudou** — só onde ficam o código, os
-> dados e os backups. Origem da mudança: `memory/plans/PLAN-0038-MIGRACAO-SERVIDOR-UBUNTU-SRV.md`
+> dados e os backups. Origem da mudança: `memory/plans/PLAN-0038-DONE-MIGRACAO-SERVIDOR-UBUNTU-SRV.md`
 > e `memory/decisions/DECISION-022.md`.
 
 ## Mapa do `/srv`
@@ -106,7 +106,7 @@ docker compose up -d                 # api: "No pending migrations"
 ## Pendências conhecidas do ambiente
 
 - Teste de **reboot do servidor** (dados persistem + serviços voltam) — aguardando janela.
-- Backup **offsite** e agendamento via cron.
+- Backup **offsite** e agendamento via cron — dispensados em 2026-10-03 (só há dados de teste). Reavaliar antes de entrar dado real.
 - Senhas das roles `jlr_api_rw`/`jlr_api_ro` iguais aos defaults de desenvolvimento versionados
   (achado de segurança, plano próprio).
 - HTTPS/domínio: `PLAN-0019` (bloqueado). `APP_WEB_URL` ainda `http://localhost`.

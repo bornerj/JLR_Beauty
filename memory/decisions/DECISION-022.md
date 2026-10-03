@@ -22,7 +22,7 @@ restaurados (`PLAN-0038`, contagens por tabela idênticas, 41/41).
 3. **`driveguard` e `scripts/fix-nginx.sh` removidos** — causa raiz (drive externo montando depois do
    Docker) deixou de existir. `ERR-0033`/`ERR-0091` ficam como histórico, marcados "superado".
 4. **Backup** por `scripts/backup.sh` (dump custom + uploads + SHA256SUMS, retenção, `--verify` com restore
-   em banco temporário). Agendamento e cópia offsite ficam como decisão futura do usuário.
+   em banco temporário). Agendamento e cópia offsite: dispensados pelo usuário em 2026-10-03 (só há dados de teste) — reavaliar antes de dado real.
 5. A aplicação (`apps/*`, schema, integrações) **não muda**.
 
 ## Consequências

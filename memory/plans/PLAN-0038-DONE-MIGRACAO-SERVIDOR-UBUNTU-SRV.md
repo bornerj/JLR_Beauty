@@ -1,6 +1,6 @@
 # PLAN-0038 — Migração Zorin → servidor Ubuntu: estrutura `/srv`, restore de dados e documentação
 
-**Status:** 🔵 EM EXECUÇÃO — aprovado pelo usuário em 2026-10-03 (D1–D4 como propostos). **Ondas 0, 1, 2, 4 e 5 concluídas; Onda 3 concluída exceto o teste de reboot** (pendente, usuário fará depois). Plano NÃO renomeado `-DONE-` até o reboot ser validado e o Git Record preenchido.
+**Status:** ✅ DONE — fechado em 2026-10-03. Todas as ondas concluídas; reboot do servidor validado (4 containers de volta sozinhos, 41 tabelas/15 migrations/69 uploads intactos). Cron e backup offsite **dispensados por decisão do usuário** (banco só tem dados de teste).
 **Data de abertura:** 2026-10-03
 **Escopo macro:** `docker-compose.yml`, `.env`/`.env.docker.example`, `.gitignore`, `scripts/` (backup), `sfk.toml`, `docs/`, `memory/`. **Zero mudança em `apps/api` ou `apps/web`**, zero migration Prisma.
 **Agente de apoio:** `@devops-engineer` (skill `fullstack-docker-deploy`, `deployment-procedures`) + `@database-architect` para o restore.
@@ -118,4 +118,5 @@
 - Step 4 (Push authorization and result): aprovação separada do usuário em 2026-10-03; `git push origin main` → `6d66dd9..ecf4734`; `origin/main` = `ecf4734`.
 - Push status: COMPLETED
 
-**Plano permanece aberto (sem `-DONE-`)** até o teste de reboot do servidor ser feito e validado pelo usuário.
+
+**Fechamento (2026-10-03):** reboot validado pelo usuário e conferido pelo agente (`docker compose ps`, restart `unless-stopped`, Docker habilitado no boot, `GET /` 200, API pública 200, upload 200, contagens do banco). Agendamento (cron) e cópia offsite do backup: dispensados pelo usuário — "só tem dados de testes". `scripts/backup.sh` segue disponível para uso manual. **Reavaliar ambos antes de entrar dado real.**

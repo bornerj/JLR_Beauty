@@ -11313,3 +11313,11 @@ nomeadas e rastreadas.
 | Git Governance | PASS — commit e push aprovados separadamente (`ecf4734`) |
 
 Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261003_183448-PASS.md`.
+
+## 2026-10-03 — PLAN-0038 DONE: reboot validado, cron/offsite dispensados
+
+- **Contexto**: usuário reiniciou o servidor e pediu checagem. Pendências restantes do plano: cron e offsite do backup.
+- **Validações**: 4 containers `Up` (api/nginx/postgres `healthy`), `restart: unless-stopped` nos 4, Docker `enabled` no boot; `GET /` 200, `/api/public/services/featured` 200, upload 200; banco com 41 tabelas e 15 migrations; 69 arquivos em uploads. (`/api/health` = 404 — caminho errado usado na checagem, healthcheck do container verde.)
+- **Decisão do usuário**: cron e backup offsite dispensados — banco só tem dados de teste. `backup.sh` fica para uso manual; reavaliar antes de dado real.
+- **Arquivos alterados**: `memory/plans/PLAN-0038-…` → renomeado `-DONE-`, `memory/progress.md`, `memory/decisions/DECISION-022.md`, `docs/config/SERVIDOR_UBUNTU.md`.
+- **Pendente**: senhas das roles do banco (plano próprio); `PLAN-0036` Onda 6; `PLAN-0019`. Sem commit (aguardando aprovação).
