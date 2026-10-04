@@ -103,6 +103,24 @@ docker compose up -d                 # api: "No pending migrations"
   de UID) e tem modo 700: **`jbsystemas` não consegue ler os arquivos dela diretamente**. É esperado —
   para backup use `scripts/backup.sh` (`pg_dump`), nunca copie essa pasta com o banco no ar.
 
+## Rotação de senhas das roles do banco
+
+As senhas de `jlr_api_rw`/`jlr_api_ro` vivem só no `.env` (nunca no git; o compose e o init **falham** se faltarem).
+Para trocar (PLAN-0039):
+1. Gere: `openssl rand -hex 24` (hex é seguro dentro da URL do `DATABASE_URL`).
+2. Aplique no banco — `init-api-users.sh` só roda em data dir vazio, então precisa de `ALTER ROLE`:
+   `docker compose exec -T postgres psql -U <POSTGRES_USER> -d <POSTGRES_DB>` com `ALTER ROLE jlr_api_rw PASSWORD '...';` via stdin (não em argumento).
+3. Atualize `DB_API_RW_PASSWORD`/`DB_API_RO_PASSWORD` **e** a senha dentro de `DATABASE_URL` no `.env` (`chmod 600`).
+4. `docker compose up -d` (recria postgres/api; `restart` não relê o `.env`).
+5. Teste **pela rede** (`psql -h postgres …`): dentro do container, `-h 127.0.0.1` cai em `trust` e aceita qualquer senha — não prova nada.
+
+## Cuidado: não mova `/srv/{databases,data,backups}`
+
+O Postgres e os uploads são bind mounts nesses caminhos (`JLR_*` no `.env`). Se o diretório for movido com os
+containers no ar, eles continuam funcionando (o Docker segue o inode), mas qualquer `up -d`/reboot depois cria
+diretórios **vazios** nos caminhos antigos e o Postgres sobe com banco vazio. Se precisar mudar o layout, mude
+primeiro as variáveis `JLR_*` com a stack parada. (Incidente de 2026-10-03: revertido sem perda.)
+
 ## Pendências conhecidas do ambiente
 
 - Teste de **reboot do servidor** (dados persistem + serviços voltam) — aguardando janela.

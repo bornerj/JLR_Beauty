@@ -3,8 +3,8 @@
 # Creates the least-privilege API users and applies RLS on sensitive tables.
 set -e
 
-RW_PASS="${DB_API_RW_PASSWORD:-JLRapiRW_Dev2026!}"
-RO_PASS="${DB_API_RO_PASSWORD:-JLRapiRO_Dev2026!}"
+RW_PASS="${DB_API_RW_PASSWORD:?DB_API_RW_PASSWORD nao definida}"
+RO_PASS="${DB_API_RO_PASSWORD:?DB_API_RO_PASSWORD nao definida}"
 DB="${POSTGRES_DB:-jlrbeauty}"
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DB" <<-EOSQL

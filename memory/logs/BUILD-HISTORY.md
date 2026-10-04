@@ -196,3 +196,9 @@ deploy` e conflitaria com um banco vazio).
 incl. `audit_logs` 431 e `refresh_tokens` 1114; `_prisma_migrations` 15/15; 26 policies RLS em 8
 tabelas; 69 uploads servidos pelo nginx (200); login MASTER e telas confirmados pelo usuário.
 Nenhuma migration nova, nenhum dado alterado. Zorin mantido intacto como cópia de segurança.
+
+## 2026-10-03 — Rotação das senhas das roles `jlr_api_rw` / `jlr_api_ro` (PLAN-0039)
+
+**O quê/por quê:** as senhas das duas roles eram idênticas aos defaults versionados em `docker-compose.yml`/`init-api-users.sh` (achado do PLAN-0038). Nenhuma migration, nenhum dado de tabela alterado.
+**Como:** 2 senhas novas (`openssl`/`secrets.token_hex(24)`, nunca exibidas) aplicadas com `ALTER ROLE`; `.env` e `DATABASE_URL` atualizados juntos; `docker compose up -d` (postgres e api recriados). Defaults removidos do compose, do init e do `.env.docker.example`.
+**Validação:** `psql -h postgres` (caminho de rede): senha antiga **rejeitada** nas 2 roles, nova aceita; 41 tabelas/15 migrations/69 uploads intactos; api `healthy`, sem erro de autenticação nos logs; `docker compose config` falha com mensagem clara sem as variáveis. Rollback disponível em `/srv/backups/jlr_beauty/env-pre-PLAN-0039.bak`.

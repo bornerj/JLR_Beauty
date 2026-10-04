@@ -8,8 +8,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-jlrbeauty}
       POSTGRES_USER: ${POSTGRES_USER:-jlrbeauty}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_API_RW_PASSWORD: ${DB_API_RW_PASSWORD:-JLRapiRW_Dev2026!}
-      DB_API_RO_PASSWORD: ${DB_API_RO_PASSWORD:-JLRapiRO_Dev2026!}
+      DB_API_RW_PASSWORD: ${DB_API_RW_PASSWORD:?defina DB_API_RW_PASSWORD no .env (openssl rand -hex 24)}
+      DB_API_RO_PASSWORD: ${DB_API_RO_PASSWORD:?defina DB_API_RO_PASSWORD no .env (openssl rand -hex 24)}
     command: >
       postgres
       -c shared_preload_libraries=pgaudit

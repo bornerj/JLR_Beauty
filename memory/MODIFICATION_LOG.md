@@ -11321,3 +11321,11 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261003_183448-PASS.md`.
 - **Decisão do usuário**: cron e backup offsite dispensados — banco só tem dados de teste. `backup.sh` fica para uso manual; reavaliar antes de dado real.
 - **Arquivos alterados**: `memory/plans/PLAN-0038-…` → renomeado `-DONE-`, `memory/progress.md`, `memory/decisions/DECISION-022.md`, `docs/config/SERVIDOR_UBUNTU.md`.
 - **Pendente**: senhas das roles do banco (plano próprio); `PLAN-0036` Onda 6; `PLAN-0019`. Sem commit (aguardando aprovação).
+
+## 2026-10-03 — PLAN-0039: rotação das senhas das roles do banco (+ incidente de diretórios movidos) ##bug
+
+- **Incidente (antes da execução)**: ao preparar o backup, `/srv/{databases,data,backups,models}` não existiam — o usuário os havia movido para `/srv/projects/` por engano (~19:23). Containers seguiam saudáveis (bind mount segue o inode), mas o `.env` apontava para os caminhos antigos: qualquer recriação criaria diretórios vazios e o Postgres subiria vazio. Ação: dump + tar de emergência tirados dos containers em execução (`/srv/backups/jlr_beauty/emergencia-20261003/`, `chmod 600`, SHA256SUMS; dump 518 itens, 69 uploads); a pedido do usuário os 4 diretórios foram movidos de volta para `/srv`; stack conferida (healthy, 200, 69 uploads). Zero perda de dados. Aviso permanente adicionado em `docs/config/SERVIDOR_UBUNTU.md`.
+- **Execução**: 2 senhas novas via `ALTER ROLE`, `.env`+`DATABASE_URL` sincronizados, postgres+api recriados; defaults públicos removidos de `docker-compose.yml`, `docker/postgres/init-api-users.sh`, `.env.docker.example` (agora `${VAR:?…}`).
+- **Validações**: senha antiga rejeitada / nova aceita **pela rede** (um primeiro teste por `127.0.0.1` aceitou qualquer senha — `trust` do pg_hba da imagem — e foi descartado como prova); 41/15/69 intactos; api healthy; site 200 e API pública 200; `docker compose config` falha com mensagem clara sem `.env`.
+- **Arquivos alterados**: `docker-compose.yml`, `docker/postgres/init-api-users.sh`, `.env.docker.example`, `docs/config/SERVIDOR_UBUNTU.md`, `memory/*`; fora do git: `.env`.
+- **Pendente**: usuário reconfirmar login MASTER no navegador; apagar `/srv/backups/jlr_beauty/emergencia-20261003` e o `.bak` do `.env` quando não forem mais necessários (contêm PII/segredos antigos); commit/push aguardando aprovação.
