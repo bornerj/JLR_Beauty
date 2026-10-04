@@ -1,6 +1,6 @@
 # PLAN-0039 — Rotação das senhas das roles `jlr_api_rw` / `jlr_api_ro` e remoção dos defaults versionados
 
-**Status:** 🟢 EXECUTADO (Ondas 1-5) em 2026-10-03 — falta confirmação de login do usuário, commit/push e rename `-DONE-`. Incidente no meio: usuário moveu `/srv/{data,databases,backups}` para `/srv/projects/` por engano; revertido sem perda antes de qualquer passo destrutivo (ver `MODIFICATION_LOG`).
+**Status:** ✅ DONE — executado, validado (login MASTER confirmado), commitado e pushado em 2026-10-03. Incidente no meio: usuário moveu `/srv/{data,databases,backups}` para `/srv/projects/` por engano; revertido sem perda antes de qualquer passo destrutivo (ver `MODIFICATION_LOG`).
 **Escopo macro:** `.env` (não versionado), roles do Postgres (`ALTER ROLE`), `docker-compose.yml`, `docker/postgres/init-api-users.sh`, `.env.docker.example`, `docs/`, `memory/`. **Zero mudança em `apps/api`/`apps/web`**, zero migration Prisma.
 **Agente de apoio:** `@devops-engineer` + `@security-auditor` (achado de segurança herdado do `PLAN-0038`, Riscos #4).
 
@@ -69,8 +69,8 @@
 - Docs, log, progress e BUILD-HISTORY atualizados.
 
 ## Git Record of Delivery
-- Step 1 (Pre-commit review): _pendente_
-- Step 2 (Commit authorization): _pendente_
-- Step 3 (Commit confirmation): _pendente_
-- Step 4 (Push authorization and result): _pendente_
-- Push status: PENDING
+- Step 1 (Pre-commit review): 9 arquivos (+143/−10) — compose, init-api-users.sh, .env.docker.example, SERVIDOR_UBUNTU.md, memória (log, BUILD-HISTORY, progress, PLAN-0039, PR-0002). Validações: senha antiga rejeitada/nova aceita pela rede, 41/15/69 intactos, api healthy, 200 no site e API, login MASTER confirmado pelo usuário, nenhum segredo no diff.
+- Step 2 (Commit authorization): aprovação explícita do usuário em 2026-10-03.
+- Step 3 (Commit confirmation): `3ace59b` / `main` / `fix(security): remove senhas default do compose/init e rotaciona jlr_api_rw/ro (PLAN-0039)` / 9 arquivos, +143/−10.
+- Step 4 (Push authorization and result): aprovação separada do usuário em 2026-10-03; `git push origin main` → `19a2b4f..3ace59b`.
+- Push status: COMPLETED
