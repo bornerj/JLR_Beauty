@@ -11334,32 +11334,9 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261003_183448-PASS.md`.
 
 - Login MASTER confirmado pelo usuário; commit `3ace59b` pushado (`19a2b4f..3ace59b`). Plano renomeado `-DONE-` com Git Record. Pendente: apagar `emergencia-20261003` e `env-pre-PLAN-0039.bak` quando o usuário decidir; `PLAN-0036` Onda 6; `PLAN-0019`.
 
-## 2026-10-03 — PLAN-0040 aberto: Iridium Ignitor (I²) — plano + mockup (sem código)
+## 2026-10-04 — Iridium Ignitor movido para repositório próprio; PLAN-0040 vira NOTDONE
 
-- **Contexto**: usuário pediu um programa de setup reutilizável, fora da aplicação, estilo checklist de aviação (default × configurado × real), UI inspirada em `docs/config/hud_plane.png` (G1000). Aplicados `@project-planner` + `/brainstorm` e `@frontend-specialist`.
-- **Arquivos**: `memory/plans/PLAN-0040-IRIDIUM-IGNITOR-I2.md` (novo, aguardando aprovação), `docs/config/ignitor-mockup-v1.html` (mockup estático navegável, dados de exemplo). Nenhum código de produto, nenhum servidor tocado.
-- **Pendente**: usuário aprovar/ajustar D1–D7 e o mockup; instalação de dependências (venv) depende de aprovação; commit/push aguardando.
+- **Contexto**: o Ignitor (programa de setup reutilizável) foi planejado e construído a partir desta sessão, mas é independente do JLR Beauty. A pedido do usuário saiu deste repositório: removidos `docs/config/ignitor-mockup-v1.html`, `docs/config/hud_plane.png`, `memory/decisions/DECISION-023.md`, `memory/PR-0003-DESCRIPTION.md` e `memory/PR-0004-DESCRIPTION.md`; as entradas de log do Ignitor (5 blocos) foram trocadas por esta. O histórico detalhado e o plano vivo estão no repositório `Iridium-Ignitor` (`memory/plans/PLAN-0001`).
+- **PLAN-0040** renomeado `PLAN-0040-NOTDONE-…` (registro histórico, não executado neste repositório).
+- **Nada do app mudou**: `apps/*`, `docker-compose.yml`, `nginx/`, `docker/` e `.env` intocados; containers sem reinício. Os arquivos removidos continuam no histórico do git (commits anteriores, sem reescrita).
 
-## 2026-10-03 — PLAN-0040: aprovado; Onda 1 (design) entregue
-
-- Plano aprovado pelo usuário (D1–D7). Onda 1 fechada: Design Commitment, tokens e anatomia na seção 10 do plano; mockup aprovado ("está legal"); bug de contraste do hover na linha selecionada corrigido (mockup v2, `docs/config/ignitor-mockup-v1.html`). Repo `Iridium-Ignitor` e venv **não** criados — aguardam ok explícito. Sem commit.
-
-## 2026-10-03 — PLAN-0040: repo e venv do Iridium Ignitor criados + requisito R-IGN
-
-- **Feito**: repo `/srv/projects/GitHub/Iridium-Ignitor` (git init, branch `main`, **sem commit**); `.venv` com fastapi 0.142.2, uvicorn 0.54.0, pydantic 2.13.5, ruamel.yaml 0.19.1, pytest 9.1.1, httpx 0.28.1 (`requirements.lock`); esqueleto (`pyproject.toml`, `src/ignitor/`, `catalog/`, `ui/mockup/`, `docs/`). Dependências aprovadas pelo usuário. Requisito R-IGN (controle contra reexecução destrutiva) escrito em `Iridium-Ignitor/docs/SAFETY.md` e incorporado ao plano (seção 6b, Onda 2, aceite).
-- **Validações**: imports do venv OK; `pytest` sem testes ainda. Nada tocado em servidor/JLR além de memória.
-- **Pendente**: Onda 2 (núcleo + testes R-IGN); commit inicial do repo novo aguarda aprovação.
-
-## 2026-10-04 — PLAN-0040 Onda 2 entregue: núcleo do Iridium Ignitor + R-IGN
-
-- **Repo** `/srv/projects/GitHub/Iridium-Ignitor` (sem commit): `models`, `catalog`, `store`, `engine`, `probes`, `safety`, `actions`, `runner`, `cli`; pack `core` (11 itens); 55 testes (`pytest` 55 passed).
-- **Validações**: suíte verde; teste de mutação nas 5 barreiras do R-IGN (APPLY em ignitado, REIGNITAR, proteção de dados, DESTRUTIVA isolada, backup velho) — a mutação da DESTRUTIVA passou despercebida na 1ª rodada e ganhou teste. Demo real da CLI em workspace temporário. Nada tocado em servidor/JLR além de memória.
-- **Pendente**: Onda 3 (API local + cockpit de leitura); commit inicial do repo novo e dos arquivos do JLR aguardam aprovação.
-
-## 2026-10-04 — PLAN-0040 Ondas 3-8 entregues: Iridium Ignitor concluído (exceto ensaio em VPS) ##evolution
-
-- **Repo** `/srv/projects/GitHub/Iridium-Ignitor` (commits `a89739b`, `3fe5e8f`, `516a816`; sem remoto): API local + cockpit, ações operacionais, packs (`core`, `proxy`, `host`, `postgres`, `backup`, `monitoring`, `release`, `jlr-beauty`), preset do JLR, docs. `DECISION-023` registrada.
-- **Validações**: `pytest` 105 passed; E2E Chrome 20/20; teste de mutação das 5 barreiras do R-IGN; ataques manuais à API (401/400/403/404, sem CORS, loopback); dry-run **real** neste servidor com o preset do JLR — 21 passos, `.env`/`docker-compose.yml`/`nginx.conf` com hash idêntico, containers sem reinício, nada criado no projeto.
-- **Achado importante (corrigido)**: aplicar o plano num servidor com banco existente geraria `POSTGRES_PASSWORD` nova e quebraria as migrations; agora segredos presos ao banco são adotados do `.env` (`params.adopt`).
-- **Não feito (depende do usuário)**: ensaio numa VPS limpa com domínio, compra com cartão real (`PLAN-0036` Onda 6), publicar o repo do Ignitor, revisão de pentest com root em VPS real. **Nenhuma ignição foi aplicada neste servidor.**
-- **Arquivos (JLR)**: `memory/plans/PLAN-0040`, `memory/decisions/DECISION-023.md`, `memory/PR-0004-DESCRIPTION.md`, `memory/progress.md`, `memory/MODIFICATION_LOG.md`. Push pendente (aguarda aprovação).
