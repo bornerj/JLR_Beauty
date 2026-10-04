@@ -11355,3 +11355,11 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261003_183448-PASS.md`.
 - **Repo** `/srv/projects/GitHub/Iridium-Ignitor` (sem commit): `models`, `catalog`, `store`, `engine`, `probes`, `safety`, `actions`, `runner`, `cli`; pack `core` (11 itens); 55 testes (`pytest` 55 passed).
 - **Validações**: suíte verde; teste de mutação nas 5 barreiras do R-IGN (APPLY em ignitado, REIGNITAR, proteção de dados, DESTRUTIVA isolada, backup velho) — a mutação da DESTRUTIVA passou despercebida na 1ª rodada e ganhou teste. Demo real da CLI em workspace temporário. Nada tocado em servidor/JLR além de memória.
 - **Pendente**: Onda 3 (API local + cockpit de leitura); commit inicial do repo novo e dos arquivos do JLR aguardam aprovação.
+
+## 2026-10-04 — PLAN-0040 Ondas 3-8 entregues: Iridium Ignitor concluído (exceto ensaio em VPS) ##evolution
+
+- **Repo** `/srv/projects/GitHub/Iridium-Ignitor` (commits `a89739b`, `3fe5e8f`, `516a816`; sem remoto): API local + cockpit, ações operacionais, packs (`core`, `proxy`, `host`, `postgres`, `backup`, `monitoring`, `release`, `jlr-beauty`), preset do JLR, docs. `DECISION-023` registrada.
+- **Validações**: `pytest` 105 passed; E2E Chrome 20/20; teste de mutação das 5 barreiras do R-IGN; ataques manuais à API (401/400/403/404, sem CORS, loopback); dry-run **real** neste servidor com o preset do JLR — 21 passos, `.env`/`docker-compose.yml`/`nginx.conf` com hash idêntico, containers sem reinício, nada criado no projeto.
+- **Achado importante (corrigido)**: aplicar o plano num servidor com banco existente geraria `POSTGRES_PASSWORD` nova e quebraria as migrations; agora segredos presos ao banco são adotados do `.env` (`params.adopt`).
+- **Não feito (depende do usuário)**: ensaio numa VPS limpa com domínio, compra com cartão real (`PLAN-0036` Onda 6), publicar o repo do Ignitor, revisão de pentest com root em VPS real. **Nenhuma ignição foi aplicada neste servidor.**
+- **Arquivos (JLR)**: `memory/plans/PLAN-0040`, `memory/decisions/DECISION-023.md`, `memory/PR-0004-DESCRIPTION.md`, `memory/progress.md`, `memory/MODIFICATION_LOG.md`. Push pendente (aguarda aprovação).

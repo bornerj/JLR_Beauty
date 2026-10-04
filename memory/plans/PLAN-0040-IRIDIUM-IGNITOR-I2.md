@@ -117,27 +117,30 @@ Especificação completa no repo: `Iridium-Ignitor/docs/SAFETY.md`. Resumo: esta
 - Achados corrigidos no caminho: `dig` sem resposta lido como sucesso; sonda dependente rodava sem o valor de que dependia; `destroy` sem `--item` passava (agora exige item explícito); lacuna de teste da barreira DESTRUTIVA; cooldown real de 10 s não era injetável.
 - **Limitações assumidas (ondas seguintes):** snapshot de banco (dump) entra com o pack de banco (hook) na Onda 6; botão de cancelar do cooldown e modal de confirmação na UI (Ondas 3-4); ações reais (proxy, TLS, firewall…) nas Ondas 5-7.
 
-### Onda 3 — API + UI de leitura
-- [ ] Servidor local (127.0.0.1) + token; páginas do cockpit exibindo default × configurado × real, anunciadores e medidores (dados reais das sondas).
+### Onda 3 — API + UI de leitura ✅ entregue 2026-10-04
+- [x] API local FastAPI só em 127.0.0.1: token de sessão (cookie HttpOnly/SameSite=Strict), CSRF nas escritas, validação do Host, sem CORS, CSP restritiva, docs/openapi desligados. Cockpit (HTML/CSS/JS sem build, sem `innerHTML`) fiel ao mockup, com dados reais das sondas.
 
-### Onda 4 — Edição e modo voo
-- [ ] Edição de campos com validação, `DEFAULT` por item, "deferir", navegação por F-keys; modo checklist passo a passo; salvar perfil.
+### Onda 4 — Edição e modo voo ✅ entregue 2026-10-04
+- [x] Editor por tipo (ON/OFF, enum, número, texto, segredo por campo password), DEFAULT/DEFERIR, navegação por teclado e teclas de função, PLAN (dry-run) e APPLY em modal com a barreira do R-IGN: faixa vermelha, passos classificados, confirmação digitada, espera de 10 s com CANCELAR, histórico. E2E em Chrome real (20 verificações).
 
-### Onda 5 — Módulos de aplicação "core"
-- [ ] Domínio/DNS (sonda), proxy (templates Traefik e nginx), TLS (ACME + HSTS + expiração), segredos (gerar/rotacionar), endurecimento do host (ufw, SSH, fail2ban, unattended-upgrades, log do Docker). Cada ação: `plan → apply → verify`, idempotente.
+### Onda 5 — Módulos "core" ✅ entregue 2026-10-04
+- [x] Packs `core`, `proxy` (Traefik com TLS automático ou manual), `host` (UFW com anti-lockout, SSH com validação `sshd -t` e rollback, fail2ban, atualizações automáticas, limite de logs do Docker preservando `data-root`). Ações com `plan → apply → verify`, idempotentes; `plan` nunca escreve (`DryRunError`).
 
-### Onda 6 — Banco, backup, monitoramento, release
-- [ ] Postgres (roles, `ALTER ROLE`, restore), backup agendado + offsite + teste de restore, monitoramento/alertas, tags/rollback.
+### Onda 6 — Banco, backup, monitoramento, release ✅ entregue 2026-10-04
+- [x] Packs `postgres` (senha por stdin/`PGPASSWORD` herdado, só quando o login não autentica), `backup` (timers systemd: backup, teste de restore semanal, cópia externa via rclone), `monitoring` (healthcheck + alerta por webhook no cofre), `release` (deploy.sh/rollback.sh, `compose up` validando antes). Segredos presos ao banco são **adotados** do `.env` existente (descoberto no dry-run real: sem isso a ignição geraria `POSTGRES_PASSWORD` nova e quebraria o banco).
 
-### Onda 7 — Pack `jlr-beauty`
-- [ ] Manifesto derivado do `sfk.toml` (variáveis, serviços, integrações); gerar `.env`/compose de produção; **dry-run contra este servidor** (sem aplicar).
+### Onda 7 — Pack `jlr-beauty` ✅ entregue 2026-10-04
+- [x] Pack + preset: 56 itens, 19 tarefas, `.env` de produção completo (URLs pelo domínio, `DATABASE_URL` com segredo codificado, integrações Mercado Pago/Brevo/Z-API), sem sobrescrever linhas do operador. **Dry-run real neste servidor:** 21 passos, nada escrito, `.env`/compose/nginx do JLR com hash idêntico e containers intactos.
 
-### Onda 8 — Segurança, ensaio e entrega
-- [ ] Revisão de segurança do Ignitor (auditor + pentest); ensaio numa VPS limpa (ou VM): do zero ao GO, restore de backup, fluxo de compra real (fecha Onda 6 do `PLAN-0036`); documentação (`README`, guia de packs) e memória SFK.
+### Onda 8 — Segurança, ensaio e entrega ✅ parcial 2026-10-04
+- [x] Revisão `@security-auditor`: varredura de padrões perigosos (zero `shell=True`/`eval`/`pickle`/`innerHTML`), ataques manuais ao servidor em execução (401/400/403/404, sem CORS, só loopback), 5 endurecimentos (`$` no `.env` p/ o Compose, `$$` rejeitado em extras, `target_dir` absoluto, id de item validado na API, variável vazia em template = erro de plano).
+- [x] Documentação: README, `docs/PACKS.md`, `docs/SAFETY.md` §7.
+- [ ] **Ensaio numa VPS limpa** (domínio + DNS + root/sudo) e **compra com cartão real** (fecha a Onda 6 do `PLAN-0036`): não executável sem a VPS e o domínio do usuário.
+- [ ] Revisão de segurança por `@penetration-tester` com o Ignitor rodando como root numa VPS real (esta sessão cobriu revisão estática + ataques à API).
 
-> Prioridade de entrega: Ondas 1→4 dão um cockpit já útil em **modo leitura/checklist**; as ações (5→7) entram em incrementos, cada uma validada em dry-run antes de aplicar.
+> Achados do caminho (todos corrigidos e com teste): `dig` sem resposta lido como sucesso; sonda rodando sem o valor de que depende; `destroy` sem item explícito; `RunLock` falhando sem a pasta `state/`; `[hidden]` ignorado por `all:unset` nos botões; token do `serve` preso em buffer; template renderizando campo vazio em silêncio; `DATABASE_URL` gravada com `${...}` literal (`$$` do YAML); tarefas dependentes de segredo ainda inexistente não eram planejadas; `compose config` do override antes de ele existir; caminhos `/etc` fixos impediam teste (agora `SYSTEM_ROOT`); geração de `POSTGRES_PASSWORD` nova em servidor com banco (adoção).
 
----
+> Limites conhecidos: snapshot não inclui dump de banco; a idade do backup (`backup.verify`) precisa ser registrada por quem integrar o `backup.sh --verify`; ações privilegiadas exigem root/sudo sem senha; o modo `manual` do proxy não gera TLS; nginx+certbot não foi implementado (só Traefik).
 
 ## 8. Riscos
 1. **Escopo grande** → mitigado por ondas e por entregar valor cedo (cockpit + sondas antes das ações).
