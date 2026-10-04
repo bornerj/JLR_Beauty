@@ -34,3 +34,8 @@ restaurados (`PLAN-0038`, contagens por tabela idênticas, 41/41).
 - Ver `docs/config/SERVIDOR_UBUNTU.md` para o mapa de `/srv` e a operação.
 - Supera, para fins de ambiente, as notas de `ERR-0033`/`ERR-0091`; não conflita com nenhuma `DECISION` ACTIVE
   (verificado: 013–021 tratam de Admin V2, estoque, pagamento e conteúdo, não de hospedagem).
+- **Adendo 2026-10-04 (PLAN-0039):** `docker-compose.yml`, `docker/postgres/init-api-users.sh` e `.env.docker.example` deixaram de ter senhas default
+  para `jlr_api_rw`/`jlr_api_ro`. `DB_API_RW_PASSWORD` e `DB_API_RO_PASSWORD` agora são **obrigatórias** no `.env` (o compose e o init falham com
+  mensagem clara se faltarem). Os diretórios `/srv/{databases,data,backups}` não devem ser movidos com a stack no ar (ver `SERVIDOR_UBUNTU.md`).
+  Cron e cópia offsite do backup foram dispensados enquanto só houver dados de teste — reavaliar antes de dado real.
+

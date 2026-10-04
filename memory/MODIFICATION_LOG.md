@@ -11340,3 +11340,25 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261003_183448-PASS.md`.
 - **PLAN-0040** renomeado `PLAN-0040-NOTDONE-…` (registro histórico, não executado neste repositório).
 - **Nada do app mudou**: `apps/*`, `docker-compose.yml`, `nginx/`, `docker/` e `.env` intocados; containers sem reinício. Os arquivos removidos continuam no histórico do git (commits anteriores, sem reescrita).
 
+
+## 2026-10-04 — FECHAMENTO DE SESSÃO
+
+**Feito:** (1) `PLAN-0038` fechado (reboot validado; cron/offsite dispensados enquanto só há dados de teste). (2) `PLAN-0039` executado e fechado: senhas das roles `jlr_api_rw/ro` rotacionadas, defaults públicos removidos do compose/init/exemplo, validado pela rede (antiga rejeitada, nova aceita), `3ace59b`. (3) Incidente: `/srv/{data,databases,backups}` movidos por engano para `/srv/projects/`; dump e uploads de emergência tirados dos containers e diretórios devolvidos sem perda. (4) Iridium Ignitor construído (núcleo, cockpit, ações, pack JLR, 105 testes, dry-run real sem alterar nada) e depois **retirado deste repositório** para `github.com/bornerj/Iridium-Ignitor`; aqui `PLAN-0040` ficou NOTDONE.
+
+**Mudou:** `docker-compose.yml`, `docker/postgres/init-api-users.sh`, `.env.docker.example`, `docs/config/SERVIDOR_UBUNTU.md`, `memory/*`; fora do git: `.env` (senhas novas). `apps/*` intocado, sem migration.
+
+**Pendente (nomeado):** decidir apagar `/srv/backups/jlr_beauty/emergencia-20261003` e `env-pre-PLAN-0039.bak`; Onda 6 do `PLAN-0036` + `MERCADOPAGO_WEBHOOK_SECRET`; `PLAN-0019` (TLS, domínio); reavaliar cron/offsite antes de dado real; Ignitor Onda 9 (porta de entrada) no repo dele. Esta leva de fechamento está **sem commit**, aguardando aprovação.
+
+## 2026-10-04 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — `DECISION-022` com adendo; `DECISION-023` movida ao repo do Ignitor; nenhuma ACTIVE contradita |
+| State Integrity | PASS — `PLAN-0036`/`0019`/`0040-NOTDONE` rastreados; `0038`/`0039` DONE; desvio dos diretórios registrado |
+| Operational Memory | PASS — log, planos, BUILD-HISTORY e progress atualizados |
+| Debug Memory | PASS (N/A) — nenhum bug do código do JLR corrigido |
+| Technical Validation | PASS — `apps/*` intocado; Ignitor 105 testes; validações ao vivo do PLAN-0039 |
+| Regression Risk | PASS com ressalva — credenciais do banco sem teste automatizado no JLR |
+| Git Governance | PASS — commits/pushes autorizados; Git Record do PLAN-0039 preenchido; repos sincronizados |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261004_033721-PASS.md`.
