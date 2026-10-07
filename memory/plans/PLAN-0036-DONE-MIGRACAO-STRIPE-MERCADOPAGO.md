@@ -1,6 +1,6 @@
 # PLAN-0036 — Migração de Pagamentos: remover Stripe, integrar Mercado Pago (Checkout Pro) + dados de teste
 
-**Status:** 🟡 Ondas 0-5 e 7 concluídas, commitado (`dc4c174`, sem push ainda) — falta Onda 6 (validação manual com cartão real) antes do fechamento formal `-DONE-`
+**Status:** ✅ DONE (fechado em 2026-10-04) — Ondas 1-5 e 7 concluídas e publicadas. A **Onda 6** (validação com cartão real) **não foi executada** e foi deslocada, por decisão do usuário, para o `PLAN-0041`: pagamento com cartão é um **upgrade comercial** (entregue como "golden point", desligado por padrão — `MERCADOPAGO_ENABLED=false`); só será validado/ativado se a cliente contratar.
 **Data de abertura:** 2026-09-02
 **Escopo macro:** `apps/api` (módulo `payments/stripe` → `payments/mercadopago`, ~15 pontos em `routes/orders.ts`, 1 model em `schema.prisma`, `app.ts`, env vars), `apps/web` (`CheckoutContent.tsx` reescrito, 2 arquivos com texto/comentário Stripe), `apps/web/e2e` (1 spec), `sfk.toml`/`.env.docker.example`/`docs/integrations/`.
 **Decisão a registrar no fechamento:** `DECISION-021` (troca de provedor de pagamento — motivo, trade-offs, data).
@@ -94,7 +94,7 @@ Acesso direto à documentação oficial (`developers.mercadopago.com`) funcionou
       aplicações registradas; confirmado como credencial de sandbox de verdade (validado
       com uma chamada real à API, ver `ERR-0089`)
 - [x] Confirmar país/moeda da conta — Brasil confirmado no painel
-- [ ] Gerar a assinatura secreta do webhook — **ainda pendente**, tela separada
+- [➡️] Gerar a assinatura secreta do webhook — **movido para o `PLAN-0041` (Fase 3)**; sem ela o webhook é recusado, o que é correto enquanto a integração estiver desligada
       (Webhooks > Configurar notificações), não bloqueia o fluxo de checkout/confirmação,
       só a validação assíncrona via webhook
 - [x] Valores repassados via `.env` (raiz, gitignored) — nunca em texto no código/sfk.toml,
@@ -130,7 +130,7 @@ já referencia `PaymentWebhookEvent`).
       teste limpo, nenhum dado de teste deixado no banco. Achado real corrigido no processo:
       `ERR-0089` (MP rejeita `auto_return` sem `back_urls.success` publicamente alcançável —
       `localhost` neste ambiente, mesma limitação do `PLAN-0019`).
-- [ ] Teste manual do fluxo completo **com pagamento de cartão de verdade** (via
+- [➡️] Teste manual do fluxo completo **com pagamento de cartão de verdade** (movido para o `PLAN-0041`) (via
       `sandbox_init_point` num navegador, cartão de teste `APRO`) — ainda não feito; a criação
       da preferência já está validada, falta percorrer a página do Mercado Pago até o fim
       (Onda 6)
@@ -166,7 +166,8 @@ já referencia `PaymentWebhookEvent`).
 - [x] Grep final por `stripe`/`Stripe` em `apps/api/src` e `apps/web/src` — **zero resíduo**
       (nem funcional nem em comentário, backend e frontend)
 
-### Onda 6 — Matriz de dados de teste + validação manual
+### Onda 6 — Matriz de dados de teste + validação manual — ➡️ DESLOCADA para o `PLAN-0041` (Fase 4/5)
+> Decisão do usuário (2026-10-04): a validação com cartão deixou de ser pendência deste plano. Os itens abaixo continuam como roteiro de teste e **não foram executados**; vivem agora na Fase 4 do `PLAN-0041`, condicionada à contratação do recurso.
 Cartões oficiais de sandbox do Mercado Pago Brasil (confirme os números atuais no painel antes de usar — o MP costuma rotacioná-los):
 
 | Bandeira | Número | CVV | Validade |
@@ -217,11 +218,11 @@ Proposta de matriz mínima pra validar os 3 pedidos do usuário ("aprovar alguns
       decisão de segurança que não tomo sozinho sem perguntar)
 - [x] Rebuild Docker completo (`api`+`web`) + validado ao vivo: `/health` 200, `pageTexts`
       novo resolvendo corretamente via API real (`global.checkout.secure_badge`)
-- [ ] **Validação visual real do checkout ponta a ponta (navegador) — não executada**
+- [➡️] **Validação visual real do checkout ponta a ponta (navegador) — não executada; movida para o `PLAN-0041` (Fase 4)**
       (extensão Chrome indisponível nesta sessão). Fica pendência explícita, não
       "deveria funcionar" — ver Onda 6.
-- [ ] Git Record of Delivery — aguardando aprovação de commit do usuário
-- [ ] Plano **não renomeado `-DONE-` ainda** — Onda 6 (validação manual com cartão real)
+- [x] Git Record of Delivery — preenchido (ver seção abaixo)
+- [x] Plano renomeado `-DONE-` em 2026-10-04 (a Onda 6 foi deslocada para o `PLAN-0041`; antes: Onda 6 (validação manual com cartão real)
       segue em aberto; renomear só quando isso for concluído (ou o usuário decidir
       fechar mesmo assim)
 
@@ -267,8 +268,5 @@ Proposta de matriz mínima pra validar os 3 pedidos do usuário ("aprovar alguns
       ("pode commitar")
 - [x] Step 3 (Commit confirmation) — `dc4c174` em `main`, 35 arquivos
       (1543 inserções, 843 deleções; inclui a regularização do `PLAN-0035`)
-- [ ] Step 4 (Push authorization e resultado): **adiado por decisão explícita do
-      usuário** (2026-09-02) — "pode esperar a validação manual antes do push". Não é
-      falta de aprovação pendente, é uma escolha deliberada de não publicar até a
-      Onda 6 (cartão real num navegador) confirmar que o fluxo funciona ponta a ponta.
-- Push status: DEFERRED (deliberado, não pendente por omissão)
+- [x] Step 4 (Push authorization e resultado) — 2026-09-15: o push de `PLAN-0037`, aprovado pelo usuário, publicou o histórico linear da `main`, e com ele `dc4c174`/`08b3d0b` (Mercado Pago) em `origin/main` — **antes** da validação com cartão real (registrado e avisado ao usuário na época). Em 2026-10-04 o usuário decidiu que a validação real é um upgrade comercial (`PLAN-0041`) e que o código fica entregue e desligado.
+- Push status: COMPLETED

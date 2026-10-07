@@ -3,11 +3,12 @@ import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import {
   hashPassword,
-  isStrongPassword,
   signToken,
   verifyPassword,
+  burnPasswordCheck,
   createRefreshToken,
   findValidRefreshToken,
+  inspectRefreshToken,
   rotateRefreshToken,
   revokeRefreshToken,
   revokeAllRefreshTokens,
@@ -27,6 +28,7 @@ import {
 import { withDetail, formatZodDetail, applyEmailEnumerationJitter } from "../lib/routeHelpers";
 import { MSG } from "../lib/messages";
 import { recordAudit } from "../lib/auditLog";
+import { validateNewPassword } from "../lib/passwordPolicy";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/emailTemplates";
 
 const REFRESH_COOKIE = "jlr_rt";
@@ -127,10 +129,13 @@ authRouter.post("/auth/login", async (req: Request, res: Response) => {
       },
     });
 
+    // PLAN-0042 / Onda 3 — mesma resposta e mesmo custo de CPU para "e-mail inexistente" e
+    // "senha errada": o motivo real só vai para o AuditLog (servidor), nunca para o cliente.
     if (!user || !user.passwordHash) {
+      await burnPasswordCheck(password);
       await registerFailedLoginAttempt(req, identifier);
       recordAudit("LOGIN_FAILED", { req, meta: { reason: "user_not_found", email: identifier } });
-      res.status(401).json({ message: MSG.USER_NOT_REGISTERED });
+      res.status(401).json({ message: MSG.INVALID_CREDENTIALS });
       return;
     }
 
@@ -138,7 +143,7 @@ authRouter.post("/auth/login", async (req: Request, res: Response) => {
     if (!valid) {
       await registerFailedLoginAttempt(req, identifier);
       recordAudit("LOGIN_FAILED", { userId: user.id, req, meta: { reason: "wrong_password" } });
-      res.status(401).json({ message: MSG.WRONG_PASSWORD });
+      res.status(401).json({ message: MSG.INVALID_CREDENTIALS });
       return;
     }
 
@@ -207,7 +212,7 @@ authRouter.post("/auth/register", async (req: Request, res: Response) => {
     }
 
     const { name, email, password } = parsed.data;
-    if (!isStrongPassword(password)) {
+    if (!validateNewPassword(password, { email, name }).ok) {
       res.status(400).json({ message: MSG.WEAK_PASSWORD });
       return;
     }
@@ -282,8 +287,22 @@ authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
       return;
     }
 
-    const record = await findValidRefreshToken(oldToken);
-    if (!record) {
+    // PLAN-0042 / Onda 4 — distingue token inválido, corrida entre abas e REUSO de token revogado.
+    const { record, status } = await inspectRefreshToken(oldToken);
+    if (status === "reuse" && record) {
+      await revokeAllRefreshTokens(record.userId);
+      recordAudit("REFRESH_TOKEN_REUSE", { userId: record.userId, req });
+      logger.warn("Reuso de refresh token revogado — sessoes do usuario encerradas", { userId: record.userId });
+      res.clearCookie(REFRESH_COOKIE, clearRefreshCookieOptions);
+      res.status(401).json({ message: MSG.REFRESH_TOKEN_INVALID });
+      return;
+    }
+    if (status === "grace") {
+      // Aba concorrente acabou de rotacionar: o cookie do navegador já é o novo. Não apagar.
+      res.status(401).json({ message: MSG.REFRESH_TOKEN_INVALID });
+      return;
+    }
+    if (status !== "valid" || !record) {
       res.clearCookie(REFRESH_COOKIE, clearRefreshCookieOptions);
       res.status(401).json({ message: MSG.REFRESH_TOKEN_INVALID });
       return;
@@ -504,7 +523,7 @@ authRouter.post("/auth/reset-password", async (req: Request, res: Response) => {
 
     const { token, newPassword } = parsed.data;
 
-    if (!isStrongPassword(newPassword)) {
+    if (!validateNewPassword(newPassword).ok) {
       res.status(400).json({ message: MSG.WEAK_PASSWORD });
       return;
     }

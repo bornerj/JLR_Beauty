@@ -29,13 +29,13 @@ const normalizeAuthUser = (user: AuthUser): AuthUser => ({
 
 const messageMap: Record<string, string> = {
   "dados invalidos": "Dados inválidos",
-  "credenciais invalidas": "Credenciais inválidas",
-  "usuario nao cadastrado": "Usuário não cadastrado",
-  "senha incorreta": "Senha incorreta",
+  "credenciais invalidas": "E-mail ou senha inválidos",
   "erro interno no servidor": "Erro interno no servidor",
   "email ja cadastrado": "E-mail já cadastrado",
-  "senha fraca: use 8+ caracteres com maiuscula, minuscula, numero e caractere especial":
-    "Senha fraca: use 8+ caracteres com maiúscula, minúscula, número e caractere especial",
+  "senha fraca: use 10+ caracteres com maiuscula, minuscula, numero e caractere especial, sem palavras comuns nem dados do seu cadastro":
+    "Senha fraca: use 10+ caracteres com maiúscula, minúscula, número e caractere especial, sem palavras comuns (como \"senha\" ou \"admin\") nem dados do seu cadastro",
+  "nao e possivel remover, desativar ou rebaixar o ultimo usuario master ativo":
+    "Não é possível remover, desativar ou rebaixar o último usuário MASTER ativo",
   "usuario nao encontrado": "Usuário não encontrado",
   "conteudo nao encontrado": "Conteúdo não encontrado",
   "nao autorizado": "Não autorizado",

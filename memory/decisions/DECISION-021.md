@@ -72,3 +72,6 @@ manifest de headers, não sobre o body (não precisa de `express.raw()`); 3 `bac
 - `MERCADOPAGO_WEBHOOK_SECRET` real (gerado no painel, tela de Webhooks) ainda não foi
   configurado neste ambiente — sem ele, a confirmação assíncrona via webhook não
   funciona (o retorno síncrono do navegador funciona normalmente).
+
+**Adendo 2026-10-04:** o pagamento com Mercado Pago passa a ser tratado como **upgrade comercial opcional**. A integração fica entregue e desligada (`MERCADOPAGO_ENABLED=false`) como "golden point"; a validação com cartão real e a ativação em produção foram movidas do `PLAN-0036` (agora `-DONE-`) para o `PLAN-0041` (BACKLOG, só se a cliente contratar). A decisão de provedor (Mercado Pago, Checkout Pro) não muda.
+

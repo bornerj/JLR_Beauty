@@ -14,6 +14,11 @@ export type AuditAction =
   | "ROLE_CHANGE"
   | "PASSWORD_RESET_REQUEST"
   | "PASSWORD_RESET_SUCCESS"
+  // PLAN-0042 — hardening de autenticação/autorização
+  | "USER_SENSITIVE_UPDATE"
+  | "USER_DELETED"
+  | "USER_ACCESS_DENIED"
+  | "REFRESH_TOKEN_REUSE"
   // PLAN-0020 — estoque e vendas (PRD 3.3: ações sensíveis auditadas)
   | "STOCK_ENTRY"
   | "STOCK_CONSUMPTION"

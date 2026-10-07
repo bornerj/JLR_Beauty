@@ -15,12 +15,13 @@ export const conciergePublicWindowMs   = 60 * 1000; // 1 minute
 export const conciergePublicMaxAttempts = 10;
 export const conciergePublicBlockMs    = 60 * 1000; // 1 minute block
 
-export const getClientIp = (req: Request): string => {
-  const fwd = req.headers["x-forwarded-for"];
-  if (typeof fwd === "string" && fwd.trim()) return fwd.split(",")[0]?.trim() || req.ip || "unknown";
-  if (Array.isArray(fwd) && fwd.length)       return fwd[0]?.trim() || req.ip || "unknown";
-  return req.ip || "unknown";
-};
+/**
+ * PLAN-0042 / Onda 2 — IP do cliente = `req.ip`, nunca o cabeçalho cru.
+ * Com `trust proxy 1` (app.ts) o Express usa só o salto escrito pelo nginx, que sobrescreve o
+ * `X-Forwarded-For` com `$remote_addr`. Antes, ler o 1º item do cabeçalho deixava o cliente
+ * escolher o próprio IP (burlava rate limit de login/cupom/concierge e falsificava o AuditLog).
+ */
+export const getClientIp = (req: Pick<Request, "ip">): string => req.ip || "unknown";
 
 export const buildLoginAttemptKey = (req: Request, identifier: string): string => {
   const ip = getClientIp(req);
@@ -28,11 +29,17 @@ export const buildLoginAttemptKey = (req: Request, identifier: string): string =
   return `${ip}::${id}`;
 };
 
-export const checkLoginAttemptBlock = async (
-  req: Request,
-  identifier: string,
-): Promise<{ blocked: boolean; retryAfterSeconds: number }> => {
-  const key = buildLoginAttemptKey(req, identifier);
+/**
+ * Limite por CONTA (independe do IP): barra ataque distribuído contra um e-mail só. O teto é
+ * bem maior que o do par IP+e-mail para que um terceiro não consiga travar a conta alheia
+ * com poucas tentativas — o bloqueio dura só `loginAttemptBlockMs`.
+ */
+export const accountAttemptMaxFailures = Number(process.env.AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS || 30);
+
+export const buildAccountAttemptKey = (identifier: string): string =>
+  `acct::${identifier.trim().toLowerCase() || "unknown"}`;
+
+const checkBlockByKey = async (key: string): Promise<{ blocked: boolean; retryAfterSeconds: number }> => {
   const now = new Date();
 
   const record = await prisma.loginAttempt.findUnique({ where: { key } });
@@ -52,8 +59,7 @@ export const checkLoginAttemptBlock = async (
   return { blocked: false, retryAfterSeconds: 0 };
 };
 
-export const registerFailedLoginAttempt = async (req: Request, identifier: string): Promise<void> => {
-  const key = buildLoginAttemptKey(req, identifier);
+const registerFailureByKey = async (key: string, maxFailures: number): Promise<void> => {
   const now = new Date();
 
   const current = await prisma.loginAttempt.findUnique({ where: { key } });
@@ -68,7 +74,7 @@ export const registerFailedLoginAttempt = async (req: Request, identifier: strin
   }
 
   const nextFailures = current.failures + 1;
-  const blockedUntil = nextFailures >= loginAttemptMaxFailures
+  const blockedUntil = nextFailures >= maxFailures
     ? new Date(now.getTime() + loginAttemptBlockMs)
     : now;
 
@@ -78,9 +84,26 @@ export const registerFailedLoginAttempt = async (req: Request, identifier: strin
   });
 };
 
+/** Bloqueado se o par IP+e-mail OU a conta (qualquer IP) estourou o limite. */
+export const checkLoginAttemptBlock = async (
+  req: Request,
+  identifier: string,
+): Promise<{ blocked: boolean; retryAfterSeconds: number }> => {
+  const [byPair, byAccount] = await Promise.all([
+    checkBlockByKey(buildLoginAttemptKey(req, identifier)),
+    checkBlockByKey(buildAccountAttemptKey(identifier)),
+  ]);
+  return byPair.retryAfterSeconds >= byAccount.retryAfterSeconds ? byPair : byAccount;
+};
+
+export const registerFailedLoginAttempt = async (req: Request, identifier: string): Promise<void> => {
+  await registerFailureByKey(buildLoginAttemptKey(req, identifier), loginAttemptMaxFailures);
+  await registerFailureByKey(buildAccountAttemptKey(identifier), accountAttemptMaxFailures);
+};
+
+/** Login bem-sucedido zera só o par IP+e-mail; o contador da conta decai pela janela. */
 export const clearFailedLoginAttempts = async (req: Request, identifier: string): Promise<void> => {
-  const key = buildLoginAttemptKey(req, identifier);
-  await prisma.loginAttempt.delete({ where: { key } }).catch(() => {});
+  await prisma.loginAttempt.delete({ where: { key: buildLoginAttemptKey(req, identifier) } }).catch(() => {});
 };
 
 // Coupon validation rate limiting

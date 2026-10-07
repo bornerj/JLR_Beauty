@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { SignOptions } from "jsonwebtoken";
 import prisma from "./prisma";
+import { classifyRefreshToken } from "./refreshPolicy";
 
 const JWT_SECRET = (process.env.JWT_SECRET || "").trim();
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
@@ -26,6 +27,15 @@ export function hashPassword(password: string) {
 
 export function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
+}
+
+// PLAN-0042 / Onda 3 — hash descartável com o mesmo custo (12) dos hashes reais. Quando o e-mail
+// não existe, o login ainda gasta um bcrypt.compare: sem isso a resposta "rápida" denunciaria
+// que a conta não existe (canal de tempo).
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(24).toString("hex"), 12);
+
+export async function burnPasswordCheck(password: string): Promise<void> {
+  await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
 }
 
 export function signToken(payload: JwtPayload) {
@@ -68,6 +78,18 @@ export async function findValidRefreshToken(plaintext: string) {
   return record;
 }
 
+/**
+ * Inspeciona (sem alterar nada) o refresh token apresentado, inclusive os já revogados, para
+ * que a rota consiga distinguir "inválido" de "reuso de token revogado" (ver `refreshPolicy.ts`).
+ */
+export async function inspectRefreshToken(plaintext: string) {
+  const record = await prisma.refreshToken.findUnique({
+    where: { token: hashToken(plaintext) },
+    include: { user: { select: { id: true, role: true, status: true } } },
+  });
+  return { record, status: classifyRefreshToken(record) };
+}
+
 export async function rotateRefreshToken(oldPlaintext: string, userId: number): Promise<string | null> {
   const oldHash = hashToken(oldPlaintext);
   const existing = await prisma.refreshToken.findUnique({ where: { token: oldHash } });
@@ -79,7 +101,13 @@ export async function rotateRefreshToken(oldPlaintext: string, userId: number): 
   ) {
     return null;
   }
-  await prisma.refreshToken.update({ where: { id: existing.id }, data: { revokedAt: new Date() } });
+  // PLAN-0042 / Onda 4 — revogação condicional e atômica: se duas requisições chegarem juntas com o
+  // mesmo token, só uma consegue (count === 1); a outra cai fora em vez de gerar 2 sucessores.
+  const claimed = await prisma.refreshToken.updateMany({
+    where: { id: existing.id, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+  if (claimed.count !== 1) return null;
   return createRefreshToken(userId);
 }
 

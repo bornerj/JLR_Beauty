@@ -11362,3 +11362,55 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261003_183448-PASS.md`.
 | Git Governance | PASS — commits/pushes autorizados; Git Record do PLAN-0039 preenchido; repos sincronizados |
 
 Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261004_033721-PASS.md`.
+
+## 2026-10-04 — Pós-fechamento: PLAN-0036 DONE, PLAN-0041 (ativação do Mercado Pago) e retirada do Ignitor das pendências
+
+- **Pedido do usuário**: (1) o Iridium Ignitor não será usado no JLR_Beauty — sair de qualquer pendência; (2) pagamento com cartão passa a ser **upgrade comercial** (foi entregue como "golden point", sem a cliente pedir): sair da lista de pendências, virar uma fase condicionada à contratação, encerrar o `PLAN-0036` se fosse a única pendência; (3) criar um plano completo para ativar o pagamento caso seja contratado.
+- **Feito**: `PLAN-0036` → `PLAN-0036-DONE-…` (Onda 6 deslocada para o `PLAN-0041`; Git Record completo: push de `dc4c174` ocorrera em 2026-09-15); `PLAN-0040-NOTDONE` → `PLAN-0040-SUPERADO-…` (encerrado para o JLR); `PLAN-0041-ATIVACAO-PAGAMENTO-MERCADOPAGO.md` criado (BACKLOG; 9 fases: proposta comercial, pré-requisitos da cliente, infra/HTTPS, configuração, sandbox, produção controlada, operação, segurança/LGPD, go-live/rollback); `DECISION-021` com adendo; `docs/integrations/mercadopago.md` com ponteiro; `progress.md` atualizado (linha de pagamentos, next_action, planos abertos).
+- **Achado (código, não alterado)**: com `MERCADOPAGO_ENABLED=false` o botão "Concluir Compra" do checkout continua visível e falha ao clicar (`CheckoutContent.tsx`, `startMercadoPagoCheckout`). Registrado como item **P-1/P-2** do `PLAN-0041` (recomendado independente da contratação; exige plano/aprovação próprios). Também confirmado: o webhook sem `MERCADOPAGO_WEBHOOK_SECRET` é recusado (`mercadopago_webhook_secret_missing`).
+- **Validações**: leitura do código (`config.ts`, `publicCheckout.ts`, `orders.ts`, `CheckoutContent.tsx`); nenhuma alteração em `apps/*`, `docker-compose.yml` ou `.env`; containers sem reinício. Auditoria de fechamento (`AUDIT_CHECKLIST_20261004_033721-PASS`) continua válida: State Integrity agora tem **menos** planos abertos (`PLAN-0019` e o backlog `PLAN-0041`).
+- **Pendente (nomeado)**: ver `progress.md`. Sem commit (aguardando aprovação).
+
+## 2026-10-07 — PLAN-0042: hardening da autenticação e autorização (auth próprio mantido) ##bug ##evolution
+
+- **Contexto**: consultor recomendou não usar login próprio. Diagnóstico `@security-auditor` (leitura de código) concluiu que a base é boa e os riscos reais estavam na autorização da API e na infra; usuário decidiu **não migrar** para provedor externo e endurecer o que existe (`DECISION-023`), com MFA como opcional documentado.
+- **Feito (Ondas 1-5, 7a, 7b)**: (1) hierarquia MASTER > ADMIN em `/users` (ADMIN tomava conta/apagava MASTER — `ERR-0097`) + guarda do último MASTER + revogação de sessões na troca de senha/e-mail/desativação; (2) IP confiável (nginx sobrescreve `X-Forwarded-For`, `getClientIp` = `req.ip`), limite por conta, `limit_req` em `/api/auth/` (`ERR-0098`); (3) login uniforme + bcrypt dummy (`ERR-0099`); (4) refresh com rotação atômica e detecção de reuso (janela 10 s) e política de senha 10+/sem senhas comuns (`ERR-0100`); 7a nginx `server_tokens off`/`Permissions-Policy`; 7b runbook `docs/config/HARDENING_VPS.md` (nada aplicado no host).
+- **Arquivos**: `apps/api/src/lib/{userGuards,passwordPolicy,refreshPolicy}.ts` (+ testes), `rateLimiter.ts`, `auth.ts`, `auditLog.ts`, `messages.ts`, `routes/{users,auth}.ts`, `package.json` (`test:auth`); `apps/web/src/lib/auth.ts`, `UserFormModal.tsx`, `RedefinirSenhaContent.tsx`; `nginx/nginx.conf`; `.env.docker.example`, `sfk.toml` (nova variável `AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS`); docs/memória. **Zero migration.**
+- **Validações**: `apps/api` 193/193 (26 novos); `tsc -b` api+web e `eslint` limpos; `nginx -t`; rebuild `api web` + `nginx -s reload`; validação ao vivo com contas de teste (criadas e removidas): todas as verificações OK (ver plano, "Resultado da execução").
+- **Efeitos visíveis ao usuário**: mensagem de login passa a ser "E-mail ou senha inválidos"; senhas novas exigem 10+ caracteres e não podem ser comuns; um ADMIN não edita/exclui outro ADMIN nem MASTER (o Admin V2 mostrará "Acesso negado"); sessões do alvo caem quando a senha é trocada por um admin.
+- **Ambiente**: `node_modules` do host sem bits de execução (cópia do Zorin) — `chmod +x` só no `esbuild`; `npm run` não funciona no host, testes rodados via `tsx` direto.
+- **Pendente (nomeado)**: Onda 6 (access token fora do `localStorage`) — decisão do usuário; Onda 8 (MFA/TOTP) — opcional, só desenho; HTTPS (`PLAN-0019`, depende de domínio) continua o maior risco restante; aplicar itens do runbook no host só com aprovação por item; testar manualmente no navegador o login MASTER e a tela Usuários. **Sem commit** (aguardando aprovação) — inclui também a leva de memória de 2026-10-04 ainda não commitada.
+
+## 2026-10-07 — PLAN-0042: Onda 6 adiada até o PLAN-0019
+
+- **Decisão do usuário**: após análise de impacto (94 chamadas a `getToken()` em ~30 telas, mas mudança concentrada em `lib/auth.ts`/`main.tsx`/`RequireAdmin.tsx`; custo: refresh a cada F5, corrida entre abas, dependência do cookie de refresh), a Onda 6 (access token só em memória) fica **adiada até o `PLAN-0019`** (HTTPS + `TLS_ENABLED=true`).
+- **Arquivos alterados** (só memória, zero código): `memory/plans/PLAN-0042-…` (Onda 6 com motivos, impacto, passos de retomada e gatilho), `memory/progress.md`, `memory/PR-0003-DESCRIPTION.md`.
+- **Pendente**: Onda 8 (MFA) opcional; retomar a Onda 6 junto do `PLAN-0019`. Sem commit.
+
+## 2026-10-07 — PLAN-0043 criado: catálogo de melhorias futuras (MFA e pagamento por cartão como upgrades)
+
+- **Decisão do usuário**: MFA entra na mesma categoria do pagamento por cartão — feature futura/upgrade, só após o primeiro retorno financeiro e, se pedida, negociada e paga. Criar um plano único de melhorias futuras.
+- **Feito** (só memória, zero código): `PLAN-0043-MELHORIAS-FUTURAS.md` (BACKLOG; regra de entrada; catálogo F-1 pagamento → `PLAN-0041`, F-2 MFA com o desenho completo movido da Onda 8, F-3 token em memória → `PLAN-0042` Onda 6); `PLAN-0042` Onda 8 virou ponteiro e saiu do escopo ativo; `PLAN-0041` aponta para o catálogo; `progress.md` e `PR-0003` ajustados.
+- **Pendente**: nada novo; itens do catálogo só iniciam por contratação. Sem commit.
+
+## 2026-10-07 — FECHAMENTO DE SESSÃO
+
+**Feito:** (1) Diagnóstico de segurança do login (`@security-auditor`) a pedido, após aviso de consultor; decisão de manter o auth próprio (`DECISION-023`). (2) `PLAN-0042` criado e executado: Ondas 1-5, 7a e 7b — hierarquia MASTER > ADMIN e guarda do último MASTER (`ERR-0097`), IP confiável + limite por conta + `limit_req` (`ERR-0098`), login uniforme (`ERR-0099`), detecção de reuso de refresh + política de senha 10+ (`ERR-0100`), runbook `docs/config/HARDENING_VPS.md`. (3) Onda 6 (token em memória) adiada até o `PLAN-0019`; MFA movido para o novo `PLAN-0043` (melhorias futuras, junto do pagamento por cartão).
+
+**Mudou:** `apps/api` (lib/rotas de auth e usuários, testes), `apps/web` (mensagens e 2 telas de senha), `nginx/nginx.conf`, `.env.docker.example`, `sfk.toml`, docs e memória. Zero migration. Containers `api`/`web` reconstruídos e nginx recarregado; `.env` intocado.
+
+**Pendente (nomeado):** usuário testar no navegador login MASTER + tela Usuários; aprovar commit (leva também a memória de 04/10) e, separadamente, push; `PLAN-0042` só vira `-DONE-` após o Git Record; aplicar o runbook de hardening no host item a item (só com aprovação); `PLAN-0019` (HTTPS, depende de domínio) e retomada da Onda 6; decidir apagar `/srv/backups/jlr_beauty/emergencia-20261003` e `env-pre-PLAN-0039.bak`; reavaliar cron/offsite do backup antes de dado real; itens do `PLAN-0043` só por contratação.
+
+## 2026-10-07 — SESSION AUDIT — PASS
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — `DECISION-023` criada; nenhuma ACTIVE contradita |
+| State Integrity | PASS — `PLAN-0019/0041/0042/0043` abertos e rastreados; Onda 6 adiada e MFA movido, ambos registrados |
+| Operational Memory | PASS — log, plano, progress, PR-0003 atualizados |
+| Debug Memory | PASS — `ERR-0097..0100` registrados |
+| Technical Validation | PASS — 193/193 testes, tsc/eslint/nginx -t limpos, validação ao vivo OK, sem migration |
+| Regression Risk | PASS com ressalva — sem teste automatizado das rotas HTTP; teste manual do usuário pendente |
+| Git Governance | PASS — nada commitado nem pushado (sem autorização) |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261007_203130-PASS.md`.

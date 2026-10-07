@@ -127,6 +127,7 @@ vars = [
   "AUTH_RATE_LIMIT_WINDOW_MS",          # rate limit window in ms
   "AUTH_RATE_LIMIT_MAX_ATTEMPTS",       # max login attempts per window
   "AUTH_RATE_LIMIT_BLOCK_MS",           # block duration in ms
+  "AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS", # max failed logins per ACCOUNT (any IP) per window (PLAN-0042, default 30)
   "MASTER_EMAIL",                       # email do usuário master (criado no seed)
   "MASTER_PASSWORD",                    # senha do usuário master
   "MERCADOPAGO_ENABLED",                # true | false

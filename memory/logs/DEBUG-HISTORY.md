@@ -641,3 +641,31 @@ SINTOMA: após a migração para o servidor Ubuntu (`PLAN-0038`), o site públic
 CAUSA_RAIZ: `.env` tinha `CORS_ORIGIN=http://localhost`. O navegador envia `Origin: http://10.10.10.2` em POST (GET same-origin não envia `Origin`, por isso só o POST falhava) e `apps/api/src/app.ts` bloqueia origens fora da lista com `"Origin blocked by CORS policy"` → handler de erro devolve 403 `MSG.FORBIDDEN`. No Zorin sempre se acessava por `localhost`, então nunca apareceu.
 ACAO: `CORS_ORIGIN=http://localhost,http://10.10.10.2,http://192.168.0.14` (só `.env`, não versionado) + `docker compose up -d api` (`restart` não relê o `.env`). Verificado com `curl`: origens liberadas passam do CORS (400 por payload de teste inválido), `http://evil.example` segue 403. Confirmado pelo usuário: login MASTER funcionou, telas, dados e imagens ok. Regra anotada em `docs/config/SERVIDOR_UBUNTU.md`: todo endereço de acesso novo entra no `CORS_ORIGIN`.
 CONTEXTO: 2026-10-03, `PLAN-0038` Onda 3. Código intocado — é configuração de ambiente. Efeito colateral: `APP_WEB_URL` continua `http://localhost` (afeta só links gerados em e-mails/Mercado Pago; vira problema com acesso externo/domínio, `PLAN-0019`).
+
+# ID: ERR-0097: ADMIN conseguia tomar a conta de um MASTER (ou apagá-lo) via `PATCH`/`DELETE /users/:id` ##bug
+SINTOMA: achado de auditoria de segurança (2026-10-07), não reportado por usuário. Um ADMIN podia trocar senha, e-mail ou status de um MASTER e logar como ele, ou excluí-lo.
+CAUSA_RAIZ: as rotas só exigiam `requireAdmin`; a guarda do `ERR-0093` cobria apenas a troca de PAPEL. A troca de senha por essa rota também não validava força, não revogava refresh tokens e não gerava auditoria. `POST /users` deixava ADMIN criar outro ADMIN.
+ACAO: `lib/userGuards.ts` (funções puras): MASTER > ADMIN > demais; ADMIN não toca MASTER/ADMIN, só MASTER cria/exclui ADMIN/MASTER; nunca remover/desativar/rebaixar o último MASTER ativo (`MSG.LAST_MASTER`); troca de senha/e-mail ou desativação revoga as sessões do alvo; novas ações de auditoria `USER_SENSITIVE_UPDATE`/`USER_DELETED`/`USER_ACCESS_DENIED`.
+VALIDACAO: 12 testes unitários + ao vivo contra a API real (ADMIN de teste → MASTER: senha/e-mail/status/exclusão = 403, criar ADMIN = 403, desativar a si mesmo = 403; contas de teste removidas).
+CONTEXTO: `PLAN-0042` Onda 1, sessão 2026-10-07. Decisão: `DECISION-023`.
+
+# ID: ERR-0098: IP do cliente falsificável via `X-Forwarded-For` — rate limit e AuditLog burláveis ##bug
+SINTOMA: achado de auditoria (2026-10-07). Um cliente podia escolher o próprio IP e zerar o limite de tentativas de login/cupom/concierge e poluir o IP gravado no `audit_logs`.
+CAUSA_RAIZ: `nginx.conf` usava `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for` (concatena o valor enviado pelo cliente) e `getClientIp()` lia o PRIMEIRO item do cabeçalho. Também não havia limite por conta nem `limit_req` no nginx.
+ACAO: nginx sobrescreve com `$remote_addr`; `getClientIp()` usa `req.ip` (`trust proxy 1`); contador por conta (`acct::<email>`, teto `AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS`=30) além do par IP+e-mail; `limit_req` 30 req/min (burst 20) em `/api/auth/`; `server_tokens off`, `Permissions-Policy`, remoção do `X-XSS-Protection` obsoleto.
+VALIDACAO: teste unitário do `getClientIp` com XFF forjado; ao vivo: `X-Forwarded-For: 6.6.6.6, 7.7.7.7` NÃO aparece no `audit_logs`; contador `acct::` gravado; rajada de 70 requisições em `/api/auth/` → 51 respostas 429.
+CONTEXTO: `PLAN-0042` Onda 2. Sem migration (a chave do `login_attempts` é string).
+
+# ID: ERR-0099: login enumerava contas e vazava existência pelo tempo de resposta ##bug
+SINTOMA: achado de auditoria (2026-10-07). "usuario nao cadastrado" vs "senha incorreta"; e o bcrypt só rodava quando o e-mail existia.
+CAUSA_RAIZ: mensagens distintas por ramo e ausência de custo equivalente no ramo "inexistente".
+ACAO: resposta única `credenciais invalidas` (exibida como "E-mail ou senha inválidos"); `burnPasswordCheck()` executa um `bcrypt.compare` com hash descartável de custo 12 quando o e-mail não existe. O motivo real continua só no `audit_logs`. `MSG.USER_NOT_REGISTERED`/`WRONG_PASSWORD` removidos.
+VALIDACAO: ao vivo — mesmo status e mesmo corpo; tempos 1352 ms (inexistente) vs 1350 ms (senha errada).
+CONTEXTO: `PLAN-0042` Onda 3.
+
+# ID: ERR-0100: refresh token sem detecção de reuso e rotação não atômica; política de senha só de complexidade ##bug
+SINTOMA: achado de auditoria (2026-10-07). Token já revogado reapresentado era só recusado (sinal de roubo ignorado); duas requisições simultâneas podiam gerar dois sucessores; `Senha@123` era aceita.
+CAUSA_RAIZ: `rotateRefreshToken` lia e depois atualizava sem condição; nenhuma distinção entre token inválido e token revogado; `isStrongPassword` só checava classes de caracteres.
+ACAO: `lib/refreshPolicy.ts` (`valid|invalid|grace|reuse`, janela de 10 s para duas abas): reuso fora da janela revoga TODAS as sessões do usuário + `REFRESH_TOKEN_REUSE`; revogação via `updateMany(where: revokedAt null)` (atômica); `lib/passwordPolicy.ts` — 10+ caracteres, bloqueio de fragmentos comuns PT/EN (com leet), repetição e dados do cadastro, aplicada em registro/reset/senha definida por admin (login continua aceitando senhas antigas).
+VALIDACAO: 15 testes unitários novos; ao vivo — replay dentro da janela = 401 sem derrubar a sessão; replay fora da janela = 401 e a sessão legítima também cai; `REFRESH_TOKEN_REUSE` auditado.
+CONTEXTO: `PLAN-0042` Ondas 4-5.

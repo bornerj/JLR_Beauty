@@ -1,7 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
-import { hashPassword } from "../lib/auth";
+import { hashPassword, revokeAllRefreshTokens } from "../lib/auth";
+import { validateNewPassword } from "../lib/passwordPolicy";
+import {
+  canCreateWithRole,
+  canDeleteUser,
+  canModifyUser,
+  shouldRevokeSessions,
+  wouldRemoveLastMaster,
+} from "../lib/userGuards";
 import { requireAuth, requireAdmin, requireMaster, type AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
 import { withDetail, formatZodDetail, urlOrPathSchema } from "../lib/routeHelpers";
@@ -44,6 +52,10 @@ const roleSchema = z.object({
 
 const usersRouter = Router();
 
+// PLAN-0042 / Onda 1 — nunca deixar o sistema sem MASTER ativo.
+const countOtherActiveMasters = (excludeUserId: number): Promise<number> =>
+  prisma.user.count({ where: { role: "MASTER", status: "ATIVO", id: { not: excludeUserId } } });
+
 usersRouter.get("/users", requireAuth, requireAdmin, async (_req, res) => {
   const users = await prisma.user.findMany({
     select: {
@@ -77,8 +89,13 @@ usersRouter.post("/users", requireAuth, requireAdmin, async (req: AuthRequest, r
     return;
   }
   const payload = parsed.data;
-  if (payload.role === "MASTER" && req.user?.role !== "MASTER") {
+  const actor = { id: req.user!.id, role: req.user!.role };
+  if (!canCreateWithRole(actor, payload.role).allowed) {
     res.status(403).json({ message: MSG.FORBIDDEN });
+    return;
+  }
+  if (!validateNewPassword(payload.password, { email: payload.email, name: payload.name }).ok) {
+    res.status(400).json({ message: MSG.WEAK_PASSWORD });
     return;
   }
   const existing = await prisma.user.findUnique({ where: { email: payload.email.toLowerCase() } });
@@ -126,9 +143,48 @@ usersRouter.patch("/users/:id", requireAuth, requireAdmin, async (req: AuthReque
     return;
   }
   const payload = parsed.data;
-  const existingUser = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, email: true, status: true },
+  });
   if (!existingUser) {
     res.status(404).json({ message: MSG.USER_NOT_FOUND });
+    return;
+  }
+  // PLAN-0042 / Onda 1 — hierarquia: ADMIN nunca atinge MASTER (nem outro ADMIN); antes bastava
+  // `requireAdmin` para trocar a senha de um MASTER e assumir a conta.
+  const changedFields = (Object.keys(payload) as Array<keyof typeof payload>).filter(
+    (key) => payload[key] !== undefined,
+  );
+  const guard = canModifyUser(
+    { id: req.user!.id, role: req.user!.role },
+    { id: userId, role: existingUser.role },
+    changedFields,
+  );
+  if (!guard.allowed) {
+    recordAudit("USER_ACCESS_DENIED", {
+      userId,
+      req,
+      meta: { reason: guard.reason, attemptedBy: req.user?.id, via: "PATCH /users/:id", fields: changedFields },
+    });
+    res.status(403).json({ message: MSG.FORBIDDEN });
+    return;
+  }
+  if (
+    payload.password &&
+    !validateNewPassword(payload.password, { email: payload.email ?? existingUser.email, name: payload.name }).ok
+  ) {
+    res.status(400).json({ message: MSG.WEAK_PASSWORD });
+    return;
+  }
+  if (
+    wouldRemoveLastMaster(
+      existingUser,
+      { newStatus: payload.status, newRole: payload.role },
+      await countOtherActiveMasters(userId),
+    )
+  ) {
+    res.status(409).json({ message: MSG.LAST_MASTER });
     return;
   }
   // ERR-0093 — a checagem original só bloqueava PROMOVER alguém a MASTER; um ADMIN
@@ -169,6 +225,23 @@ usersRouter.patch("/users/:id", requireAuth, requireAdmin, async (req: AuthReque
     where: { id: userId },
     data,
   });
+  const emailChanged = payload.email !== undefined && payload.email.toLowerCase() !== existingUser.email;
+  if (shouldRevokeSessions({ passwordChanged: Boolean(payload.password), emailChanged, newStatus: payload.status })) {
+    await revokeAllRefreshTokens(userId);
+  }
+  if (payload.password || emailChanged || payload.status !== undefined || payload.emailVerified !== undefined) {
+    recordAudit("USER_SENSITIVE_UPDATE", {
+      userId,
+      req,
+      meta: {
+        changedBy: req.user?.id,
+        passwordChanged: Boolean(payload.password),
+        emailChanged,
+        statusChanged: payload.status !== undefined && payload.status !== existingUser.status,
+        emailVerifiedChanged: payload.emailVerified !== undefined,
+      },
+    });
+  }
   if (isRoleChange) {
     recordAudit("ROLE_CHANGE", {
       userId,
@@ -212,6 +285,10 @@ usersRouter.patch("/users/:id/role", requireAuth, requireMaster, async (req: Aut
     res.status(404).json({ message: MSG.USER_NOT_FOUND });
     return;
   }
+  if (wouldRemoveLastMaster(existing, { newRole: parsed.data.role }, await countOtherActiveMasters(userId))) {
+    res.status(409).json({ message: MSG.LAST_MASTER });
+    return;
+  }
   const updated = await prisma.user.update({
     where: { id: userId },
     data: { role: parsed.data.role },
@@ -236,15 +313,30 @@ usersRouter.delete("/users/:id", requireAuth, requireAdmin, async (req: AuthRequ
     res.status(400).json({ message: MSG.INVALID_PAYLOAD });
     return;
   }
-  if (req.user?.id === userId) {
-    res.status(403).json({ message: MSG.FORBIDDEN });
-    return;
-  }
   const existing = await prisma.user.findUnique({ where: { id: userId } });
   if (!existing) {
     res.status(404).json({ message: MSG.USER_NOT_FOUND });
     return;
   }
+  const guard = canDeleteUser({ id: req.user!.id, role: req.user!.role }, { id: userId, role: existing.role });
+  if (!guard.allowed) {
+    recordAudit("USER_ACCESS_DENIED", {
+      userId,
+      req,
+      meta: { reason: guard.reason, attemptedBy: req.user?.id, via: "DELETE /users/:id" },
+    });
+    res.status(403).json({ message: MSG.FORBIDDEN });
+    return;
+  }
+  if (wouldRemoveLastMaster(existing, { deleting: true }, await countOtherActiveMasters(userId))) {
+    res.status(409).json({ message: MSG.LAST_MASTER });
+    return;
+  }
+  recordAudit("USER_DELETED", {
+    userId,
+    req,
+    meta: { deletedRole: existing.role, deletedBy: req.user?.id },
+  });
   await prisma.user.delete({ where: { id: userId } });
   res.status(204).send();
 });

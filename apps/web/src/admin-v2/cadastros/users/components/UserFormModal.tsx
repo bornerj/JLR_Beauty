@@ -140,12 +140,12 @@ export function UserFormModal({
       return;
     }
     const password = form.password.trim();
-    if (!editing && password.length < 8) {
-      setLocalError("Informe uma senha com pelo menos 8 caracteres.");
+    if (!editing && password.length < 10) {
+      setLocalError("Informe uma senha com pelo menos 10 caracteres.");
       return;
     }
-    if (editing && password && password.length < 8) {
-      setLocalError("A nova senha precisa ter pelo menos 8 caracteres (ou deixe em branco pra manter a atual).");
+    if (editing && password && password.length < 10) {
+      setLocalError("A nova senha precisa ter pelo menos 10 caracteres (ou deixe em branco pra manter a atual).");
       return;
     }
     const ratingRaw = form.rating.trim();
@@ -229,7 +229,7 @@ export function UserFormModal({
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder={editing ? "Deixe em branco pra manter a atual" : "Mínimo 8 caracteres"}
+                placeholder={editing ? "Deixe em branco pra manter a atual" : "Mínimo 10 caracteres"}
                 className="rounded-lg border border-primary/60 bg-white px-3 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-primary dark:bg-forest-green"
               />
             </div>

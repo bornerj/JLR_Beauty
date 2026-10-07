@@ -1,6 +1,6 @@
 # PLAN-0040 — Iridium Ignitor (I²): programa de setup/ignição reutilizável, estilo checklist de aviação
 
-**Status:** ⛔ NOTDONE no JLR_Beauty — o Iridium Ignitor passou a ser um projeto independente em repositório próprio (`/srv/projects/GitHub/Iridium-Ignitor`). Este arquivo é só o registro histórico; o plano vivo é o `PLAN-0001` daquele repositório. Nada do Ignitor ficou no código do JLR.
+**Status:** ⚪ SUPERADO / ENCERRADO para o JLR_Beauty (2026-10-04) — o usuário decidiu **não usar o Iridium Ignitor no JLR_Beauty** e seguir outra abordagem específica para o Ignitor, em projeto próprio (`github.com/bornerj/Iridium-Ignitor`). Este arquivo é só registro histórico; **não é pendência do JLR**. A publicação do JLR em VPS segue por `docs/config/DEPLOY_VPS.md`, `docs/config/SERVIDOR_UBUNTU.md` e `PLAN-0019` (TLS).
 **Natureza:** projeto **novo e independente** do JLR Beauty. Este plano mora aqui só porque é a sessão/governança em curso; o código vive em repositório próprio (decisão D1).
 **Agentes/skills aplicados:** `@project-planner` (brainstorming, plan-writing) para este plano; `@frontend-specialist` (frontend-design, ui-ux-pro-max) para a interface; na execução: `@devops-engineer` (fullstack-docker-deploy, server-management), `@security-auditor` + `@penetration-tester`, `@backend-specialist`, `@test-engineer`.
 

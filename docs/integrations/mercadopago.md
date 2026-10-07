@@ -3,6 +3,8 @@
 Este capítulo consolida as orientações operacionais da integração de pagamentos com o
 Mercado Pago, implementada no `PLAN-0036` em substituição ao Stripe.
 
+> **Estado (2026-10-04):** integração entregue e **desligada por padrão** (`MERCADOPAGO_ENABLED=false`). Pagamento com cartão é um upgrade comercial; o roteiro completo de ativação (pré-requisitos da cliente, configuração, sandbox, produção controlada, operação e rollback) está em `memory/plans/PLAN-0041-ATIVACAO-PAGAMENTO-MERCADOPAGO.md`.
+
 ## Objetivo
 - Processar pagamento com cartão (crédito parcelado, débito) no checkout público do site
   via **Checkout Pro** (página hospedada pelo Mercado Pago — não é um formulário embutido).

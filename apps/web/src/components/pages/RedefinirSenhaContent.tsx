@@ -26,8 +26,8 @@ export default function RedefinirSenhaContent() {
       setError("Link inválido — falta o token de redefinição.");
       return;
     }
-    if (password.length < 8) {
-      setError("A senha precisa ter pelo menos 8 caracteres.");
+    if (password.length < 10) {
+      setError("A senha precisa ter pelo menos 10 caracteres.");
       return;
     }
     if (password !== confirmPassword) {
