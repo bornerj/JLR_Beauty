@@ -11435,3 +11435,25 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261007_203130-PASS.md`.
 - **Achados da pesquisa**: (1) Kamal 2.x usa `kamal-proxy`; o Traefik foi substituído (só como acessório) — a `DECISION-024` cita Traefik, logo D1 fica pendente; (2) com `ssl: false` o kamal-proxy repassa o `X-Forwarded-For` do cliente por padrão, o que reabriria o `ERR-0098` na VM sem domínio — o documento manda fixar `forward_headers: false`; (3) Let's Encrypt no kamal-proxy exige um único servidor, `host` e porta 443; (4) Kamal e Ruby não estão instalados nesta máquina; Multipass 1.16.4 está.
 - **Alterado (só docs/memória)**: ponteiros em `docs/config/HARDENING_VPS.md`, `DECISION-024`, `PLAN-0019`. Nada alterado no servidor ou no código. Sem commit.
 - **Pendente**: executar o ensaio na VM e preencher a seção 11 do documento; decidir D1–D5; `.gitignore` do `.kamal/secrets` antes do primeiro `kamal setup`.
+
+## 2026-10-07 — FECHAMENTO FINAL DE SESSÃO
+
+**Feito (desde o 1º fechamento):** commit `267d921` e push do `PLAN-0042`; `PLAN-0042` fechado `-DONE-`; verificação somente-leitura do hardening do servidor de UAT (ufw, SSH, atualizações, `.env`; achado: porta 80 do Docker contorna o ufw, confirmado pelo usuário e aceito como risco no UAT); `DECISION-024` (UAT pessoal; produção = VPS + proxy de borda + nginx interno; ensaio na VM Multipass com Kamal); runbook `HARDENING_VPS.md` reorganizado; `docs/deploy/DEPLOY_KAMAL_NGINX_VM_E_VPS.md` criado (rascunho com pontos [A VALIDAR]); commit `a2b0d26` e push. Memória do assistente: alvo de produção e melhorias futuras.
+
+**Mudou:** só documentação e memória nesta etapa. Nada alterado no servidor, no `.env`, nos containers ou no código desde o `267d921`.
+
+**Pendente (nomeado):** (1) usuário testar no navegador o login MASTER e a tela Usuários; (2) escolher a versão do Kamal / D1 (kamal-proxy vs Traefik) e executar o ensaio na VM Multipass seguindo o roteiro, preenchendo a seção 11; (3) `PLAN-0019` (HTTPS por proxy de borda, depende de domínio); (4) incluir `.kamal/secrets*` no `.gitignore` antes do primeiro `kamal setup`; (5) decidir apagar `/srv/backups/jlr_beauty/emergencia-20261003` e `env-pre-PLAN-0039.bak`; (6) tratar IP real atrás do proxy (`real_ip`) na migração; (7) retomar a Onda 6 (token em memória) junto do HTTPS; (8) `PLAN-0043` e `PLAN-0041` só por contratação. Este fechamento está **sem commit**.
+
+## 2026-10-07 — SESSION AUDIT — PASS (fechamento final)
+
+| Item | Resultado |
+|---|---|
+| Decision Integrity | PASS — `DECISION-023/024` coerentes; nota D1 sobre Traefik vs kamal-proxy registrada |
+| State Integrity | PASS — `PLAN-0042` DONE com Git Record; `0019/0041/0043` abertos e rastreados |
+| Operational Memory | PASS — log, progress, decisões e memória do assistente atualizados |
+| Debug Memory | PASS — sem bug de código novo; achados de infra registrados |
+| Technical Validation | PASS (N/A código) — containers saudáveis; nada aplicado no host |
+| Regression Risk | PASS com ressalva — teste manual do usuário pendente; roteiro Kamal é rascunho |
+| Git Governance | PASS — 2 commits e 2 pushes com aprovações separadas; `origin/main` = `a2b0d26` |
+
+Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261007_213806-PASS.md`.
