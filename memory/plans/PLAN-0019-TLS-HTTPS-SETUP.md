@@ -3,6 +3,7 @@
 **Status:** ⏸️ BLOCKED — aguardando domínio (Let's Encrypt não emite certificado para IP puro)
 **Data Início:** 2026-07-05 (desmembrado do PLAN-0018, Onda 4)
 **Escopo:** `nginx/production.conf`, `docker-compose.yml`, `.env` de produção
+**Atualização 2026-10-07 (`DECISION-024`):** em produção o TLS será do **Traefik** (Let's Encrypt automático), não `certbot` no nginx; o nginx fica só na rede interna. Domínio continua sendo pré-requisito. Ao executar este plano, tratar também o **IP real do cliente** atrás do Traefik (ver `docs/config/HARDENING_VPS.md`, seção "Produção"). O escopo "`nginx/production.conf`" abaixo é anterior a essa decisão. Roteiro de deploy: `docs/deploy/DEPLOY_KAMAL_NGINX_VM_E_VPS.md` (no Kamal 2.x o proxy de borda é o `kamal-proxy`, não o Traefik — decisão D1 pendente).
 **Razão:** SEC-30 — produção do JLR Beauty roda em HTTP puro, sem TLS/domínio configurado
 
 ---

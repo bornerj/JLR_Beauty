@@ -11414,3 +11414,24 @@ Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261004_033721-PASS.md`.
 | Git Governance | PASS — nada commitado nem pushado (sem autorização) |
 
 Checklist completo: `memory/logs/AUDIT_CHECKLIST_20261007_203130-PASS.md`.
+
+## 2026-10-07 — PLAN-0042 DONE: commit e push
+
+- Commit `267d921` (34 arquivos, +1126/−68) e push `921b6a1..267d921` em `origin/main`, ambos com aprovações separadas do usuário. O push pelo agente foi negado pelo classificador de permissões; o usuário o executou no próprio prompt.
+- `PLAN-0042` renomeado `-DONE-` com Git Record completo (push COMPLETED). `progress.md` e `PR-0003` ajustados.
+- **Pendente (inalterado)**: usuário testar login MASTER + tela Usuários no navegador; aplicar o runbook `HARDENING_VPS.md` no host (aprovação por item); `PLAN-0019` (HTTPS) e retomada da Onda 6; apagar `emergencia-20261003` e `env-pre-PLAN-0039.bak`; reavaliar cron/offsite antes de dado real; `PLAN-0043` só por contratação. Este ajuste de memória está **sem commit**.
+
+## 2026-10-07 — Verificação do hardening do servidor + DECISION-024 (alvo de produção)
+
+- **Verificação (somente leitura) do runbook no servidor de UAT**: `ufw` ativo (entrada negada; 22/80 só de `10.10.10.0/24`; Tailscale liberado), SSH só por chave/sem root, `unattended-upgrades` ativo, `.env` 600, Docker publica só o nginx. fail2ban não instalado. **Achado**: a porta 80 publicada pelo Docker (`"80:80"`) contorna o `ufw` — confirmado pelo usuário: o site abre pelo Wi-Fi `192.168.0.14`.
+- **Contexto dado pelo usuário** (não estava registrado): servidor atual é UAT pessoal; produção será VPS com Traefik (nginx só na rede interna); ensaio em VM Multipass com Kamal antes da VPS; barreiras demais entre o notebook e o UAT atrapalham. Registrado como `DECISION-024`.
+- **Resultado**: hardening do UAT considerado suficiente; fail2ban/`MaxAuthTries`/`AllowUsers` dispensados aqui; porta 80 = risco aceito. Runbook reorganizado (estado do UAT + seção "Produção"), `PLAN-0019` anotado (TLS será do Traefik). **Requisito novo para a migração**: tratar o IP real do cliente atrás do Traefik (`real_ip` no nginx), senão o `limit_req` e o rate limit da API tratam todos os usuários como um IP só.
+- **Arquivos alterados** (só docs/memória): `memory/decisions/DECISION-024.md`, `docs/config/HARDENING_VPS.md`, `memory/plans/PLAN-0019-…`, este log. Nada alterado no servidor. Sem commit.
+
+## 2026-10-07 — Documento de deploy Kamal + nginx (VM Multipass e VPS)
+
+- **Pedido do usuário**: deixar as instruções de uso do Kamal e do nginx em ambiente de VPS num documento separado, para seguir no ensaio da VM e na implantação.
+- **Criado**: `docs/deploy/DEPLOY_KAMAL_NGINX_VM_E_VPS.md` (arquitetura, decisões pendentes D1–D5, pré-requisitos, Fase A/B/C/D, nginx de produção, IP real atrás do proxy, dados/segredos/acessórios, checklist de validação, registro do ensaio, fontes). Consultada a documentação oficial do Kamal; **o que não foi confirmado está marcado [A VALIDAR]** e o documento se declara rascunho não validado.
+- **Achados da pesquisa**: (1) Kamal 2.x usa `kamal-proxy`; o Traefik foi substituído (só como acessório) — a `DECISION-024` cita Traefik, logo D1 fica pendente; (2) com `ssl: false` o kamal-proxy repassa o `X-Forwarded-For` do cliente por padrão, o que reabriria o `ERR-0098` na VM sem domínio — o documento manda fixar `forward_headers: false`; (3) Let's Encrypt no kamal-proxy exige um único servidor, `host` e porta 443; (4) Kamal e Ruby não estão instalados nesta máquina; Multipass 1.16.4 está.
+- **Alterado (só docs/memória)**: ponteiros em `docs/config/HARDENING_VPS.md`, `DECISION-024`, `PLAN-0019`. Nada alterado no servidor ou no código. Sem commit.
+- **Pendente**: executar o ensaio na VM e preencher a seção 11 do documento; decidir D1–D5; `.gitignore` do `.kamal/secrets` antes do primeiro `kamal setup`.

@@ -1,6 +1,6 @@
 # PLAN-0042 — Hardening da autenticação e autorização (auth próprio, sem provedor externo)
 
-**Status:** 🟨 PARCIAL — aprovado em 2026-10-07. **Ondas 1, 2, 3, 4, 5, 7a e 7b executadas e validadas (ao vivo + testes).** **Onda 6 ADIADA até o `PLAN-0019` (HTTPS), por decisão do usuário em 2026-10-07.** Onda 8 (MFA) **movida para o `PLAN-0043`** (melhoria futura, upgrade comercial). Sem commit (aguardando aprovação). **Escopo ativo do plano = Ondas 1-5 e 7, todas concluídas.** O plano pode virar `-DONE-` sem a Onda 6, desde que ela fique registrada como adiada (retomada em `PLAN-0019`).
+**Status:** ✅ DONE — Ondas 1-5 e 7 (7a+7b) executadas, validadas (193/193 testes + validação ao vivo), commitadas (`267d921`) e pushadas em 2026-10-07. **Onda 6 adiada até o `PLAN-0019`** (decisão do usuário; passos de retomada na própria Onda 6). **Onda 8 (MFA) movida para o `PLAN-0043`** (melhoria futura, upgrade comercial).
 **Decisão do usuário (2026-10-07):** **não migrar** para Auth0/Supabase/similar. Maximizar a segurança do auth atual, dentro do que uma VPS própria permite. MFA foi pedido como opcional e depois reclassificado como **melhoria futura/upgrade pago** (`PLAN-0043`, F-2).
 **Origem:** aviso de consultor + diagnóstico `@security-auditor` de 2026-10-07 (leitura de `lib/auth.ts`, `middleware/auth.ts`, `routes/auth.ts`, `routes/users.ts`, `lib/rateLimiter.ts`, `nginx/nginx.conf`).
 **Agentes de apoio:** `@security-auditor`, `@backend-specialist`, `@devops-engineer`, `@test-engineer`.
@@ -92,8 +92,8 @@ Decisão do usuário (2026-10-07): MFA é **upgrade comercial** — só será im
 5. Contas existentes com senha fraca continuam logando; a política vale para senhas novas.
 
 ## Git Record of Delivery
-- Step 1 (Pre-commit review): _pendente_
-- Step 2 (Commit authorization): _pendente_
-- Step 3 (Commit confirmation): _pendente_
-- Step 4 (Push authorization and result): _pendente_
-- Push status: PENDING
+- Step 1 (Pre-commit review): 34 arquivos (código `apps/api` + `apps/web`, `nginx/nginx.conf`, `.env.docker.example`, `sfk.toml`, docs e memória, incluindo a leva de memória de 04/10 ainda não commitada). Validações: `apps/api` 193/193 (26 novos), `tsc -b` api+web, `eslint`, `nginx -t`, rebuild Docker + validação ao vivo (contas de teste removidas), varredura de segredos no diff sem achados. Zero migration.
+- Step 2 (Commit authorization): "pode commitar" (usuário, 2026-10-07), após revisão do stage.
+- Step 3 (Commit confirmation): `267d921` · branch `main` · `fix(security): endurece autenticação e autorização (PLAN-0042)` · 34 arquivos, +1126/−68.
+- Step 4 (Push authorization and result): "pode dar o push" (usuário, 2026-10-07). O push feito pelo agente foi negado pelo classificador de permissões do Claude Code; o usuário executou `git push origin main` no próprio prompt (`!`). Resultado: `921b6a1..267d921  main -> main` (`git@github.com:bornerj/JLR_Beauty.git`).
+- Push status: COMPLETED
