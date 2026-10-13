@@ -1,0 +1,126 @@
+# docker-compose.coolify.yml — variante do docker-compose.yml para deploy via Coolify.
+# Diferencas em relacao ao original (so o necessario):
+#   1. nginx SEM `ports: 80:80` -> a porta 80 do servidor pertence ao proxy do Coolify (Traefik);
+#      o Coolify roteia o dominio configurado para a porta 80 interna do servico `nginx`.
+#   2. Dados em volumes nomeados (gerenciados pelo Docker/Coolify) em vez de ./.data no checkout.
+#   3. Variaveis por `environment: ${VAR}` (aparecem automaticamente na UI do Coolify)
+#      em vez de `env_file: .env` (o .env nao e versionado).
+services:
+  postgres:
+    build:
+      context: ./docker/postgres
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-jlrbeauty}
+      POSTGRES_USER: ${POSTGRES_USER:-jlrbeauty}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_API_RW_PASSWORD: ${DB_API_RW_PASSWORD}
+      DB_API_RO_PASSWORD: ${DB_API_RO_PASSWORD}
+    command: >
+      postgres
+      -c shared_preload_libraries=pgaudit
+      -c pgaudit.log=ddl,role
+      -c pgaudit.log_catalog=off
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_min_duration_statement=2000
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-api-users.sh:/docker-entrypoint-initdb.d/01-init-api-users.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jlrbeauty} -d ${POSTGRES_DB:-jlrbeauty}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: ${PORT:-3001}
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_MIGRATION_URL: ${DATABASE_MIGRATION_URL}
+      APP_API_URL: ${APP_API_URL}
+      APP_WEB_URL: ${APP_WEB_URL}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      TLS_ENABLED: ${TLS_ENABLED}
+      AUTH_RATE_LIMIT_WINDOW_MS: ${AUTH_RATE_LIMIT_WINDOW_MS:-}
+      AUTH_RATE_LIMIT_MAX_ATTEMPTS: ${AUTH_RATE_LIMIT_MAX_ATTEMPTS:-}
+      AUTH_RATE_LIMIT_BLOCK_MS: ${AUTH_RATE_LIMIT_BLOCK_MS:-}
+      AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS: ${AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS:-}
+      MASTER_EMAIL: ${MASTER_EMAIL}
+      MASTER_PASSWORD: ${MASTER_PASSWORD}
+      MERCADOPAGO_ENABLED: ${MERCADOPAGO_ENABLED:-false}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
+      MERCADOPAGO_PUBLIC_KEY: ${MERCADOPAGO_PUBLIC_KEY:-}
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
+      MERCADOPAGO_CHECKOUT_SUCCESS_URL: ${MERCADOPAGO_CHECKOUT_SUCCESS_URL:-}
+      MERCADOPAGO_CHECKOUT_FAILURE_URL: ${MERCADOPAGO_CHECKOUT_FAILURE_URL:-}
+      MERCADOPAGO_CHECKOUT_PENDING_URL: ${MERCADOPAGO_CHECKOUT_PENDING_URL:-}
+      MERCADOPAGO_NOTIFICATION_URL: ${MERCADOPAGO_NOTIFICATION_URL:-}
+      MERCADOPAGO_MAX_INSTALLMENTS: ${MERCADOPAGO_MAX_INSTALLMENTS:-}
+      ZAPI_WEBHOOK_SECRET: ${ZAPI_WEBHOOK_SECRET:-}
+      CONCIERGE_RETENTION_DAYS: ${CONCIERGE_RETENTION_DAYS:-}
+      CONCIERGE_RETENTION_INTERVAL_HOURS: ${CONCIERGE_RETENTION_INTERVAL_HOURS:-}
+      BREVO_SMTP_HOST: ${BREVO_SMTP_HOST:-}
+      BREVO_SMTP_PORT: ${BREVO_SMTP_PORT:-}
+      BREVO_SMTP_USER: ${BREVO_SMTP_USER:-}
+      BREVO_SMTP_KEY: ${BREVO_SMTP_KEY:-}
+      BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-}
+      BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-}
+    volumes:
+      - uploads:/app/uploads
+    expose:
+      - "3001"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+        VITE_WEB_URL: ${APP_WEB_URL:-}
+    restart: unless-stopped
+    depends_on:
+      - api
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    # SEM ports: o Coolify publica este servico via dominio (SERVICE_FQDN_NGINX_80).
+    environment:
+      - SERVICE_FQDN_NGINX_80
+    volumes:
+      - ./nginx/:/etc/nginx/conf.d/:ro
+    depends_on:
+      api:
+        condition: service_started
+      web:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "test -s /etc/nginx/conf.d/nginx.conf || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  pgdata:
+  uploads:
